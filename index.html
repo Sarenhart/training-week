@@ -87,12 +87,32 @@ h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;line-heigh
 .cue{font-size:13px;color:var(--muted);margin-top:2px}
 .last{font-size:13px;color:var(--muted);margin-top:2px}
 .last .up{color:var(--done);font-weight:600}
-.sets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.set{min-width:58px;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
-.set b{font-family:var(--display);font-size:22px}
-.set small{font-size:11px;color:var(--muted)}
-.set.done{background:var(--done);border-color:var(--done);color:var(--accent-ink)}
-.set.done small{color:var(--accent-ink);opacity:.85}
+.exbody{display:flex;gap:10px;align-items:flex-end;margin-top:12px}
+.setcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.lastlbl{display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.lastlbl .up{color:var(--done);text-transform:none;letter-spacing:0;font-size:13px;margin-left:auto}
+.lastrow,.sets{display:grid;gap:8px}
+.lastrow{font-size:13px;color:var(--muted);text-align:center}
+.setbox{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.setbox.done{border:2px solid var(--done)}
+.arr{height:36px;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0}
+.arr.up{border-bottom:1px solid var(--line)}
+.arr.dn{border-top:1px solid var(--line)}
+.setbox.done .arr{border-color:color-mix(in srgb,var(--done) 35%,transparent)}
+.setmain{min-height:56px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.1;padding:0}
+.setmain .rp{display:flex;align-items:baseline;gap:1px}
+.setmain b{font-family:var(--display);font-size:24px}
+.setmain .of{font-family:var(--display);font-size:15px;opacity:.75}
+.setmain small{font-size:11px;color:var(--muted)}
+.setbox.done .setmain{background:var(--done);color:var(--accent-ink)}
+.setbox.done .setmain small{color:var(--accent-ink);opacity:.85}
+.feel{display:flex;flex-direction:column;gap:10px;padding-left:10px;border-left:1px solid var(--line);margin-bottom:6px}
+.fbtn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center;padding:0}
+.fbtn.light.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.fbtn.heavy.on{background:var(--warn);border-color:var(--warn);color:var(--accent-ink)}
+.fbadge{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;color:var(--accent-ink)}
+.fbadge.light{background:var(--accent)}.fbadge.heavy{background:var(--warn)}
+.feelnote{font-size:13px;color:var(--muted);margin-top:8px}
 .kgrow{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--muted)}
 .step{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;display:grid;place-items:center}
 .kg{font-family:var(--display);font-size:22px;color:var(--ink);min-width:80px;text-align:center}
@@ -1254,7 +1274,8 @@ function prevBest(name, beforeId) {
       const done = sets.filter(x => x.done);
       if (!done.length) continue;
       return { id, done: done.length, total: sets.length, reps: done[0].reps, kg: Math.max(...done.map(x => x.kg || 0)),
-        allReps: done.length === sets.length && done.every(x => x.reps >= (x.target ?? x.reps)), date: l.date };
+        allReps: done.length === sets.length && done.every(x => x.reps >= (x.target ?? x.reps)), date: l.date,
+        sets: sets.filter(x => x.done), feel: l.feel?.[eid] || null };
     }
   }
   return null;
@@ -1263,7 +1284,7 @@ function suggest(e, id) {
   const last = prevBest(e.name, id);
   if (!last) return { kg: e.kg, last: null, up: false };
   if (!e.inc) return { kg: last.kg || e.kg, last, up: false };
-  const up = last.allReps && last.reps >= e.reps;
+  const up = last.feel === "light" ? true : last.feel === "heavy" ? false : last.allReps && last.reps >= e.reps;
   return { kg: up ? last.kg + e.inc : Math.max(last.kg, 0), last, up };
 }
 function ensureLog(w, k) {
@@ -1304,6 +1325,12 @@ function head(eyebrow, title) {
   return `<header class="top"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1></div><div class="sync">${sync}</div></header>`;
 }
 
+const ARROW_UP = `<svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 2.5l9 7"/></svg>`;
+const ARROW_DN = `<svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9 7 9-7"/></svg>`;
+const FEEL_ICON = {
+  light: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 3.8a6 6 0 0 0-8.5 0L5 10.5V19h8.5l6.7-6.7a6 6 0 0 0 0-8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`,
+  heavy: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 11.6C5.5 7.3 7 3.4 12 3.4s6.5 3.9 5.4 8.2" stroke-width="2.6"/><path d="M6.9 19.6A7.1 7.1 0 1 1 17.1 19.6Z" fill="currentColor" stroke="none"/></svg>`
+};
 function todayView() {
   const w = S.week, k = S.wk, ph = phaseOf(w), pi = phaseIndex(w), wo = workout(w, k), tw = totalWeeks(), cur = currentWeek();
   let h = head(`Week ${w} of ${tw} · Phase ${pi + 1} ${ph.name}`, wo.name);
@@ -1334,19 +1361,30 @@ function todayView() {
     const complete = sets.length && sets.every(x => x.done);
     const unit = UNIT[e.unit || "reps"];
     const nextSs = wo.exercises[i + 1]?.ss, ssCls = e.ss && e.ss.endsWith("1") && nextSs ? "ss1" : e.ss && e.ss.endsWith("2") ? "ss2" : "";
-    const lastTxt = sg.last ? `Last time: ${sg.last.done} × ${sg.last.reps}${unit ? " " + unit : ""}${sg.last.kg ? " @ " + fmt(sg.last.kg) + " kg" : ""}${sg.up && !l ? ` <span class="up">↑ +${fmt(e.inc)} kg today</span>` : ""}` : "";
     const kgLabel = x => e.bw ? (x ? "+" + fmt(x) + " kg" : "BW") : x ? fmt(x) + " kg" : "";
+    const cols = `grid-template-columns:repeat(${Math.max(sets.length, 1)},minmax(0,1fr))`;
+    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ +${fmt(e.inc)} kg today</span>` : ""}</div>
+        <div class="lastrow num" style="${cols}">${sg.last.sets.map(x => `<span>${x.kg && !e.bw ? fmt(x.kg) + " × " : e.bw && x.kg ? "+" + fmt(x.kg) + " × " : ""}${x.reps}${unit ? " " + unit : ""}</span>`).join("")}</div>` : "";
+    const feel = l?.feel?.[e.id] || null;
+    const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${fmt(kgNow + e.inc)} kg.` : `Felt heavy: next time stay at ${fmt(kgNow)} kg.`}</div>` : "";
     h += `<section class="ex ${complete ? "complete" : ""} ${ssCls}">
       <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}
         ${e.note ? `<div class="cue">${esc(e.note)}</div>` : ""}
-        ${lastTxt ? `<div class="last num">${lastTxt}</div>` : ""}</div>
+</div>
         <div class="target num">${e.sets} × ${e.reps}${unit ? " " + unit : ""}</div></div>
-      <div class="sets">${sets.map((x, j) => `<button class="set ${x.done ? "done" : ""}" data-act="tick" data-ex="${e.id}" data-i="${j}" id="set-${e.id}-${j}" aria-pressed="${x.done}" aria-label="Set ${j + 1}"><b class="num">${x.reps}${unit ? `<small> ${unit}</small>` : ""}</b><small class="num">${kgLabel(x.kg) || "&nbsp;"}</small></button>`).join("")}</div>
+      <div class="exbody"><div class="setcol">${lastRow}
+        <div class="sets" style="${cols}">${sets.map((x, j) => `<div class="setbox ${x.done ? "done" : ""}">
+          <button class="arr up" data-act="reps" data-ex="${e.id}" data-i="${j}" data-d="1" aria-label="Set ${j + 1}: more">${ARROW_UP}</button>
+          <button class="setmain" data-act="tick" data-ex="${e.id}" data-i="${j}" id="set-${e.id}-${j}" aria-pressed="${x.done}" aria-label="Set ${j + 1}, ${x.reps}${unit ? " " + unit : " reps"}"><span class="rp num"><b>${x.reps}</b>${x.reps < (x.target ?? e.reps) ? `<span class="of">/${x.target ?? e.reps}</span>` : unit ? `<span class="of"> ${unit}</span>` : ""}</span><small class="num">${kgLabel(x.kg) || "&nbsp;"}</small></button>
+          <button class="arr dn" data-act="reps" data-ex="${e.id}" data-i="${j}" data-d="-1" aria-label="Set ${j + 1}: fewer">${ARROW_DN}</button></div>`).join("")}</div></div>
+        <div class="feel"><button class="fbtn light ${feel === "light" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="light" aria-pressed="${feel === "light"}" aria-label="Felt light" title="Felt light">${FEEL_ICON.light(22)}</button>
+          <button class="fbtn heavy ${feel === "heavy" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="heavy" aria-pressed="${feel === "heavy"}" aria-label="Felt heavy" title="Felt heavy">${FEEL_ICON.heavy(22)}</button></div></div>
       ${e.inc ? `<div class="kgrow"><span>${e.bw ? "Added" : "Weight"}</span>
         <button class="step" data-act="kg" data-ex="${e.id}" data-d="${-e.inc}" aria-label="Less weight">−</button>
         <span class="kg num">${kgLabel(kgNow) || "0 kg"}</span>
         <button class="step" data-act="kg" data-ex="${e.id}" data-d="${e.inc}" aria-label="More weight">+</button>
         <span style="margin-left:auto">sets left</span></div>` : ""}
+      ${feelNote}
       ${guideHtml(e)}
     </section>`;
   });
@@ -1577,6 +1615,17 @@ document.addEventListener("click", ev => {
       const e = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex);
       if (set.done) { if (e?.rest) startTimer(e.rest, e.name); keepAwake(); }
       render(); break;
+    }
+    case "reps": {
+      const l = ensureLog(S.week, S.wk), set = l.sets[b.dataset.ex][+b.dataset.i];
+      const e = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex), step = (e?.unit || "reps") === "reps" ? 1 : 5;
+      set.reps = Math.max(0, Math.min(999, set.reps + step * +b.dataset.d));
+      saveLog(l); render(); break;
+    }
+    case "feel": {
+      const l = ensureLog(S.week, S.wk); l.feel = l.feel || {};
+      l.feel[b.dataset.ex] = l.feel[b.dataset.ex] === b.dataset.f ? null : b.dataset.f;
+      saveLog(l); render(); break;
     }
     case "kg": {
       const l = ensureLog(S.week, S.wk), arr = l.sets[b.dataset.ex], d = +b.dataset.d;
