@@ -305,7 +305,8 @@ const GUIDES = {
   },
   "pull-up": {
     steps: ["Grip just outside shoulder width, palms facing away.", "Start from a full hang with arms straight.", "Pull the shoulder blades down first, then drive the elbows toward the ribs.", "Pull until the chin is over the bar.", "Lower under control to a full hang."],
-    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."]
+    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."],
+    tip: "Can't do the reps yet? Use the assisted pull-up machine and tap − under the sets until it shows the help you need (e.g. 20 kg). Each time it feels light, the app takes 2,5 kg of help away."
   },
   "weighted pull-up": {
     steps: ["Hang the weight from a dip belt, plate or dumbbell between the legs.", "Same technique as a normal pull-up: full hang, shoulder blades down, chin over the bar.", "Lower under control to a full hang."],
@@ -1285,7 +1286,7 @@ function suggest(e, id) {
   if (!last) return { kg: e.kg, last: null, up: false };
   if (!e.inc) return { kg: last.kg || e.kg, last, up: false };
   const up = last.feel === "light" ? true : last.feel === "heavy" ? false : last.allReps && last.reps >= e.reps;
-  return { kg: up ? last.kg + e.inc : Math.max(last.kg, 0), last, up };
+  return { kg: up ? last.kg + e.inc : e.bw ? last.kg : Math.max(last.kg, 0), last, up };
 }
 function ensureLog(w, k) {
   const id = logId(w, k), wo = workout(w, k);
@@ -1302,7 +1303,7 @@ function ensureLog(w, k) {
 }
 function stats(l) {
   let done = 0, total = 0, vol = 0;
-  Object.values(l.sets || {}).forEach(a => a.forEach(x => { total++; if (x.done) { done++; vol += (x.kg || 0) * (x.reps || 0); } }));
+  Object.values(l.sets || {}).forEach(a => a.forEach(x => { total++; if (x.done) { done++; vol += Math.max(0, x.kg || 0) * (x.reps || 0); } }));
   return { done, total, vol };
 }
 
@@ -1361,12 +1362,13 @@ function todayView() {
     const complete = sets.length && sets.every(x => x.done);
     const unit = UNIT[e.unit || "reps"];
     const nextSs = wo.exercises[i + 1]?.ss, ssCls = e.ss && e.ss.endsWith("1") && nextSs ? "ss1" : e.ss && e.ss.endsWith("2") ? "ss2" : "";
-    const kgLabel = x => e.bw ? (x ? "+" + fmt(x) + " kg" : "BW") : x ? fmt(x) + " kg" : "";
+    const kgLabel = x => e.bw ? (x > 0 ? "+" + fmt(x) + " kg" : x < 0 ? "−" + fmt(-x) + " kg" : "BW") : x ? fmt(x) + " kg" : "";
+    const kgWord = x => e.bw && x < 0 ? fmt(-x) + " kg help" : fmt(x) + " kg";
     const cols = `grid-template-columns:repeat(${Math.max(sets.length, 1)},minmax(0,1fr))`;
-    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ +${fmt(e.inc)} kg today</span>` : ""}</div>
-        <div class="lastrow num" style="${cols}">${sg.last.sets.map(x => `<span>${x.kg && !e.bw ? fmt(x.kg) + " × " : e.bw && x.kg ? "+" + fmt(x.kg) + " × " : ""}${x.reps}${unit ? " " + unit : ""}</span>`).join("")}</div>` : "";
+    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(e.inc) + " kg today"}</span>` : ""}</div>
+        <div class="lastrow num" style="${cols}">${sg.last.sets.map(x => `<span>${x.kg && !e.bw ? fmt(x.kg) + " × " : e.bw && x.kg ? kgLabel(x.kg) + " × " : ""}${x.reps}${unit ? " " + unit : ""}</span>`).join("")}</div>` : "";
     const feel = l?.feel?.[e.id] || null;
-    const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${fmt(kgNow + e.inc)} kg.` : `Felt heavy: next time stay at ${fmt(kgNow)} kg.`}</div>` : "";
+    const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(kgNow + e.inc)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`}</div>` : "";
     h += `<section class="ex ${complete ? "complete" : ""} ${ssCls}">
       <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}
         ${e.note ? `<div class="cue">${esc(e.note)}</div>` : ""}
@@ -1379,11 +1381,10 @@ function todayView() {
           <button class="arr dn" data-act="reps" data-ex="${e.id}" data-i="${j}" data-d="-1" aria-label="Set ${j + 1}: fewer">${ARROW_DN}</button></div>`).join("")}</div></div>
         <div class="feel"><button class="fbtn light ${feel === "light" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="light" aria-pressed="${feel === "light"}" aria-label="Felt light" title="Felt light">${FEEL_ICON.light(22)}</button>
           <button class="fbtn heavy ${feel === "heavy" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="heavy" aria-pressed="${feel === "heavy"}" aria-label="Felt heavy" title="Felt heavy">${FEEL_ICON.heavy(22)}</button></div></div>
-      ${e.inc ? `<div class="kgrow"><span>${e.bw ? "Added" : "Weight"}</span>
-        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${-e.inc}" aria-label="Less weight">−</button>
-        <span class="kg num">${kgLabel(kgNow) || "0 kg"}</span>
-        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${e.inc}" aria-label="More weight">+</button>
-        <span style="margin-left:auto">sets left</span></div>` : ""}
+      ${e.inc ? `<div class="kgrow"><span>${e.bw ? (kgNow < 0 ? "Machine help" : "Added") : "Weight"}</span>
+        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${-e.inc}" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "Less weight (more machine help)" : "Less weight"}">−</button>
+        <span class="kg num">${e.bw && kgNow < 0 ? fmt(-kgNow) + " kg" : kgLabel(kgNow) || "0 kg"}</span>
+        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${e.inc}" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "More weight (less machine help)" : "More weight"}">+</button></div>` : ""}
       ${feelNote}
       ${guideHtml(e)}
     </section>`;
@@ -1442,7 +1443,7 @@ function planView() {
               <div class="grid4">
                 <label class="f">Sets<input type="number" inputmode="numeric" min="1" max="20" id="es-${e.id}" data-field="sets" data-p="${pi}" data-k="${k}" data-ex="${e.id}" value="${e.sets}"></label>
                 <label class="f">${esc(u)}<input type="number" inputmode="numeric" min="1" id="er-${e.id}" data-field="reps" data-p="${pi}" data-k="${k}" data-ex="${e.id}" value="${e.reps}"></label>
-                <label class="f">${e.bw ? "+kg" : "kg"}<input type="number" inputmode="decimal" min="0" step="0.5" id="ek-${e.id}" data-field="kg" data-p="${pi}" data-k="${k}" data-ex="${e.id}" value="${e.kg}"></label>
+                <label class="f">${e.bw ? "±kg" : "kg"}<input type="number" inputmode="decimal" min="${e.bw ? -80 : 0}" step="0.5" id="ek-${e.id}" data-field="kg" data-p="${pi}" data-k="${k}" data-ex="${e.id}" value="${e.kg}"></label>
                 <label class="f">Rest s<input type="number" inputmode="numeric" min="0" step="15" id="et-${e.id}" data-field="rest" data-p="${pi}" data-k="${k}" data-ex="${e.id}" value="${e.rest ?? 90}"></label>
               </div>
               <div class="exactions">
@@ -1629,7 +1630,7 @@ document.addEventListener("click", ev => {
     }
     case "kg": {
       const l = ensureLog(S.week, S.wk), arr = l.sets[b.dataset.ex], d = +b.dataset.d;
-      const left = arr.filter(x => !x.done); (left.length ? left : arr).forEach(x => x.kg = Math.max(0, Math.round(((x.kg || 0) + d) * 100) / 100));
+      const left = arr.filter(x => !x.done); const lo = +(b.dataset.min || 0); (left.length ? left : arr).forEach(x => x.kg = Math.max(lo, Math.round(((x.kg || 0) + d) * 100) / 100));
       saveLog(l); render(); break;
     }
     case "finish": { const l = S.logs[logId(S.week, S.wk)]; if (l) { l.finished = true; l.finishedAt = new Date().toISOString(); saveLog(l); S.timer = null; clearInterval(tick);
@@ -1674,7 +1675,7 @@ document.addEventListener("input", ev => {
   else {
     const e = wo.exercises.find(x => x.id === t.dataset.ex); if (!e) return;
     if (f === "name") e.name = t.value;
-    else { const v = parseFloat(String(t.value).replace(",", ".")); if (isNaN(v)) return; e[f] = f === "kg" ? Math.max(0, v) : Math.max(f === "rest" ? 0 : 1, Math.round(v)); }
+    else { const v = parseFloat(String(t.value).replace(",", ".")); if (isNaN(v)) return; e[f] = f === "kg" ? Math.max(e.bw ? -80 : 0, v) : Math.max(f === "rest" ? 0 : 1, Math.round(v)); }
   }
   saveProgram(true);
 });
