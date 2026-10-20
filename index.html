@@ -93,6 +93,9 @@ h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;line-heigh
 .lastlbl .up{color:var(--done);text-transform:none;letter-spacing:0;font-size:13px;margin-left:auto}
 .lastrow,.sets{display:grid;gap:8px}
 .lastrow{font-size:13px;color:var(--muted);text-align:center}
+.lastrow.tight{font-size:12px}
+.feelit{font-size:13px;color:var(--accent);margin-top:2px}
+.feelit b{font-weight:600}
 .setbox{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
 .setbox.done{border:2px solid var(--done)}
 .arr{height:26px;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0}
@@ -1341,6 +1344,34 @@ function head(eyebrow, title) {
 
 const ARROW_UP = `<svg width="22" height="9" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 2.5l9 7"/></svg>`;
 const ARROW_DN = `<svg width="22" height="9" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9 7 9-7"/></svg>`;
+// Which muscle the user should feel working – first match wins (specific names before general ones)
+const FEEL_IN = [
+  [/bike|rower|walk|jog|run|cardio|interval|ski machine|stair|jump rope/i, ""],
+  [/hamstring curl|leg curl|nordic/i, "Back of the thighs"],
+  [/romanian|rdl|good.?morning/i, "Back of the thighs and glutes"],
+  [/hip thrust|glute bridge|pull-through|kettlebell swing/i, "Glutes"],
+  [/hip abduction|clamshell|side-lying (leg|hip)/i, "Side of the hips"],
+  [/split squat|lunge|step-up/i, "Front thighs and glutes"],
+  [/squat|leg press|leg extension/i, "Front thighs"],
+  [/calf raise/i, "Calves"],
+  [/tibialis/i, "Shins"],
+  [/skull crusher|triceps|pushdown|close-grip/i, "Triceps (back of the arms)"],
+  [/hammer curl/i, "Biceps and forearms"],
+  [/curl/i, "Biceps"],
+  [/lateral raise/i, "Side shoulders"],
+  [/rear-delt|face pull|reverse fly/i, "Rear shoulders"],
+  [/overhead press|shoulder press|y-raise/i, "Front shoulders"],
+  [/incline.*(press|fly)|low-to-high/i, "Upper chest"],
+  [/bench press|push-up|dips|chest press|fly|floor press/i, "Chest"],
+  [/pull-up|chin-up|pulldown|pullover/i, "Lats (sides of the back)"],
+  [/row/i, "Upper back"],
+  [/back extension|superman|reverse hyper/i, "Lower back and glutes"],
+  [/side plank|copenhagen/i, "Side of the waist"],
+  [/pallof|woodchop/i, "Core – resist the twist"],
+  [/dead bug|knee raise|ab wheel|crunch|plank|hollow|bird dog/i, "Abs"],
+  [/farmer|suitcase|carry/i, "Grip and core"]
+];
+function feelIn(name) { const m = FEEL_IN.find(([re]) => re.test(name || "")); return m ? m[1] : ""; }
 const FEEL_ICON = {
   light: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 3.8a6 6 0 0 0-8.5 0L5 10.5V19h8.5l6.7-6.7a6 6 0 0 0 0-8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`,
   heavy: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 11.6C5.5 7.3 7 3.4 12 3.4s6.5 3.9 5.4 8.2" stroke-width="2.6"/><path d="M6.9 19.6A7.1 7.1 0 1 1 17.1 19.6Z" fill="currentColor" stroke="none"/></svg>`
@@ -1379,11 +1410,12 @@ function todayView() {
     const kgWord = x => e.bw && x < 0 ? fmt(-x) + " kg help" : fmt(x) + " kg";
     const cols = `grid-template-columns:repeat(${Math.max(sets.length, 1)},minmax(0,1fr))`;
     const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(e.inc) + " kg today"}</span>` : ""}</div>
-        <div class="lastrow num" style="${cols}">${sg.last.sets.map(x => `<span>${x.kg && !e.bw ? fmt(x.kg) + " × " : e.bw && x.kg ? kgLabel(x.kg) + " × " : ""}${x.reps}${unit ? " " + unit : ""}</span>`).join("")}</div>` : "";
+        <div class="lastrow num ${sets.length > 3 ? "tight" : ""}" style="${cols}">${sg.last.sets.map(x => `<span>${x.reps}${unit ? " " + unit : ""}${x.kg && !e.bw ? " × " + fmt(x.kg) + " kg" : e.bw && x.kg ? " × " + kgLabel(x.kg) : ""}</span>`).join("")}</div>` : "";
     const feel = l?.feel?.[e.id] || null;
     const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(kgNow + e.inc)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`}</div>` : "";
     h += `<section class="ex ${complete ? "complete" : ""} ${ssCls}">
       <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}
+        ${feelIn(e.name) ? `<div class="feelit">Feel it in: <b>${feelIn(e.name)}</b></div>` : ""}
         ${e.note ? `<div class="cue">${esc(e.note)}</div>` : ""}
 </div>
         <div class="target num">${e.sets} × ${e.reps}${unit ? " " + unit : ""}</div></div>
