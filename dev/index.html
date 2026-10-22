@@ -1334,9 +1334,22 @@ function ensureLog(w, k) {
   });
   return l;
 }
+// Body-weight exercises count the body weight you actually lift: pull-ups, chin-ups and dips the whole body,
+// push-ups about 65 % (the floor takes the rest). Machine help is taken off, a belt is added.
+// Uses the body weight logged on or before the workout date; none logged = 0.
+function bwShare(name) { const n = name || ""; return /pull-up|chin-up|\bdips?\b/i.test(n) ? 1 : /push-up/i.test(n) ? 0.65 : 0; }
+function bodyWeightOn(date) {
+  let best = null;
+  for (const b of Object.values(S.body || {})) if (b && b.weight && b.date <= (date || "9999")) { if (!best || b.date > best.date) best = b; }
+  return best ? +best.weight : 0;
+}
 function stats(l) {
   let done = 0, total = 0, vol = 0;
-  Object.values(l.sets || {}).forEach(a => a.forEach(x => { total++; if (x.done) { done++; vol += Math.max(0, x.kg || 0) * (x.reps || 0); } }));
+  const bw = bodyWeightOn(l.date);
+  Object.entries(l.sets || {}).forEach(([eid, a]) => {
+    const share = bwShare(l.names?.[eid]);
+    a.forEach(x => { total++; if (x.done) { done++; vol += Math.max(0, share * bw + (x.kg || 0)) * (x.reps || 0); } });
+  });
   return { done, total, vol };
 }
 
