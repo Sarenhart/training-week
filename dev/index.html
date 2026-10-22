@@ -95,6 +95,51 @@ h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;line-heigh
 .lastrow{font-size:13px;color:var(--muted);text-align:center}
 .lastrow.tight{font-size:12px}
 .libsearch{margin:0 0 6px}
+.obmode .bottom{display:none}
+.ob{display:grid;gap:14px;padding-bottom:30px}
+.ob header.top{align-items:flex-start}
+.obp{margin:0;color:var(--muted)}
+.obsmall{font-size:13px;margin:0;text-align:center}
+.obsteps{list-style:none;margin:6px 0;padding:0;display:grid;gap:10px;counter-reset:s}
+.obsteps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 12px 52px;position:relative;display:grid}
+.obsteps li::before{content:counter(s);position:absolute;left:12px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
+.obsteps span{font-size:14px;color:var(--muted)}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;padding:10px}
+.infobtn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--accent);font-weight:700;font-family:Georgia,serif;font-size:18px;flex:none}
+.infobtn[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.obrow{display:flex;align-items:center;justify-content:space-between;gap:10px}.obrow.col{flex-direction:column;align-items:stretch}
+.oblbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.oblbl .muted{text-transform:none;letter-spacing:0;font-weight:500}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg .obchip{border:0;border-radius:0;min-height:40px}
+.obchips{display:flex;flex-wrap:wrap;gap:8px}.obchips.static .pill{font-size:13px}
+.obchip{min-height:44px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;font-size:15px}
+.obchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.obchip:disabled{opacity:.4}
+.obchip.big{border-radius:12px;min-height:52px}
+.obgrid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.obgrid2.tight{gap:8px}
+.inu{display:flex;align-items:center;gap:6px}.inu i{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}
+.inu2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.obwarn{background:var(--warn);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;margin:0}
+.obmore{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-weight:600;min-height:48px;color:var(--ink)}
+.obmore[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.obcards{display:grid;gap:10px}
+.obcard{display:grid;gap:4px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;color:var(--ink)}
+.obcard b{font-family:var(--display);font-size:22px}.obcard span{color:var(--muted);font-size:14px}
+.obcard[aria-pressed="true"]{border:2px solid var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.obshape{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.obcard.sh{justify-items:center;text-align:center;color:var(--muted);min-height:130px;align-content:center}
+.obcard.sh[aria-pressed="true"]{color:var(--accent)}
+.obdir{display:grid;gap:4px}.obdir h2{margin:2px 0}.obdir p{margin:0}
+.obnone{display:grid;gap:2px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 16px;min-height:56px;color:var(--ink)}
+.obnone span{font-size:13px;color:var(--muted)}
+.obnone[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.obnone[aria-pressed="true"] span{color:var(--accent-ink)}
+.obanchor{background:var(--accent-soft);border-radius:12px;padding:12px;display:grid;gap:8px}.obanchor p{margin:0;font-size:14px}
+.obfit{border:1.5px solid var(--accent);background:var(--surface);border-radius:12px;padding:12px;display:grid;gap:10px}.obfit p{margin:0}
+.obweek{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}.obweek li{display:grid}.obweek span{font-size:14px;color:var(--muted)}
+.obnav{display:flex;justify-content:space-between;gap:10px;margin-top:6px}.obnav .btn{min-height:48px;flex:1}
+.btn:disabled{opacity:.45}
+.obsum{display:flex;align-items:center;gap:10px;margin-bottom:14px}.obsum>div{flex:1;min-width:0}.obsum small{display:block;color:var(--muted);font-size:13px}
 .libgrp{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--body);font-weight:700;margin:22px 0 8px}
 .libitem{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
 .librow{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;padding:12px 14px;text-align:left;min-height:52px}
@@ -1303,7 +1348,9 @@ async function connect() {
   loadLocal();
   if (!S.program) { S.program = clone(SEED.program); S.body = clone(SEED.body); S.logs = {}; saveLocal(); }
   migrate();
-  S.loaded = true; S.mode = "local"; render();
+  S.loaded = true; S.mode = "local";
+  if (!loadProfile()) { obStart(false); return; }
+  render();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
 }
 const SEED = {"program": {"title": "12-week upper-body focus", "start": "2026-09-29", "phases": [{"name": "Foundation", "weeks": [1, 2, 3], "about": "Learn the lifts and find your working weights. Stop each set with 2-3 reps left in the tank.", "workouts": {"1": {"name": "Upper · Push", "exercises": [{"name": "Barbell bench press", "sets": 3, "reps": 10, "kg": 35, "rest": 120, "inc": 2.5, "unit": "reps", "note": "Bar to lower chest, feet planted.", "id": "p11-barbell-bench-press"}, {"name": "Barbell overhead press", "sets": 3, "reps": 10, "kg": 30, "rest": 120, "inc": 2.5, "unit": "reps", "note": "Squeeze glutes, no leaning back.", "id": "p11-barbell-overhead-press"}, {"name": "Incline dumbbell press", "sets": 3, "reps": 12, "kg": 14, "rest": 90, "inc": 2, "unit": "reps", "note": "kg per dumbbell.", "id": "p11-incline-dumbbell-press"}, {"name": "Dumbbell lateral raise", "sets": 3, "reps": 12, "kg": 6, "rest": 0, "inc": 1, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p11-dumbbell-lateral-raise"}, {"name": "Overhead dumbbell triceps extension", "sets": 3, "reps": 12, "kg": 14, "rest": 75, "inc": 2, "unit": "reps", "ss": "A2", "id": "p11-overhead-dumbbell-tricep"}]}, "2": {"name": "Lower · Knee-friendly", "exercises": [{"name": "Romanian deadlift", "sets": 3, "reps": 10, "kg": 50, "rest": 120, "inc": 2.5, "unit": "reps", "note": "Soft knees, push hips back. Knees barely bend.", "id": "p12-romanian-deadlift"}, {"name": "Barbell hip thrust", "sets": 3, "reps": 12, "kg": 50, "rest": 90, "inc": 2.5, "unit": "reps", "note": "Shins vertical at the top.", "id": "p12-barbell-hip-thrust"}, {"name": "Lying hamstring curl", "sets": 3, "reps": 12, "kg": 25, "rest": 75, "inc": 1, "unit": "reps", "note": "Stop if the knee complains.", "id": "p12-lying-hamstring-curl"}, {"name": "Standing calf raise", "sets": 3, "reps": 15, "kg": 40, "rest": 60, "inc": 2.5, "unit": "reps", "id": "p12-standing-calf-raise"}, {"name": "Dead bug", "sets": 3, "reps": 10, "kg": 0, "rest": 0, "inc": 0, "unit": "reps", "ss": "A1", "note": "Reps per side. Go straight to A2.", "id": "p12-dead-bug"}, {"name": "Pallof press", "sets": 3, "reps": 12, "kg": 10, "rest": 60, "inc": 2.5, "unit": "reps", "ss": "A2", "note": "Cable, reps per side.", "id": "p12-pallof-press"}]}, "3": {"name": "Full body · Pull", "exercises": [{"name": "Pull-up", "sets": 3, "reps": 10, "kg": 0, "rest": 120, "inc": 0.25, "unit": "reps", "bw": true, "note": "Full hang to chin over bar.", "id": "p13-pull-up"}, {"name": "Machine row", "sets": 3, "reps": 12, "kg": 45, "rest": 90, "inc": 2.5, "unit": "reps", "note": "Total on the machine (both sides).", "id": "p13-machine-row"}, {"name": "Face pull", "sets": 3, "reps": 15, "kg": 15, "rest": 60, "inc": 2.5, "unit": "reps", "note": "Cable, pull to forehead, elbows high.", "id": "p13-face-pull"}, {"name": "Dumbbell hammer curl", "sets": 3, "reps": 12, "kg": 10, "rest": 60, "inc": 2, "unit": "reps", "id": "p13-dumbbell-hammer-curl"}, {"name": "Kettlebell swing", "sets": 3, "reps": 15, "kg": 16, "rest": 60, "inc": 4, "unit": "reps", "note": "Hip snap, not a squat.", "id": "p13-kettlebell-swing"}]}, "c": {"name": "Cardio (optional)", "exercises": [{"name": "Bike, rower or incline walk", "sets": 1, "reps": 30, "kg": 0, "rest": 0, "inc": 0, "unit": "min", "note": "Easy pace, you can still talk.", "id": "p1c-bike-rower-or-incline-wa"}]}}}, {"name": "Build", "weeks": [4, 5, 6], "about": "More sets for chest, back and shoulders. Add weight when you get every rep.", "workouts": {"1": {"name": "Upper · Push", "exercises": [{"name": "Barbell bench press", "sets": 4, "reps": 8, "kg": 40, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p21-barbell-bench-press"}, {"name": "Standing dumbbell shoulder press", "sets": 4, "reps": 10, "kg": 14, "rest": 90, "inc": 2, "unit": "reps", "note": "kg per dumbbell.", "id": "p21-standing-dumbbell-should"}, {"name": "Incline dumbbell press", "sets": 3, "reps": 10, "kg": 16, "rest": 90, "inc": 2, "unit": "reps", "id": "p21-incline-dumbbell-press"}, {"name": "Dumbbell lateral raise", "sets": 3, "reps": 15, "kg": 7, "rest": 0, "inc": 1, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p21-dumbbell-lateral-raise"}, {"name": "Close-grip push-up", "sets": 3, "reps": 12, "kg": 0, "rest": 75, "inc": 0, "unit": "reps", "bw": true, "ss": "A2", "id": "p21-close-grip-push-up"}]}, "2": {"name": "Lower · Knee-friendly", "exercises": [{"name": "Romanian deadlift", "sets": 4, "reps": 8, "kg": 55, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p22-romanian-deadlift"}, {"name": "Barbell hip thrust", "sets": 4, "reps": 10, "kg": 60, "rest": 90, "inc": 2.5, "unit": "reps", "id": "p22-barbell-hip-thrust"}, {"name": "Cable pull-through", "sets": 3, "reps": 12, "kg": 25, "rest": 75, "inc": 2.5, "unit": "reps", "id": "p22-cable-pull-through"}, {"name": "Seated calf raise", "sets": 3, "reps": 15, "kg": 30, "rest": 60, "inc": 2.5, "unit": "reps", "id": "p22-seated-calf-raise"}, {"name": "Hanging knee raise", "sets": 3, "reps": 12, "kg": 0, "rest": 0, "inc": 0, "unit": "reps", "bw": true, "ss": "A1", "note": "Go straight to A2.", "id": "p22-hanging-knee-raise"}, {"name": "Side plank", "sets": 3, "reps": 30, "kg": 0, "rest": 60, "inc": 0, "unit": "sec", "ss": "A2", "note": "Seconds per side.", "id": "p22-side-plank"}]}, "3": {"name": "Full body · Pull", "exercises": [{"name": "Pull-up", "sets": 4, "reps": 8, "kg": 0, "rest": 120, "inc": 0.25, "unit": "reps", "bw": true, "note": "Add a light weight belt when 4 × 10 feels easy.", "id": "p23-pull-up"}, {"name": "Barbell bent-over row", "sets": 4, "reps": 8, "kg": 45, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p23-barbell-bent-over-row"}, {"name": "One-arm dumbbell row", "sets": 3, "reps": 10, "kg": 22, "rest": 75, "inc": 2, "unit": "reps", "note": "kg per dumbbell, reps per side.", "id": "p23-one-arm-dumbbell-row"}, {"name": "Rear-delt dumbbell fly", "sets": 3, "reps": 15, "kg": 6, "rest": 0, "inc": 1, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p23-rear-delt-dumbbell-fly"}, {"name": "EZ-bar curl", "sets": 3, "reps": 10, "kg": 20, "rest": 75, "inc": 2.5, "unit": "reps", "ss": "A2", "id": "p23-ez-bar-curl"}, {"name": "Kettlebell swing", "sets": 3, "reps": 15, "kg": 20, "rest": 60, "inc": 4, "unit": "reps", "id": "p23-kettlebell-swing"}]}, "c": {"name": "Cardio (optional)", "exercises": [{"name": "Bike, rower or incline walk", "sets": 1, "reps": 35, "kg": 0, "rest": 0, "inc": 0, "unit": "min", "note": "Easy pace.", "id": "p2c-bike-rower-or-incline-wa"}]}}}, {"name": "Strength", "weeks": [7, 8, 9], "about": "Heavier main lifts with longer rests. Leave 1-2 reps in the tank.", "workouts": {"1": {"name": "Upper · Push", "exercises": [{"name": "Barbell bench press", "sets": 4, "reps": 6, "kg": 45, "rest": 150, "inc": 2.5, "unit": "reps", "id": "p31-barbell-bench-press"}, {"name": "Barbell overhead press", "sets": 4, "reps": 6, "kg": 37.5, "rest": 150, "inc": 2.5, "unit": "reps", "id": "p31-barbell-overhead-press"}, {"name": "Parallel bar dips", "sets": 3, "reps": 8, "kg": 0, "rest": 90, "inc": 2.5, "unit": "reps", "bw": true, "note": "Slight forward lean. Add weight later.", "id": "p31-parallel-bar-dips"}, {"name": "Incline dumbbell press", "sets": 3, "reps": 8, "kg": 18, "rest": 90, "inc": 2, "unit": "reps", "id": "p31-incline-dumbbell-press"}, {"name": "Dumbbell lateral raise", "sets": 3, "reps": 12, "kg": 8, "rest": 60, "inc": 1, "unit": "reps", "id": "p31-dumbbell-lateral-raise"}]}, "2": {"name": "Lower · Knee-friendly", "exercises": [{"name": "Romanian deadlift", "sets": 4, "reps": 6, "kg": 65, "rest": 150, "inc": 2.5, "unit": "reps", "id": "p32-romanian-deadlift"}, {"name": "Barbell hip thrust", "sets": 4, "reps": 8, "kg": 75, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p32-barbell-hip-thrust"}, {"name": "Lying hamstring curl", "sets": 3, "reps": 10, "kg": 30, "rest": 75, "inc": 1, "unit": "reps", "id": "p32-lying-hamstring-curl"}, {"name": "Standing calf raise", "sets": 3, "reps": 12, "kg": 50, "rest": 60, "inc": 2.5, "unit": "reps", "id": "p32-standing-calf-raise"}, {"name": "Ab wheel rollout", "sets": 3, "reps": 8, "kg": 0, "rest": 60, "inc": 0, "unit": "reps", "bw": true, "note": "From the knees.", "id": "p32-ab-wheel-rollout"}]}, "3": {"name": "Full body · Pull", "exercises": [{"name": "Weighted pull-up", "sets": 4, "reps": 6, "kg": 5, "rest": 150, "inc": 2.5, "unit": "reps", "bw": true, "note": "kg added on a belt.", "id": "p33-weighted-pull-up"}, {"name": "Barbell bent-over row", "sets": 4, "reps": 6, "kg": 52.5, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p33-barbell-bent-over-row"}, {"name": "Machine row", "sets": 3, "reps": 10, "kg": 54, "rest": 90, "inc": 2.5, "unit": "reps", "id": "p33-machine-row"}, {"name": "Face pull", "sets": 3, "reps": 15, "kg": 17.5, "rest": 0, "inc": 2.5, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p33-face-pull"}, {"name": "Barbell curl", "sets": 3, "reps": 8, "kg": 25, "rest": 75, "inc": 2.5, "unit": "reps", "ss": "A2", "id": "p33-barbell-curl"}, {"name": "Farmer's carry", "sets": 3, "reps": 40, "kg": 26, "rest": 75, "inc": 2, "unit": "m", "note": "kg per hand.", "id": "p33-farmer-s-carry"}]}, "c": {"name": "Cardio (optional)", "exercises": [{"name": "Bike or rower", "sets": 1, "reps": 35, "kg": 0, "rest": 0, "inc": 0, "unit": "min", "note": "Easy pace, last 5 min a bit harder.", "id": "p3c-bike-or-rower"}]}}}, {"name": "Strong & lean", "weeks": [10, 11, 12], "about": "Keep the heavy lift first, then supersets with short rests to raise the tempo.", "workouts": {"1": {"name": "Upper · Push", "exercises": [{"name": "Barbell bench press", "sets": 4, "reps": 6, "kg": 47.5, "rest": 150, "inc": 2.5, "unit": "reps", "id": "p41-barbell-bench-press"}, {"name": "Seated dumbbell shoulder press", "sets": 3, "reps": 10, "kg": 16, "rest": 0, "inc": 2, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p41-seated-dumbbell-shoulder"}, {"name": "Chest-supported dumbbell row", "sets": 3, "reps": 10, "kg": 22, "rest": 75, "inc": 2, "unit": "reps", "ss": "A2", "id": "p41-chest-supported-dumbbell"}, {"name": "Incline dumbbell press", "sets": 3, "reps": 10, "kg": 18, "rest": 0, "inc": 2, "unit": "reps", "ss": "B1", "note": "Go straight to B2.", "id": "p41-incline-dumbbell-press"}, {"name": "Dumbbell lateral raise", "sets": 3, "reps": 15, "kg": 8, "rest": 60, "inc": 1, "unit": "reps", "ss": "B2", "id": "p41-dumbbell-lateral-raise"}, {"name": "EZ-bar skull crusher", "sets": 3, "reps": 10, "kg": 20, "rest": 60, "inc": 2.5, "unit": "reps", "id": "p41-ez-bar-skull-crusher"}]}, "2": {"name": "Lower · Knee-friendly", "exercises": [{"name": "Romanian deadlift", "sets": 3, "reps": 8, "kg": 65, "rest": 120, "inc": 2.5, "unit": "reps", "id": "p42-romanian-deadlift"}, {"name": "Barbell hip thrust", "sets": 3, "reps": 10, "kg": 75, "rest": 0, "inc": 2.5, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p42-barbell-hip-thrust"}, {"name": "Hanging knee raise", "sets": 3, "reps": 12, "kg": 0, "rest": 75, "inc": 0, "unit": "reps", "bw": true, "ss": "A2", "id": "p42-hanging-knee-raise"}, {"name": "Lying hamstring curl", "sets": 3, "reps": 12, "kg": 30, "rest": 60, "inc": 1, "unit": "reps", "id": "p42-lying-hamstring-curl"}, {"name": "Kettlebell swing", "sets": 3, "reps": 20, "kg": 20, "rest": 60, "inc": 4, "unit": "reps", "note": "Fast and crisp. Conditioning finisher.", "id": "p42-kettlebell-swing"}]}, "3": {"name": "Full body · Pull", "exercises": [{"name": "Weighted pull-up", "sets": 4, "reps": 5, "kg": 7.5, "rest": 150, "inc": 2.5, "unit": "reps", "bw": true, "note": "kg added on a belt.", "id": "p43-weighted-pull-up"}, {"name": "Barbell bent-over row", "sets": 3, "reps": 8, "kg": 52.5, "rest": 0, "inc": 2.5, "unit": "reps", "ss": "A1", "note": "Go straight to A2.", "id": "p43-barbell-bent-over-row"}, {"name": "Push-up", "sets": 3, "reps": 15, "kg": 0, "rest": 75, "inc": 0, "unit": "reps", "bw": true, "ss": "A2", "id": "p43-push-up"}, {"name": "Face pull", "sets": 3, "reps": 15, "kg": 17.5, "rest": 0, "inc": 2.5, "unit": "reps", "ss": "B1", "note": "Go straight to B2.", "id": "p43-face-pull"}, {"name": "Dumbbell hammer curl", "sets": 3, "reps": 10, "kg": 12, "rest": 60, "inc": 2, "unit": "reps", "ss": "B2", "id": "p43-dumbbell-hammer-curl"}, {"name": "Farmer's carry", "sets": 3, "reps": 40, "kg": 28, "rest": 75, "inc": 2, "unit": "m", "note": "kg per hand.", "id": "p43-farmer-s-carry"}]}, "c": {"name": "Cardio (optional)", "exercises": [{"name": "Bike intervals", "sets": 1, "reps": 25, "kg": 0, "rest": 0, "inc": 0, "unit": "min", "note": "5 min easy, 10 × 30 s hard / 60 s easy, 5 min easy.", "id": "p4c-bike-intervals"}]}}}]}, "logs": {}, "body": {"2026-09-29": {"date": "2026-09-29", "weight": 83, "fat": 24.5, "muscle": 55.9, "waist": 101, "chest": 101, "arm": 36, "shoulder": 45, "thigh": 51}}};
@@ -1381,6 +1428,8 @@ const app = document.getElementById("app");
 function render() {
   const f = document.activeElement, fid = f && f.id, sel = f && "selectionStart" in f ? (() => { try { return [f.selectionStart, f.selectionEnd]; } catch { return null; } })() : null;
   ["today","plan","body","history","lib"].forEach(t => document.getElementById("tab-" + t).setAttribute("aria-current", S.tab === t ? "page" : "false"));
+  document.body.classList.toggle("obmode", !!S.ob);
+  if (S.ob && S.loaded) { app.innerHTML = obView(); return; }
   if (!S.loaded) { app.innerHTML = head("Loading", "Training Week") + `<p class="empty">Getting your programme…</p>`; return; }
   if (!S.program && S.tab !== "body" && S.tab !== "lib") { app.innerHTML = head("Setup", "Training Week") + `<div class="card empty">Your programme hasn't loaded. Check your connection, or ask Claude to set it up again.</div>`; renderTimer(); return; }
   if (S.program && S.week == null) { S.week = currentWeek(); S.wk = nextWorkout(S.week); }
@@ -1529,6 +1578,247 @@ function guideHtml(e) {
     <a class="vid" href="${vid}" target="_blank" rel="noopener">▶ Watch a video on YouTube</a></div>`;
   return h;
 }
+// <<onboarding
+// ===== Onboarding (round 2) – first-run setup: welcome → about you → goal → body type → your week → home kit → focus → your plan
+// Answers are saved as one profile on the phone (PROFILE_KEY). Round 3 turns them into a plan; until then the current programme is kept.
+const PROFILE_KEY = "twdev.profile";
+const OB_STEPS = ["welcome", "about", "goal", "shape", "week", "home", "focus", "plan"];
+const MUSCLES = [["chest", "Chest", true], ["back", "Upper back", true], ["shoulders", "Shoulders"], ["arms", "Arms"], ["glutes", "Glutes", true], ["thighs", "Thighs", true], ["calves", "Calves"], ["core", "Core"]];
+const KIT = [
+  ["Weights", ["Dumbbells", "Kettlebell", "Barbell & plates", "Weight vest"]],
+  ["Bands & bars", ["Long resistance band", "Mini band (loop)", "Pull-up bar", "Suspension trainer"]],
+  ["Furniture & space", ["Weight bench", "Sturdy chair", "Stairs or a sturdy step", "Heavy table (for rows)", "Space to lunge"]],
+  ["Floor", ["Smooth floor (for sliding)", "Stability ball"]],
+  ["Cardio", ["Exercise bike", "Treadmill", "Rower", "Cross-trainer", "Jump rope", "Outdoors nearby (walk, run, cycle)"]]
+];
+const DIRECTIONS = {
+  "Build muscle, more volume": "Moderate weights for 6–12 reps, extra sets for your focus muscles, longer rests. Cardio optional.",
+  "Build muscle": "Moderate weights for 6–12 reps, 3–4 sets, 90–120 s rest. Cardio optional.",
+  "Get stronger, trim fat": "Heavier main lifts for 6–10 reps, supersets from phase 3 and a short conditioning finisher. Cardio optional.",
+  "Stay lean, get stronger": "Main lifts for 6–10 reps with 2 min rest, 3 sets. Cardio optional.",
+  "Reshape": "8–12 reps, supersets from phase 2 to keep the pace up and a short finisher.",
+  "Lose fat, build some muscle": "8–12 reps in supersets from day one, short rests and an 8 min finisher. Cardio recommended.",
+  "Lean out a little": "10–15 reps in circuits, short rests and an 8 min finisher. Cardio recommended.",
+  "Lose fat": "10–15 reps in circuits, short rests and a 10 min finisher. Cardio recommended.",
+  "Lose fat, joint-friendly": "10–15 reps in supersets, joint-friendly choices (bike, walking, no jumping) and a 10 min low-impact finisher. Cardio recommended."
+};
+const WEEK_NAMES = {
+  Strength: { 2: ["Full body · Push", "Full body · Pull"], 3: ["Push", "Pull", "Full body"], 4: ["Push", "Pull", "Lower", "Full body"] },
+  Balance: { 2: ["Lower & balance", "Upper & core"], 3: ["Lower & balance", "Upper & core", "Full body & control"], 4: ["Lower & balance", "Upper & core", "Full body & control", "Mobility & core"] },
+  Cardio: { 2: ["Strength + intervals", "Strength + steady"], 3: ["Strength + intervals", "Steady endurance", "Strength + tempo"], 4: ["Strength + intervals", "Steady endurance", "Strength + tempo", "Long & easy"] }
+};
+const EXTRA_TEXT = { Strength: "Optional – walk or bike, then the sets that didn't fit", Balance: "Recommended – home balance and mobility", Cardio: "Planned easy session · counts toward 150 min a week" };
+
+function loadProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; } catch { return null; } }
+function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch {} }
+function defaultAnswers() {
+  const reg = (navigator.language || "").split("-")[1] || "";
+  return { units: ["US", "LR", "MM"].includes(reg.toUpperCase()) ? "imperial" : "metric", weight: "", height: "", ft: "", inch: "", sex: null, year: "",
+    meas: {}, goal: null, shape: null, level: null, days: null, time: null, where: null, easy: [], kit: [], dbMax: 10, anchor: null, focus: [] };
+}
+const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isNaN(n) ? null : n; };
+// stored in metric; imperial only for display/entry
+function obMetric(a) {
+  const imp = a.units === "imperial";
+  const kg = num(a.weight) != null ? (imp ? num(a.weight) * 0.4536 : num(a.weight)) : null;
+  const cm = imp ? ((num(a.ft) || 0) * 30.48 + (num(a.inch) || 0) * 2.54) || null : num(a.height);
+  const waist = num(a.meas.waist) != null ? (imp ? num(a.meas.waist) * 2.54 : num(a.meas.waist)) : null;
+  return { kg, cm, waist };
+}
+function obAge(a) { const y = parseInt(a.year, 10); return y > 1900 ? new Date().getFullYear() - y : null; }
+function startingPoint(a) {
+  const { kg, cm, waist } = obMetric(a);
+  if (!kg || !cm) return null;
+  if (waist) { const r = waist / cm; return r < 0.42 ? "lighter" : r < 0.50 ? "average" : r < 0.58 ? "heavier" : "much heavier"; }
+  const bmi = kg / Math.pow(cm / 100, 2);
+  return bmi < 18.5 ? "lighter" : bmi < 25 ? "average" : bmi < 30 ? "heavier" : "much heavier";
+}
+function directionOf(a) {
+  const sp = startingPoint(a); if (!sp || !a.shape) return null;
+  const T = {
+    Slim: { lighter: "Stay lean, get stronger", average: "Lean out a little", heavier: "Lose fat", "much heavier": "Lose fat, joint-friendly" },
+    Toned: { lighter: "Build muscle", average: "Reshape", heavier: "Lose fat, build some muscle", "much heavier": "Lose fat, build some muscle" },
+    Built: { lighter: "Build muscle, more volume", average: "Build muscle", heavier: "Get stronger, trim fat", "much heavier": "Get stronger, trim fat" }
+  };
+  return T[a.shape][sp];
+}
+function doctorNote(a) {
+  const { kg, cm } = obMetric(a), bmi = kg && cm ? kg / Math.pow(cm / 100, 2) : null, age = obAge(a);
+  return (bmi && (bmi >= 35 || bmi < 17.5)) || (age && age >= 65);
+}
+function focusMax(a) { return a.goal === "Cardio" ? 1 : ({ 2: 1, 3: 2, 4: 3 })[a.days] || 1; }
+// time-fit note (programme-rules B). Round 3 replaces this rule of thumb with the plan's real weekly sets.
+function timeFit(a) {
+  const big = a.focus.filter(f => MUSCLES.find(m => m[0] === f)?.[2]);
+  const t = parseInt(a.time, 10) || 45;
+  if (t >= 60 || big.length < 2 || a.goal === "Cardio") return null;
+  const short = (a.days === 3 && t <= 45) || t <= 30 || (a.days === 4 && big.length >= 3 && t <= 45);
+  if (!short) return null;
+  const nm = f => MUSCLES.find(m => m[0] === f)[1].toLowerCase();
+  const names = big.map(nm), lst = names.length > 2 ? names.slice(0, -1).join(", ") + " and " + names.at(-1) : names.join(" and ");
+  const others = ["back", "shoulders", "thighs", "core"].filter(x => !a.focus.includes(x)).slice(0, 2).map(x => x === "shoulders" ? "side shoulders" : x === "back" ? "upper back" : nm(x));
+  return `${lst.charAt(0).toUpperCase() + lst.slice(1)} ${names.length > 2 ? "all" : "both"} need a lot of sets. At ${t} minutes, ${others.join(" and ")} get a little less. 60 minutes is recommended for this combination.`;
+}
+function obVisibleSteps(a) { return OB_STEPS.filter(s => s !== "home" || a.where === "Home"); }
+function obCanGo(step, a) {
+  if (step === "about") { const { kg, cm } = obMetric(a), age = obAge(a); return !!(kg && cm && a.sex && age && age >= 18 && age < 110); }
+  if (step === "goal") return !!a.goal;
+  if (step === "shape") return !!a.shape;
+  if (step === "week") return !!(a.level && a.days && a.time && a.where);
+  if (step === "home") return a.kit.length === 0 || !needsAnchor(a) || a.anchor !== null;
+  return true;
+}
+const needsAnchor = a => a.kit.includes("Long resistance band") || a.kit.includes("Suspension trainer");
+const chipB = (on, act, val, label, extra = "") => `<button type="button" class="obchip" data-act="${act}" data-v="${esc(val)}" aria-pressed="${on}"${extra}>${on && act !== "obone" && act !== "obunits" ? "✓ " : ""}${esc(label)}</button>`;
+
+function obView() {
+  const o = S.ob, a = o.a, steps = obVisibleSteps(a), step = steps[o.i], n = steps.length - 2;   // welcome and plan aren't counted
+  const nr = steps.indexOf(step);
+  const stepTag = step !== "welcome" && step !== "plan" ? `<div class="eyebrow">Step ${nr} of ${n}</div>` : "";
+  const nav = (label = "Continue") => `<div class="obnav">${o.i > 0 ? `<button type="button" class="btn ghost" data-act="obback">Back</button>` : "<span></span>"}
+    <button type="button" class="btn" data-act="obnext" ${obCanGo(step, a) ? "" : "disabled"}>${label}</button></div>`;
+  const imp = a.units === "imperial";
+  let h = `<div class="ob">`;
+  if (step === "welcome") {
+    h += `<header class="top"><div><div class="eyebrow">Welcome</div><h1>Your 12-week plan, built around you</h1></div></header>
+      <p class="obp">Answer a few quick questions and the app sets up your workouts, starting weights and weekly schedule.</p>
+      <ol class="obsteps"><li><b>About you</b><span>Weight, height and optional measurements</span></li><li><b>Your goal and body type</b><span>What you want to train for and look like</span></li><li><b>Your week</b><span>Days, time, focus areas and anything to go easy on</span></li></ol>
+      <button type="button" class="btn wide" data-act="obnext">Get started</button>
+      <p class="muted obsmall">About 2 minutes. Everything stays on your phone.</p>
+      ${o.edit ? `<button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my answers</button>` : `<button type="button" class="linkbtn" data-act="obskip">DEV: skip setup and keep my current programme</button>`}`;
+  } else if (step === "about") {
+    h += `<header class="top"><div>${stepTag}<h1>About you</h1></div><button type="button" class="infobtn" data-act="obinfo" aria-expanded="${!!o.info}" aria-label="Privacy">i</button></header>
+      <p class="obp">Used to set sensible starting weights and as your baseline in the Body tab.</p>
+      ${o.info ? `<div class="note">Your answers stay on this phone. We do not collect information provided on this page nor do we have access to it. They are only used to set up your plan and are saved on your phone. You can change or delete them at any time in Settings.</div>` : ""}
+      <div class="obrow"><span class="oblbl">Units</span><div class="seg">${chipB(!imp, "obunits", "metric", "kg · cm", ' data-seg="1"')}${chipB(imp, "obunits", "imperial", "lb · ft", ' data-seg="1"')}</div></div>
+      <div class="obgrid2"><label class="f">Weight<span class="inu"><input type="text" inputmode="decimal" id="ob-weight" data-ob="weight" value="${esc(a.weight)}"><i>${imp ? "lb" : "kg"}</i></span></label>
+      ${imp ? `<label class="f">Height<span class="inu2"><span class="inu"><input type="text" inputmode="numeric" id="ob-ft" data-ob="ft" value="${esc(a.ft)}"><i>ft</i></span><span class="inu"><input type="text" inputmode="numeric" id="ob-in" data-ob="inch" value="${esc(a.inch)}"><i>in</i></span></span></label>`
+        : `<label class="f">Height<span class="inu"><input type="text" inputmode="numeric" id="ob-height" data-ob="height" value="${esc(a.height)}"><i>cm</i></span></label>`}</div>
+      <div class="obrow col"><span class="oblbl">Sex</span><div class="obchips">${["Female", "Male", "Prefer not to say"].map(v => chipB(a.sex === v, "obone", v, v, ' data-k="sex"')).join("")}</div></div>
+      <label class="f">Year of birth<input type="text" inputmode="numeric" id="ob-year" data-ob="year" value="${esc(a.year)}" placeholder="e.g. 1985"></label>
+      ${obAge(a) !== null && obAge(a) < 18 ? `<p class="obwarn">Training Week is made for adults. You need to be 18 or older to use the app.</p>` : ""}
+      <button type="button" class="obmore" data-act="obmeas" aria-expanded="${!!o.meas}"><span>More measurements <span class="muted">· optional</span></span><span class="chev">›</span></button>
+      ${o.meas ? `<div class="obgrid2">${[["waist", "Waist"], ["chest", "Chest"], ["arm", "Upper arm"], ["shoulder", "Shoulders"], ["thigh", "Thigh"], ["fat", "Body fat"]].map(([k, l]) =>
+        `<label class="f">${l}<span class="inu"><input type="text" inputmode="decimal" id="ob-m-${k}" data-obm="${k}" value="${esc(a.meas[k] ?? "")}"><i>${k === "fat" ? "%" : imp ? "in" : "cm"}</i></span></label>`).join("")}</div>
+        <p class="muted obsmall">Skip any you don't know. You can add them later in the Body tab.</p>` : ""}
+      ${nav()}`;
+  } else if (step === "goal") {
+    const G = [["Strength", "Lift heavier. Fewer reps, longer rests, steady weight increases."], ["Balance", "Stability, core and mobility. One-sided work and control."], ["Cardio", "Better fitness. Circuits, intervals and more time moving."]];
+    h += `<header class="top"><div>${stepTag}<h1>What are you training for?</h1></div></header><p class="obp">Pick your main focus. Every plan still has a bit of everything.</p>
+      <div class="obcards">${G.map(([g, t]) => `<button type="button" class="obcard" data-act="obone" data-k="goal" data-v="${g}" aria-pressed="${a.goal === g}"><b>${g}</b><span>${t}</span></button>`).join("")}</div>${nav()}`;
+  } else if (step === "shape") {
+    const d = directionOf(a), sp = startingPoint(a);
+    h += `<header class="top"><div>${stepTag}<h1>What look are you aiming for?</h1></div></header><p class="obp">This sets your reps, sets and how much conditioning goes into each week.</p>
+      <div class="obshape">${["Slim", "Toned", "Built"].map(v => `<button type="button" class="obcard sh" data-act="obone" data-k="shape" data-v="${v}" aria-pressed="${a.shape === v}">${shapeIcon(v)}<b>${v}</b></button>`).join("")}</div>
+      ${d ? `<div class="card obdir"><div class="eyebrow">Your direction, from your measurements</div><h2>${esc(d)}</h2><p>${esc(DIRECTIONS[d])}</p>
+        ${a.shape === "Slim" && sp === "lighter" ? `<p class="muted obsmall">You're already lean – Toned may suit you better if you want to add some muscle.</p>` : ""}</div>` : ""}${nav()}`;
+  } else if (step === "week") {
+    const one = (k, label, hint, vals) => `<div class="obrow col"><span class="oblbl">${label}${hint ? ` <span class="muted">· ${hint}</span>` : ""}</span><div class="obchips">${vals.map(v => chipB(String(a[k]) === String(v), "obone", v, String(v), ` data-k="${k}"`)).join("")}</div></div>`;
+    h += `<header class="top"><div>${stepTag}<h1>Your training week</h1></div></header>
+      ${one("level", "Experience", "sets your starting weights", ["New", "Some", "Experienced"])}
+      ${one("days", "Workouts per week", "plus an extra session", [2, 3, 4])}
+      ${one("time", "Time per workout", "", ["30 min", "45 min", "60 min"])}
+      ${one("where", "Where you train", "home: tick your equipment next", ["Gym", "Home"])}
+      <div class="obrow col"><span class="oblbl">Go easy on <span class="muted">· pick any</span></span><div class="obchips">${["Knees", "Back", "Shoulders", "Wrists"].map(v => chipB(a.easy.includes(v), "obeasy", v, v)).join("")}${chipB(a.easy.length === 0, "obeasy", "", "Nothing")}</div></div>
+      ${nav()}`;
+  } else if (step === "home") {
+    const has = x => a.kit.includes(x);
+    h += `<header class="top"><div><div class="eyebrow">Step ${nr} of ${n} · Training at home</div><h1>What do you have at home?</h1></div></header>
+      <p class="obp">Tick everything you have. Your plan only uses what you tick – you can change it later.</p>
+      <button type="button" class="obnone" data-act="obnokit" aria-pressed="${a.kit.length === 0}"><b>Nothing – body weight only</b><span>a floor and a little space</span></button>
+      ${KIT.map(([g, items]) => `<div class="obrow col"><span class="oblbl">${g}</span><div class="obchips">${items.map(i => chipB(has(i), "obkit", i, i)).join("")}</div>
+        ${g === "Weights" && has("Dumbbells") ? `<div class="kgrow"><span>Heaviest dumbbell (per hand)</span><button class="step" data-act="obdb" data-d="-0.5" aria-label="Lighter">−</button><span class="kg">${fmt(a.dbMax)} kg</span><button class="step" data-act="obdb" data-d="0.5" aria-label="Heavier">+</button></div>` : ""}
+        ${g === "Bands & bars" && needsAnchor(a) ? `<div class="obanchor"><b>Can you anchor to a door?</b><p>You need a sturdy door that closes fully, where you can stand on the side it opens away from – so pulling presses it shut – plus a door anchor for the band or the strap anchor for the suspension trainer.</p>
+          <div class="obchips">${chipB(a.anchor === true, "obanchor", "yes", "Yes")}${chipB(a.anchor === false, "obanchor", "no", "No")}</div></div>` : ""}</div>`).join("")}
+      <div class="note">${esc(kitSummary(a))}</div>${nav()}`;
+  } else if (step === "focus") {
+    const max = focusMax(a), tf = timeFit(a);
+    h += `<header class="top"><div>${stepTag}<h1>Your focus</h1></div></header>
+      <p class="obp">Pick up to ${max} ${max === 1 ? "area" : "areas"}${a.goal === "Cardio" ? " – Cardio plans have two short strength days" : ` – you train ${a.days} days a week`}. The plan stays full body and adds extra sets for these. You can also skip this.</p>
+      <div class="obgrid2 tight">${MUSCLES.map(([k, l]) => { const on = a.focus.includes(k), full = !on && a.focus.length >= max;
+        return `<button type="button" class="obchip big" data-act="obfocus" data-v="${k}" aria-pressed="${on}" ${full ? "disabled" : ""}>${on ? "✓ " : ""}${l}</button>`; }).join("")}</div>
+      ${tf ? `<div class="obfit" role="note"><p>${esc(tf)}</p>${a.time !== "60 min" ? `<button type="button" class="btn small" data-act="obone" data-k="time" data-v="60 min">Switch to 60 min</button>` : ""}</div>` : ""}
+      ${nav()}`;
+  } else if (step === "plan") {
+    const d = directionOf(a), names = WEEK_NAMES[a.goal][a.days], fl = a.focus.map(f => MUSCLES.find(m => m[0] === f)[1]);
+    const chips = [a.goal, a.shape, a.days + " workouts a week", a.time, a.where, a.level + " experience"].concat(a.easy.map(e => "Easy on " + e.toLowerCase())).concat(fl.map(f => "Focus: " + f));
+    h += `<header class="top"><div><div class="eyebrow">Plan ready</div><h1>Your 12-week plan</h1></div></header>
+      <div class="obchips static">${chips.map(c => `<span class="pill">${esc(c)}</span>`).join("")}</div>
+      ${d ? `<div class="card obdir"><div class="eyebrow">Your direction</div><h2>${esc(d)}</h2><p>${esc(DIRECTIONS[d])}</p></div>` : ""}
+      ${doctorNote(a) ? `<div class="obwarn">We recommend consulting with a doctor before starting a new training plan.</div>` : ""}
+      <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
+      <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
+      <div class="note">DEV: the plan generator comes in round 3. Until then your current programme is kept – your answers are saved.</div>
+      <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">Start week 1</button></div>`;
+  }
+  return h + `</div>`;
+}
+function kitSummary(a) {
+  const has = x => a.kit.includes(x), parts = [];
+  if (!a.kit.length) parts.push("Body-weight plan with exercise ladders.");
+  else if (has("Dumbbells")) parts.push(`Dumbbell plan up to ${fmt(a.dbMax)} kg per hand, then ladders.`);
+  else parts.push("Body-weight plan with exercise ladders, plus what you ticked.");
+  const anchored = needsAnchor(a) && a.anchor === true;
+  const rows = has("Pull-up bar") || (has("Suspension trainer") && anchored) || has("Heavy table (for rows)") || has("Dumbbells") || has("Kettlebell") || has("Barbell & plates") || has("Long resistance band");
+  parts.push(rows ? "Back exercises: rows included" + (has("Long resistance band") && anchored ? ", plus band pulldowns." : ".") : "Back exercises: floor raises (Y-T-W) and towel pulldowns.");
+  const cardio = KIT[4][1].filter(has).map(c => c.replace(" (walk, run, cycle)", ""));
+  parts.push(cardio.length ? "Cardio: " + cardio.join(", ").toLowerCase() + "." : "Cardio: body-weight circuits.");
+  return parts.join(" ");
+}
+function shapeIcon(v) {
+  const w = { Slim: [7, 6, 5], Toned: [9, 7, 6], Built: [12, 8, 8] }[v];
+  return `<svg width="40" height="64" viewBox="0 0 40 64" aria-hidden="true" fill="currentColor"><circle cx="20" cy="8" r="6"/><path d="M${20 - w[0]} 17h${2 * w[0]}l-${w[0] - w[1]} 22h-${2 * w[1]}z"/><rect x="${20 - w[2]}" y="40" width="${w[2] - 1}" height="22" rx="3"/><rect x="21" y="40" width="${w[2] - 1}" height="22" rx="3"/></svg>`;
+}
+function obStart(edit) {
+  const p = loadProfile();
+  S.ob = { i: 0, a: p && p.answers ? JSON.parse(JSON.stringify(p.answers)) : defaultAnswers(), edit: !!edit, info: false, meas: false };
+  render();
+}
+function obFinish(skipped) {
+  const a = S.ob.a, m = obMetric(a);
+  const p = skipped ? { skipped: true, at: today() } : { answers: a, at: today(), direction: directionOf(a), metric: m };
+  saveProfile(p);
+  if (!skipped && m.kg && !S.ob.edit) {                 // first set of measurements becomes the Body baseline
+    const d = today(), b = S.body[d] || { date: d };
+    b.weight = Math.round(m.kg * 10) / 10;
+    const imp = a.units === "imperial";
+    for (const k of ["waist", "chest", "arm", "shoulder", "thigh", "fat"]) { const v = num(a.meas[k]); if (v != null) b[k] = k === "fat" || !imp ? v : Math.round(v * 2.54 * 10) / 10; }
+    S.body[d] = b; try { saveLocal(); } catch {}
+  }
+  S.ob = null; S.tab = "today"; window.scrollTo(0, 0); render();
+}
+function obClick(a, b) {
+  const o = S.ob; if (!o) return false;
+  const A = o.a, steps = obVisibleSteps(A);
+  switch (a) {
+    case "obnext": if (obCanGo(steps[o.i], A)) { o.i = Math.min(o.i + 1, steps.length - 1); window.scrollTo(0, 0); } break;
+    case "obback": o.i = Math.max(0, o.i - 1); window.scrollTo(0, 0); break;
+    case "obskip": obFinish(true); return true;
+    case "obcancel": S.ob = null; break;
+    case "obdone": obFinish(false); return true;
+    case "obinfo": o.info = !o.info; break;
+    case "obmeas": o.meas = !o.meas; break;
+    case "obunits": A.units = b.dataset.v; break;
+    case "obone": { const k = b.dataset.k, v = b.dataset.v; A[k] = k === "days" ? +v : v;
+      if (k === "days" || k === "goal") A.focus = A.focus.slice(0, focusMax(A)); break; }
+    case "obeasy": { const v = b.dataset.v; A.easy = !v ? [] : A.easy.includes(v) ? A.easy.filter(x => x !== v) : A.easy.concat(v); break; }
+    case "obkit": { const v = b.dataset.v; A.kit = A.kit.includes(v) ? A.kit.filter(x => x !== v) : A.kit.concat(v); if (!needsAnchor(A)) A.anchor = null; break; }
+    case "obnokit": A.kit = []; A.anchor = null; break;
+    case "obanchor": A.anchor = b.dataset.v === "yes"; break;
+    case "obdb": A.dbMax = Math.max(1, Math.min(60, A.dbMax + parseFloat(b.dataset.d))); break;
+    case "obfocus": { const v = b.dataset.v; A.focus = A.focus.includes(v) ? A.focus.filter(x => x !== v) : A.focus.length < focusMax(A) ? A.focus.concat(v) : A.focus; break; }
+    default: return false;
+  }
+  render(); return true;
+}
+function obInput(t) {
+  if (!S.ob) return false;
+  if (t.dataset.ob) { S.ob.a[t.dataset.ob] = t.value; render(); return true; }
+  if (t.dataset.obm) { S.ob.a.meas[t.dataset.obm] = t.value; render(); return true; }
+  return false;
+}
+
+// onboarding>>
 function libView() {
   const q = S.libQ.trim().toLowerCase(), cards = TWLIB.cards.filter(c => !q || (c.title + " " + c.fam + " " + c.section + " " + feelIn(c.title)).toLowerCase().includes(q));
   let h = head(TWLIB.cards.length + " exercises", "Library") + `<label class="f libsearch">Search<input type="text" id="libq" value="${esc(S.libQ)}" placeholder="e.g. chest, band, balance" autocomplete="off"></label>`;
@@ -1557,6 +1847,8 @@ function advanceIfWeekDone(prevWeek) {
 function planView() {
   const P = S.program, cur = currentWeek();
   let h = head(P.title || "Programme", "Programme");
+  const prof = loadProfile();
+  h += `<div class="card obsum"><div><b>Your answers</b><small>${prof && prof.answers ? esc([prof.answers.goal, prof.answers.shape, prof.answers.days + " days", prof.answers.time, prof.answers.where].join(" · ")) + (prof.direction ? " · " + esc(prof.direction) : "") : "Setup skipped"}</small></div><button type="button" class="btn ghost small" data-act="obedit">Change my answers</button></div>`;
   h += `<p class="muted" style="margin:0 0 14px">Four phases of three weeks. Each phase repeats the same workouts so you can add weight week to week. Edits save as you type.</p>`;
   P.phases.forEach((ph, pi) => {
     const pk = "p" + pi, open = S.open === pk;
@@ -1730,6 +2022,8 @@ document.addEventListener("click", ev => {
   const b = ev.target.closest("[data-act],[data-tab]"); if (!b) return;
   if (b.dataset.tab) { S.tab = b.dataset.tab; try { localStorage.setItem("twdev.tab", S.tab); } catch {} window.scrollTo(0, 0); render(); return; }
   const a = b.dataset.act;
+  if (S.ob && obClick(a, b)) return;
+  if (a === "obedit") { obStart(true); return; }
   if (a !== "del") S.confirmDel = null;
   if (a !== "bdel") S.confirmB = null;
   switch (a) {
@@ -1808,6 +2102,7 @@ document.addEventListener("submit", ev => {
   render();
 });
 document.addEventListener("input", ev => {
+  if (obInput(ev.target)) return;
   if (ev.target.id === "libq") { S.libQ = ev.target.value; render(); return; }
   const t = ev.target, f = t.dataset.field; if (!f) return;
   const wo = S.program.phases[+t.dataset.p].workouts[t.dataset.k];
