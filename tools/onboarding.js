@@ -33,7 +33,7 @@ function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify
 function defaultAnswers() {
   const reg = (navigator.language || "").split("-")[1] || "";
   return { units: ["US", "LR", "MM"].includes(reg.toUpperCase()) ? "imperial" : "metric", weight: "", height: "", ft: "", inch: "", sex: null, year: "",
-    meas: {}, goal: null, shape: null, level: null, days: null, time: null, where: null, easy: [], kit: [], dbMax: 10, anchor: null, focus: [] };
+    meas: {}, goal: null, shape: null, level: null, days: null, time: null, where: null, easy: [], kit: [], machine: null, dbMax: 10, anchor: null, focus: [] };
 }
 const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isNaN(n) ? null : n; };
 // stored in metric; imperial only for display/entry
@@ -83,7 +83,7 @@ function obCanGo(step, a) {
   if (step === "about") { const { kg, cm } = obMetric(a), age = obAge(a); return !!(kg && cm && a.sex && age && age >= 18 && age < 110); }
   if (step === "goal") return !!a.goal;
   if (step === "shape") return !!a.shape;
-  if (step === "week") return !!(a.level && a.days && a.time && a.where);
+  if (step === "week") return !!(a.level && a.days && a.time && a.where && (a.goal !== "Cardio" || a.machine));
   if (step === "home") return a.kit.length === 0 || !needsAnchor(a) || a.anchor !== null;
   return true;
 }
@@ -138,6 +138,7 @@ function obView() {
       ${one("days", "Workouts per week", "plus an extra session", [2, 3, 4])}
       ${one("time", "Time per workout", "", ["30 min", "45 min", "60 min"])}
       ${one("where", "Where you train", "home: tick your equipment next", ["Gym", "Home"])}
+      ${a.goal === "Cardio" ? one("machine", "Preferred cardio machine", "the rower, air bike, ski machine and running open up in later phases", ["Bike", "Cross-trainer", "Incline treadmill walk", "Stair climber", "Air bike", "Ski machine", "Rower", "Running"]) : ""}
       <div class="obrow col"><span class="oblbl">Go easy on <span class="muted">· pick any</span></span><div class="obchips">${["Knees", "Back", "Shoulders", "Wrists"].map(v => chipB(a.easy.includes(v), "obeasy", v, v)).join("")}${chipB(a.easy.length === 0, "obeasy", "", "Nothing")}</div></div>
       ${nav()}`;
   } else if (step === "home") {
