@@ -1634,14 +1634,16 @@ let tick = null;
 const timerEl = document.getElementById("timer");
 function startTimer(sec, label) {
   if (!sec) return;
-  S.timer = { end: Date.now() + sec * 1000, total: sec, label, beeped: false };
+  S.timer = { end: Date.now() + sec * 1000, total: sec, label, beeped: false, warned: sec <= 10 };
   clearInterval(tick); tick = setInterval(renderTimer, 250); renderTimer();
 }
 function renderTimer() {
   const t = S.timer;
   if (!t) { timerEl.hidden = true; return; }
   const left = Math.round((t.end - Date.now()) / 1000);
-  if (left <= 0 && !t.beeped) { t.beeped = true; beep(); try { navigator.vibrate?.([200, 100, 200]); } catch {} }
+  // 10 s left: one short buzz (only when the rest is longer than 10 s). Rest over: a longer, stronger pattern + beep.
+  if (left <= 10 && left > 0 && !t.warned) { t.warned = true; try { navigator.vibrate?.(150); } catch {} }
+  if (left <= 0 && !t.beeped) { t.beeped = true; beep(); try { navigator.vibrate?.([400, 120, 400, 120, 400]); } catch {} }
   const a = Math.abs(left), mm = Math.floor(a / 60), ss = String(a % 60).padStart(2, "0");
   const pct = Math.max(0, Math.min(100, (1 - left / t.total) * 100));
   timerEl.hidden = false;
@@ -1713,7 +1715,7 @@ document.addEventListener("click", ev => {
       render(); } break; }
     case "guide": { const id = b.dataset.ex; S.guides.has(id) ? S.guides.delete(id) : S.guides.add(id); render(); break; }
     case "reopen": { const l = S.logs[logId(S.week, S.wk)]; if (l) { l.finished = false; saveLog(l); render(); } break; }
-    case "t15": if (S.timer) { S.timer.end += 15000; S.timer.total += 15; S.timer.beeped = false; renderTimer(); } break;
+    case "t15": if (S.timer) { S.timer.end += 15000; S.timer.total += 15; S.timer.beeped = false; S.timer.warned = (S.timer.end - Date.now()) / 1000 <= 10; renderTimer(); } break;
     case "tstop": S.timer = null; clearInterval(tick); renderTimer(); break;
     case "toggle": S.open = S.open === b.dataset.key ? null : b.dataset.key; S.openW = null; render(); break;
     case "togglew": S.openW = S.openW === b.dataset.key ? null : b.dataset.key; render(); break;
