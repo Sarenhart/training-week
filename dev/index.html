@@ -237,20 +237,27 @@ tr:last-child td{border-bottom:0}
 <style>
 .devbar{position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(6px + env(safe-area-inset-top,0px)) 16px 6px;background:#b4410f;color:#fff;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
 .devbar b{font-family:var(--display);font-size:16px;letter-spacing:.06em}
-.devbar button{margin-left:auto;border:1px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;min-height:36px}
+.devbar .sp{margin-left:auto}
+.devbar button{border:1px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;min-height:36px}
 header.top{padding-top:12px!important}
 </style>
 </head>
 <body>
-<div class="devbar" role="note"><b>DEV</b><span>Test app · your plan is safe</span><button type="button" id="devcopy">Copy my data</button></div>
+<div class="devbar" role="note"><b>DEV</b><span>Your plan is safe</span><span class="sp"></span><button type="button" id="devcopy">Copy data</button><button type="button" id="devreset">Reset</button></div>
 <script>
 document.getElementById("devcopy").addEventListener("click", e => {
   const b = e.currentTarget;
-  if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Tap again to replace dev data"; setTimeout(() => { delete b.dataset.armed; b.textContent = "Copy my data"; }, 4000); return; }
+  if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Tap again to replace dev data"; setTimeout(() => { delete b.dataset.armed; b.textContent = "Copy data"; }, 4000); return; }
   try {
     for (const k of ["program", "logs", "body"]) { const v = localStorage.getItem("tw." + k); if (v !== null) localStorage.setItem("twdev." + k, v); }
     location.reload();
   } catch { b.textContent = "Couldn't copy"; }
+});
+// Reset: wipes everything the DEV app has saved (programme, logs, body data, seen tips) – as a brand-new user.
+document.getElementById("devreset").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Tap again to wipe DEV"; setTimeout(() => { delete b.dataset.armed; b.textContent = "Reset"; }, 4000); return; }
+  try { Object.keys(localStorage).filter(k => k.startsWith("twdev.")).forEach(k => localStorage.removeItem(k)); location.reload(); } catch { b.textContent = "Couldn't reset"; }
 });
 </script>
 
