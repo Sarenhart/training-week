@@ -167,7 +167,7 @@ function obView() {
       ${doctorNote(a) ? `<div class="obwarn">We recommend consulting with a doctor before starting a new training plan.</div>` : ""}
       <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
       <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
-      <div class="note">DEV: the plan generator comes in round 3. Until then your current programme is kept – your answers are saved.</div>
+      <div class="note">${typeof genSupported === "function" && genSupported(a) ? "DEV: \"Start week 1\" builds this plan and clears the workouts logged in DEV. Your main app is not touched." : "DEV: plans for " + (a.where === "Home" ? "home training" : a.goal) + " come in the next part of round 3. Until then your current programme is kept – your answers are saved."}</div>
       <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">Start week 1</button></div>`;
   }
   return h + `</div>`;
@@ -203,6 +203,10 @@ function obFinish(skipped) {
     const imp = a.units === "imperial";
     for (const k of ["waist", "chest", "arm", "shoulder", "thigh", "fat"]) { const v = num(a.meas[k]); if (v != null) b[k] = k === "fat" || !imp ? v : Math.round(v * 2.54 * 10) / 10; }
     S.body[d] = b; try { saveLocal(); } catch {}
+  }
+  if (!skipped && typeof genSupported === "function" && genSupported(a)) {      // round 3: build the plan from the answers
+    S.program = generatePlan(a); S.logs = {}; syncKeys(); S.week = null; S.wk = null; S.guides = new Set();
+    try { saveLocal(); } catch {}
   }
   S.ob = null; S.tab = "today"; window.scrollTo(0, 0); render();
 }
