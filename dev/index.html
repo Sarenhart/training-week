@@ -2333,6 +2333,85 @@ function genSupported(a) { return a && (a.goal === "Strength" || a.goal === "Bal
 const _genStrengthBalance = generatePlan;
 generatePlan = function (a) { return a.goal === "Cardio" ? generateCardio(a) : _genStrengthBalance(a); };
 
+// ===== Home plans (home-versions.md M2–M5): swap each gym exercise for the best home version the ticked kit allows
+const H = (name, needs = [], extra = {}) => ({ name, needs, ...extra });
+const HOME = {};
+const homeSet = (names, list) => names.forEach(n => HOME[n] = list);
+homeSet(["Dumbbell bench press", "Machine chest press"], [H("Dumbbell bench press", ["Dumbbells", "Weight bench"]), H("Dumbbell floor press", ["Dumbbells"]), H("Band chest press", ["band+anchor"], { lib: "Band chest press and fly" }), H("Suspension push-up", ["susp"]), H("Push-up ladder", [], { bw: true })]);
+homeSet(["Incline dumbbell press"], [H("Incline dumbbell press", ["Dumbbells", "Weight bench"]), H("Dumbbell floor press", ["Dumbbells"]), H("Suspension push-up", ["susp"]), H("Push-up ladder", [], { bw: true, note: "Feet raised on a chair when you can." }), H("Band chest press", ["band+anchor"], { lib: "Band chest press and fly" })]);
+homeSet(["Cable fly (low-to-high)", "Cable fly (mid)", "Cable fly (high-to-low)", "Incline dumbbell fly"], [H("Dumbbell floor fly", ["Dumbbells"]), H("Band chest fly", ["band+anchor"], { lib: "Band chest press and fly" }), H("Suspension push-up", ["susp"]), H("Push-up ladder", [], { bw: true, note: "Slow, hands wide." })]);
+homeSet(["Seated dumbbell shoulder press"], [H("Seated dumbbell shoulder press", ["Dumbbells"]), H("Band overhead press", ["Long resistance band"]), H("Pike push-up", [], { bw: true })]);
+homeSet(["Dumbbell lateral raise", "Lean-away lateral raise", "Side-lying lateral raise", "Cable lateral raise"], [H("SAME", ["Dumbbells"]), H("Dumbbell lateral raise", ["Dumbbells"]), H("Lean-away lateral raise", ["Dumbbells"]), H("Band lateral raise", ["Long resistance band"]), H("Wall slide", [])]);
+homeSet(["Lat pulldown", "Pull-up"], [H("Pull-up", ["Pull-up bar"], { bw: true, assist: true, note: "Use a band for help, or slow negatives." }), H("Band pulldown", ["band+anchor"]), H("Suspension row", ["susp"]), H("Table row", ["Heavy table (for rows)"]), H("Dumbbell pullover", ["Dumbbells"]), H("Prone towel pulldown", [])]);
+homeSet(["Seated cable row", "Machine row", "Single-arm cable row", "One-arm dumbbell row", "Chest-supported dumbbell row"], [H("SAME", ["Dumbbells", "Weight bench"]), H("One-arm dumbbell row", ["Dumbbells"], { note: "Hand on a sturdy chair." }), H("Band row", ["band+anchor"]), H("Suspension row", ["susp"]), H("Table row", ["Heavy table (for rows)"]), H("Backpack row", [])]);
+homeSet(["Dumbbell pullover"], [H("Dumbbell pullover", ["Dumbbells"]), H("Band pulldown", ["band+anchor"]), H("Prone towel pulldown", [])]);
+homeSet(["Face pull", "Rear-delt dumbbell fly", "Cable rear-delt fly", "Incline Y-raise"], [H("SAME", ["Dumbbells", "Weight bench"]), H("Rear-delt dumbbell fly", ["Dumbbells"]), H("Band face pull", ["band+anchor"]), H("Prone Y-T-W raises", [])]);
+homeSet(["Cable curl", "Face-away cable curl", "Preacher curl", "Incline dumbbell curl", "Spider curl", "Dumbbell hammer curl"], [H("SAME", ["Dumbbells", "Weight bench"]), H("Preacher curl", ["Dumbbells", "Weight bench"], { note: "Incline-bench version." }), H("Dumbbell hammer curl", ["Dumbbells"]), H("Band curl", ["Long resistance band"]), H("Backpack curl", [], { lib: "Backpack curl and RDL" }), H("Towel isometric curl", [])]);
+homeSet(["Rope overhead triceps extension", "Rope pushdown", "Overhead dumbbell triceps extension", "Dumbbell skull crusher"], [H("Overhead dumbbell triceps extension", ["Dumbbells"]), H("Dumbbell skull crusher", ["Dumbbells"]), H("Band pushdown", ["band+anchor"]), H("Close-grip push-up", [], { bw: true }), H("Chair dip", ["Sturdy chair", "!Shoulders"])]);
+homeSet(["Goblet squat", "Barbell back squat", "Leg press", "Single-leg leg press", "Sit-to-stand"], [H("Goblet squat", ["Dumbbells"]), H("Squat ladder", [], { note: "To a chair → full → pause → split squat, one step at a time." }), H("Sit-to-stand", ["Sturdy chair"])]);
+homeSet(["Bulgarian split squat", "Reverse lunge"], [H("SAME", ["Dumbbells"]), H("Bulgarian split squat", ["Sturdy chair"], { lib: "Squat ladder", note: "Back foot on a chair, body weight." }), H("Squat ladder", [], { note: "Split squat step." })]);
+homeSet(["Step-up"], [H("Step-up", ["Stairs or a sturdy step"]), H("Reverse lunge", [])]);
+homeSet(["Romanian deadlift", "B-stance Romanian deadlift", "Single-leg Romanian deadlift"], [H("SAME", ["Dumbbells"]), H("Romanian deadlift", ["Dumbbells"]), H("Band good-morning", ["Long resistance band"]), H("Backpack Romanian deadlift", [], { lib: "Backpack curl and RDL" }), H("Single-leg RDL reach", [], { lib: "Single-leg Romanian deadlift reach" })]);
+homeSet(["Barbell hip thrust", "Dumbbell hip thrust"], [H("Dumbbell hip thrust at home", ["Dumbbells"], { note: "Upper back on a sofa that can't slide, or on the floor." }), H("Band glute bridge", ["Long resistance band"]), H("Single-leg glute bridge", [])]);
+homeSet(["Cable pull-through"], [H("Band good-morning", ["Long resistance band"]), H("Single-leg Romanian deadlift", ["Dumbbells"]), H("Glute bridge", [])]);
+homeSet(["Hip abduction machine", "Standing cable hip abduction"], [H("Mini-band lateral walk", ["Mini band (loop)"], { lib: "Mini-band glute moves" }), H("Side-lying leg raise", [])]);
+homeSet(["Hip adduction machine"], [H("Copenhagen side plank", [])]);
+homeSet(["Lying hamstring curl", "Seated hamstring curl"], [H("Lying dumbbell hamstring curl", ["Dumbbells"]), H("Band leg curl", ["band+anchor"]), H("Sliding leg curl", ["Smooth floor (for sliding)"]), H("Stability-ball leg curl", ["Stability ball"]), H("Single-leg glute bridge", [])]);
+homeSet(["Back extension"], [H("Prone superman", []), H("Reverse hyper on a bed", [])]);
+homeSet(["Standing calf raise", "Seated calf raise", "Calf raise on the leg press", "Single-leg calf raise"], [H("Single-leg calf raise", ["Dumbbells"], { note: "On a stair, holding a dumbbell." }), H("Single-leg calf raise on a stair", [], { lib: "Single-leg dumbbell calf raise" })]);
+homeSet(["Pallof press", "Half-kneeling Pallof press", "Tall-kneeling Pallof press", "Single-leg Pallof press"], [H("Band Pallof press", ["band+anchor"]), H("Suitcase hold", ["Dumbbells"]), H("Side plank", [])]);
+homeSet(["Cable woodchop"], [H("Band Pallof press", ["band+anchor"]), H("Front plank", [])]);
+homeSet(["Ab crunch machine"], [H("Stability-ball crunch", ["Stability ball"]), H("Reverse crunch", [])]);
+homeSet(["Hanging knee raise"], [H("Hanging knee raise", ["Pull-up bar"]), H("Reverse crunch", []), H("Seated knee lift", [])]);
+homeSet(["Suitcase carry", "Farmer carry", "Farmer march", "Overhead carry", "Suitcase hold", "Turkish get-up"], [H("SAME", ["Dumbbells"]), H("SAME", ["Kettlebell"]), H("Front plank", []), H("Hollow hold", [])]);
+homeSet(["Incline push-up", "Deficit push-up", "Decline push-up", "Close-grip push-up"], [H("SAME", ["Sturdy chair"]), H("Push-up ladder", [], { bw: true })]);
+const HOME_EXTRA = { "Dumbbell floor press": { m: "chest", eq: "db", ratio: .1, inc: 2 }, "Dumbbell floor fly": { m: "chest", eq: "db", ratio: .05, inc: 2 }, "Lying dumbbell hamstring curl": { m: "ham", eq: "db", ratio: .05, inc: 2, lower: true },
+  "Dumbbell hip thrust at home": { m: "glutes", eq: "db", ratio: .25, inc: 2, lower: true } };
+Object.assign(EX, HOME_EXTRA);
+function homeify(P, a) {
+  const kit = new Set(a.kit || []), easy = new Set(a.easy || []), anchor = a.anchor === true;
+  const have = n => n === "band+anchor" ? kit.has("Long resistance band") && anchor : n === "susp" ? kit.has("Suspension trainer") && anchor : n.startsWith("!") ? !easy.has(n.slice(1)) : kit.has(n);
+  const dbMax = a.dbMax || 10;
+  const cardioKit = [["Exercise bike", "Bike"], ["Cross-trainer", "Cross-trainer"], ["Treadmill", "Incline treadmill walk"], ["Rower", "Rower"], ["Jump rope", "Jump rope"], ["Outdoors nearby (walk, run, cycle)", "Outdoors walk, jog or bike"]].filter(([k]) => kit.has(k));
+  const homeMach = (pref => { const lib = { "Bike": "Exercise bike", "Rower": "Rower", "Cross-trainer": "Cross-trainer", "Incline treadmill walk": "Treadmill", "Running": "Treadmill" }[pref]; const own = cardioKit.find(([k]) => k === lib); return own ? own[1] : cardioKit.length ? cardioKit[0][1] : "Body-weight cardio circuit"; })(a.machine || "Bike");
+  const m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75)), age = obAge(a) || 30;
+  const sx = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9], expF = { New: 0.6, Some: 1, Experienced: 1.4 }[a.level || "Some"], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
+  const dbKg = e => e && e.ratio ? Math.min(dbMax, Math.max(1, Math.floor(e.ratio * bwKg * expF * (e.lower ? sx[1] : sx[0]) * ageF / 0.5) * 0.5)) : Math.min(dbMax, 2);
+  P.phases.forEach((ph, pi) => {
+    const used = new Set();
+    Object.values(ph.workouts).forEach(w => { const inW = new Set(); w.exercises.forEach(x => {
+      if (/ – (intervals|steady|tempo)$|^Warm-up$|^Cool-down$|^Long & easy/.test(x.name) || x.unit === "min") {           // cardio blocks
+        if (/ – (intervals|steady|tempo)$/.test(x.name)) { x.name = x.name.replace(/^.* – /, homeMach + " – "); }
+        if (/^Finisher/.test(x.name)) x.name = "Finisher: " + homeMach.toLowerCase();
+        if (/^Bike( or brisk walk)?$/.test(x.name)) x.name = cardioKit.length ? homeMach : "Brisk walk or body-weight circuit";
+        x.lib = homeMach === "Body-weight cardio circuit" ? "Body-weight cardio circuit" : homeMach === "Outdoors walk, jog or bike" ? "Walk–run" : homeMach === "Jump rope" ? "Jump rope" : homeMach;
+        if (homeMach === "Body-weight cardio circuit" && /intervals/.test(x.name)) x.note = (x.note || "") + " Circuit stations rotate: step jack, air squat, mountain climber, ball toss to the wall" + (easy.has("Knees") ? " (step versions, no jumping)." : ", skater hop.");
+        return;
+      }
+      x.name = x.name.replace(/on the pad/g, "on a folded towel");
+      if (x.note) x.note = x.note.replace(/ Superset at the [^.]+\./, "").replace("holding the rack", "holding a door frame or a sturdy chair").trim() || undefined;
+      const opts = HOME[x.name]; if (!opts) { used.add(x.name); inW.add(x.name); return; }
+      const sameOk = ["db", "bw"].includes(EX[x.name]?.eq);
+      const cands = opts.filter(o => o.name !== "SAME" || sameOk).map(o => ({ ...o, name: o.name === "SAME" ? x.name : o.name })).filter(o => o.needs.every(have));
+      const pick = cands.find(o => !used.has(o.name)) || cands.find(o => !inW.has(o.name));
+      if (!pick) { x._drop = true; return; }
+      used.add(pick.name); inW.add(pick.name);
+      const e = EX[pick.name] || {}, isDb = pick.needs.includes("Dumbbells") || pick.needs.includes("Kettlebell");
+      x.name = pick.name; x.lib = pick.lib || e.lib || pick.name;
+      if (pick.note) x.note = [x.note, pick.note].filter(Boolean).join(" ");
+      const oldUnit = x.unit; x.unit = e.unit || "reps"; if (x.unit !== oldUnit) x.reps = e.reps || (x.unit === "sec" ? 30 : 15);
+      if (!isDb) { x.kg = 0; x.inc = pick.assist ? 0.25 : 0; if (pick.bw) x.bw = true; else delete x.bw; if (x.unit === "reps" && !/ladder/i.test(x.name)) x.reps = Math.max(x.reps, 15); }
+      else { x.kg = dbKg(e); x.inc = 0.5; delete x.bw; }
+      x.id = x.id.replace(/-[^-]+$/, "") + "-" + pick.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20);
+    }); w.exercises = w.exercises.filter(x => !x._drop); });
+  });
+  P.title = P.title.replace(/$/, " · home");
+  return P;
+}
+function genSupported(a) { return a && ["Strength", "Balance", "Cardio"].includes(a.goal); }
+const _genGym = generatePlan;
+generatePlan = function (a) { const P = _genGym(a); return a.where === "Home" ? homeify(P, a) : P; };
+
 // generator>>
 function libView() {
   const q = S.libQ.trim().toLowerCase(), cards = TWLIB.cards.filter(c => !q || (c.title + " " + c.fam + " " + c.section + " " + feelIn(c.title)).toLowerCase().includes(q));
