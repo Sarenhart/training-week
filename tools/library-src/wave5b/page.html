@@ -1,0 +1,123 @@
+<title>Home Samples · Wave 5b</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/*VARS*/
+:root[data-theme="dark"]{--bg:#0e1115;--surface:#171c22;--sunk:#11151a;--ink:#e7ecf1;--muted:#8e9aa8;--line:#28303a;--accent:#6693ff;--accent-ink:#0a1020;--accent-soft:#1c2a4a;--done:#43cf7f;--done-bg:#15291e;--warn:#ff8a4c;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;margin:0 0 8px}
+header p{margin:0 0 6px;color:var(--muted);line-height:1.45;max-width:720px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0;margin:10px 0 6px;border-bottom:1px solid var(--line)}
+.chip{min-height:44px;padding:0 16px;border-radius:99px;font-weight:600;font-size:15px;background:var(--surface);border:1.5px solid var(--line)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.bar .sp{flex:1}
+.bar small{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.head{display:flex;gap:10px;align-items:flex-start}
+.num{font-family:var(--display);font-weight:700;font-size:15px;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:3px 8px;flex:none}
+.head h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;line-height:1.05;text-transform:capitalize}
+.head .fam{font-size:13px;color:var(--muted);margin-top:2px}
+.anim-wrap{background:var(--bg);border-radius:10px;padding:8px 10px 10px}
+svg.anim{width:100%;max-width:300px;height:auto;display:block;margin:0 auto}
+.an-cue line{stroke:var(--warn);stroke-width:2}.an-cue path{fill:var(--warn)}.an-cue text{fill:var(--warn);font-size:12px;font-weight:700;font-family:var(--body);paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
+.an3{stroke:var(--ink);stroke-width:7;stroke-linecap:round}.an3.far{stroke:var(--muted);opacity:.7}.an3h{fill:var(--ink)}
+.an3eq{stroke:var(--muted);stroke-width:1.5;opacity:.6}.an3bench{fill:var(--muted);opacity:.5}.an3bar{stroke:var(--accent);stroke-width:4}.an3plate,.an3grip{fill:var(--accent)}
+.an3col{stroke:var(--muted);stroke-width:8}.an3eqf{fill:var(--muted)}.an3cable{stroke:var(--muted);stroke-width:2}
+.an3db{stroke:var(--muted);stroke-width:3}.an3pad{stroke:var(--muted);stroke-width:9;stroke-linecap:round}.an3fly{fill:var(--muted);opacity:.35}.an3pad2{fill:var(--muted);opacity:.55}.an3side{fill:var(--muted);opacity:.85}
+.an-cap{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;color:var(--muted);margin-top:4px}
+.an-cap span:last-child{text-align:right}
+.scrub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.scrub button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;flex:none}
+.scrub input{flex:1;accent-color:var(--accent);min-width:0;height:44px}
+.guide{display:grid;gap:10px;font-size:14px;line-height:1.4}
+.guide h3{margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.guide ol,.guide ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.guide .avoid li::marker{content:"✕  ";color:var(--warn);font-size:12px}
+.guide .knee,.guide .tipx{background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.lv{min-height:36px;padding:0 12px;border-radius:99px;font-weight:600;font-size:14px;background:var(--surface);border:1.5px solid var(--line)}
+.lv[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.an3foam{fill:var(--accent);opacity:.22}.an3foamside{fill:var(--accent);opacity:.38}
+.an3nose{stroke:var(--ink);stroke-width:4;stroke-linecap:round}.an3tape{stroke:var(--warn);stroke-width:3;opacity:.55}.an3ball{fill:var(--warn)}.an3rope{stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}.an3touch{fill:var(--warn)}
+.an-eye path{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.sec{grid-column:1/-1;margin:14px 0 0;font-family:var(--display);font-weight:700;font-size:24px}
+.talk{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.talk ul{list-style:none;padding:0;margin:0;display:grid;gap:2px}.talk p{margin:6px 0 0;color:var(--muted);font-size:13px}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<header>
+  <h1>Wave 5b · home – dumbbells</h1>
+  <p>Home versions with dumbbells where no bench or machine is needed. Most dumbbell exercises at home reuse animations you have already approved (rows, curls, RDL, lateral raise, goblet squat, step-up, calf raise) – these four are the new ones. Nothing here is in the app yet.</p>
+  <p>Refer to a card by its number (W5-17 …). Drag the slider to freeze any moment.</p>
+</header>
+<div class="bar" role="toolbar" aria-label="Playback">
+  <button class="chip" id="pause" aria-pressed="false">Pause all</button>
+  <button class="chip" id="slow" aria-pressed="false">Slow motion</button>
+  <button class="chip" id="theme" aria-pressed="false">Dark</button>
+  <span class="sp"></span>
+  <small id="count"></small>
+</div>
+<main class="grid" id="grid"></main>
+</div>
+<script>
+/*ENGINE*/
+/*SAMPLES*/
+/*LAYOUT*/
+/*GUIDES*/
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const st = { pause: false, slow: false, held: {}, pick: CARDS.map(() => 0) };
+document.getElementById("count").textContent = CARDS.filter(c => !c.section).length + " exercises";
+const SECT = CARDS.filter(c => c.section); const ALL = CARDS.slice(); CARDS.length = 0; let num = 0; const HTML = [];
+ALL.forEach(c => { if (c.section) HTML.push(`<h2 class="sec">${esc(c.section)}</h2>`); else { CARDS.push(c); HTML.push(null); } });
+const cardHtml = CARDS.map((c, i) => {
+  const g = GUIDES[c.title] || { steps: [], avoid: [] }, n = "W5-" + String(i + 17).padStart(2, "0");
+  return `<article class="card" aria-labelledby="h${i}">
+    <div class="head"><span class="num">${n}</span><div><h2 id="h${i}">${esc(c.title)}</h2><div class="fam">${esc(c.fam)}</div></div></div>
+    ${c.keys.length > 1 ? `<div class="chips" role="group" aria-label="Level or variation">${c.keys.map(([lab], j) => `<button type="button" class="lv" data-card="${i}" data-j="${j}" aria-pressed="${j === 0}">${esc(lab)}</button>`).join("")}</div>` : ""}
+    <div class="anim-wrap"><svg class="anim" viewBox="0 0 240 225" role="img" aria-label="Animation of ${esc(c.title)}"></svg>
+      <div class="an-cap"><span data-cap0></span><span data-cap1></span></div>
+      <div class="scrub"><button type="button" data-play="${i}" aria-label="Play or hold ${esc(c.title)}">❚❚</button><input type="range" min="0" max="1000" value="0" data-scrub="${i}" aria-label="Position in the movement for ${esc(c.title)}"></div></div>
+    <div class="guide">
+      <div><h3>Technique</h3><ol>${g.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>
+      ${g.levels ? `<div><h3>Levels</h3><ol>${g.levels.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>` : ""}
+      <div><h3>Avoid</h3><ul class="avoid">${g.avoid.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      ${g.knee ? `<div class="knee"><b>Your knee:</b> ${esc(g.knee)}</div>` : ""}
+      ${g.talk ? `<div class="talk"><h3>How hard? The talk test</h3><ul><li><b>Easy</b> – full sentences</li><li><b>Steady</b> – short sentences</li><li><b>Hard</b> – only a few words</li></ul><p>Each block in your plan says which one to aim for.</p></div>` : ""}
+      ${g.tip ? `<div class="tipx"><b>Tip:</b> ${esc(g.tip)}</div>` : ""}
+    </div></article>`;
+});
+let qi = 0; document.getElementById("grid").innerHTML = HTML.map(h => h === null ? cardHtml[qi++] : h).join("");
+const cards = [...document.querySelectorAll(".card")], svgs = cards.map(c => c.querySelector("svg.anim")), sliders = [...document.querySelectorAll("[data-scrub]")], plays = [...document.querySelectorAll("[data-play]")];
+const keyOf = i => CARDS[i].keys[st.pick[i]][1];
+const setCap = i => { const a = SAMPLES[keyOf(i)]; cards[i].querySelector("[data-cap0]").textContent = a.cap[0]; cards[i].querySelector("[data-cap1]").textContent = a.cap[1]; };
+CARDS.forEach((_, i) => setCap(i));
+document.querySelectorAll(".lv").forEach(b => b.addEventListener("click", () => {
+  const i = +b.dataset.card; st.pick[i] = +b.dataset.j;
+  cards[i].querySelectorAll(".lv").forEach(x => x.setAttribute("aria-pressed", x === b)); setCap(i);
+}));
+const setBtn = i => { plays[i].textContent = st.held[i] ? "▶" : "❚❚"; };
+sliders.forEach((s, i) => s.addEventListener("input", () => { st.held[i] = true; setBtn(i); }));
+plays.forEach((b, i) => b.addEventListener("click", () => { st.held[i] = !st.held[i]; setBtn(i); }));
+const tog = (id, key) => { const b = document.getElementById(id); b.addEventListener("click", () => { st[key] = !st[key]; b.setAttribute("aria-pressed", st[key]); }); };
+tog("pause", "pause"); tog("slow", "slow");
+document.getElementById("pause").addEventListener("click", () => CARDS.forEach((_, i) => { st.held[i] = st.pause; setBtn(i); }));
+const themeBtn = document.getElementById("theme");
+themeBtn.addEventListener("click", () => { const d = document.documentElement.dataset.theme !== "dark"; document.documentElement.dataset.theme = d ? "dark" : "light"; themeBtn.setAttribute("aria-pressed", d); });
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduce) CARDS.forEach((_, i) => { st.held[i] = true; setBtn(i); });
+function tick(now) {
+  svgs.forEach((el, i) => {
+    const k = keyOf(i), A = SAMPLES[k], d = A.dur * (st.slow ? 3 : 1);
+    let u;
+    if (st.held[i]) u = sliders[i].value / 1000;
+    else { u = A.loop ? (now % d) / d : phaseAt(now, d); sliders[i].value = Math.round(u * 1000); }
+    el.innerHTML = sampleFrame(k, u);
+  });
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>

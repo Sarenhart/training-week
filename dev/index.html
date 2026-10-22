@@ -94,6 +94,18 @@ h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;line-heigh
 .lastrow,.sets{display:grid;gap:8px}
 .lastrow{font-size:13px;color:var(--muted);text-align:center}
 .lastrow.tight{font-size:12px}
+.libsearch{margin:0 0 6px}
+.libgrp{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--body);font-weight:700;margin:22px 0 8px}
+.libitem{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.librow{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;padding:12px 14px;text-align:left;min-height:52px}
+.librow .lt{flex:1;min-width:0}.librow b{display:block;font-weight:600}.librow small{display:block;font-size:13px;color:var(--muted)}
+.libitem.open .librow .chev{transform:rotate(90deg)}
+.libcard{padding:0 14px 14px;display:grid;gap:10px}
+.guide .libcard,.ex .libcard{padding:10px 0 0}
+.libchips{display:flex;flex-wrap:wrap;gap:6px}
+.libchip{border:1.5px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;min-height:36px;color:var(--ink)}
+.libchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.libguide{margin-top:0;border-top:0;padding-top:0}
 .feelit{font-size:13px;color:var(--accent);margin-top:2px}
 .feelit b{font-weight:600}
 .setbox{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
@@ -226,7 +238,7 @@ tr:last-child td{border-bottom:0}
 .timer .lbl{flex:1;min-width:0;font-size:13px;color:var(--muted)}
 .timer .bar{height:4px;background:var(--sunk);border-radius:4px;margin-top:4px;overflow:hidden}
 .timer .bar span{display:block;height:100%;background:var(--accent)}
-.tabs{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .tab{background:none;border:0;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em}
 .tab svg{width:22px;height:22px}
 .tab[aria-current="page"]{color:var(--accent)}
@@ -270,10 +282,12 @@ document.getElementById("devreset").addEventListener("click", e => {
     <button class="tab" data-tab="plan" id="tab-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Programme</button>
     <button class="tab" data-tab="body" id="tab-body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16v10H4z"/><path d="M8 7v3M12 7v4M16 7v3"/></svg>Body</button>
     <button class="tab" data-tab="history" id="tab-history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Progress</button>
+    <button class="tab" data-tab="lib" id="tab-lib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h6v14H4zM14 5h6v14h-6z"/><path d="M6.5 9h1M16.5 9h1"/></svg>Library</button>
   </nav>
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="library.js"></script>
 <script>
 (() => {
 const GUIDES = {
@@ -556,13 +570,15 @@ function phaseAt(ms, dur) {
 }
 let animRaf = null;
 function animLoop(now) {
-  const els = document.querySelectorAll("svg.anim");
-  if (!els.length) { animRaf = null; return; }
+  const els = document.querySelectorAll("svg.anim[data-k]"), libs = document.querySelectorAll("svg[data-lk]");
+  if (!els.length && !libs.length) { animRaf = null; return; }
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  libs.forEach(el => { const k = el.dataset.lk, A = TWLIB.anim(k); if (!A) return; const d = A.dur;
+    el.innerHTML = TWLIB.frame(k, A.loop ? (reduce ? 0 : (now % d) / d) : reduce ? (Math.floor(now / d) % 2) : TWLIB.phaseAt(now, d)); });
   els.forEach(el => { const k = el.dataset.k, A = ANIM[k], d = A.dur; el.innerHTML = animFrame(k, A.loop ? (reduce ? 0 : (now % d) / d) : reduce ? (Math.floor(now / d) % 2) : phaseAt(now, d)); });
   animRaf = requestAnimationFrame(animLoop);
 }
-function startAnims() { if (!animRaf && document.querySelector("svg.anim")) animRaf = requestAnimationFrame(animLoop); }
+function startAnims() { if (!animRaf && document.querySelector("svg.anim[data-k], svg[data-lk]")) animRaf = requestAnimationFrame(animLoop); }
 
 // ---- 3/4-view figures: 3D joints, orthographic camera, two-bone IK
 // world: x = forward (where the figure faces), y = up, z = the figure's right side
@@ -1216,8 +1232,8 @@ const logId = (w, k) => "w" + String(w).padStart(2, "0") + "-" + k;
 
 // ---- state
 const S = { tab:"today", week:null, wk:null, open:null, openW:null, loaded:false, mode:"local",
-  program:null, logs:{}, body:{}, metric:"weight", timer:null, audio:null, guides:new Set() };
-try { const t = localStorage.getItem("twdev.tab"); if (["today","plan","body","history"].includes(t)) S.tab = t; } catch {}
+  program:null, logs:{}, body:{}, metric:"weight", timer:null, audio:null, guides:new Set(), libQ:"", libOpen:null, libPick:{} };
+try { const t = localStorage.getItem("twdev.tab"); if (["today","plan","body","history","lib"].includes(t)) S.tab = t; } catch {}
 
 // ---- storage: shared db when available, browser storage otherwise
 let db = null;
@@ -1364,11 +1380,11 @@ function stats(l) {
 const app = document.getElementById("app");
 function render() {
   const f = document.activeElement, fid = f && f.id, sel = f && "selectionStart" in f ? (() => { try { return [f.selectionStart, f.selectionEnd]; } catch { return null; } })() : null;
-  ["today","plan","body","history"].forEach(t => document.getElementById("tab-" + t).setAttribute("aria-current", S.tab === t ? "page" : "false"));
+  ["today","plan","body","history","lib"].forEach(t => document.getElementById("tab-" + t).setAttribute("aria-current", S.tab === t ? "page" : "false"));
   if (!S.loaded) { app.innerHTML = head("Loading", "Training Week") + `<p class="empty">Getting your programme…</p>`; return; }
-  if (!S.program && S.tab !== "body") { app.innerHTML = head("Setup", "Training Week") + `<div class="card empty">Your programme hasn't loaded. Check your connection, or ask Claude to set it up again.</div>`; renderTimer(); return; }
+  if (!S.program && S.tab !== "body" && S.tab !== "lib") { app.innerHTML = head("Setup", "Training Week") + `<div class="card empty">Your programme hasn't loaded. Check your connection, or ask Claude to set it up again.</div>`; renderTimer(); return; }
   if (S.program && S.week == null) { S.week = currentWeek(); S.wk = nextWorkout(S.week); }
-  app.innerHTML = S.tab === "plan" ? planView() : S.tab === "body" ? bodyView() : S.tab === "history" ? historyView() : todayView();
+  app.innerHTML = S.tab === "lib" ? libView() : S.tab === "plan" ? planView() : S.tab === "body" ? bodyView() : S.tab === "history" ? historyView() : todayView();
   if (S.tab === "body") wireChart();
   if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
   renderTimer();
@@ -1475,7 +1491,29 @@ function todayView() {
   return h;
 }
 
+function libCardHtml(c, opts = {}) {
+  const g = TWLIB.guide(c) || { steps: [], avoid: [] }, pick = Math.min(S.libPick[c.id] || 0, c.keys.length - 1), k = c.keys[pick][1], A = TWLIB.anim(k);
+  return `<div class="lib libcard">
+    ${c.keys.length > 1 ? `<div class="libchips" role="group" aria-label="Level or variation">${c.keys.map(([l], j) => `<button type="button" class="libchip" data-act="libpick" data-c="${esc(c.id)}" data-j="${j}" aria-pressed="${j === pick}">${esc(l)}</button>`).join("")}</div>` : ""}
+    <div class="anim-wrap"><svg class="anim" data-lk="${esc(k)}" viewBox="0 0 240 225" role="img" aria-label="Animation of ${esc(c.title)}">${TWLIB.frame(k, 0)}</svg>
+      <div class="an-cap"><span>${esc(A.cap[0])}</span><span>${esc(A.cap[1])}</span></div></div>
+    <div class="guide libguide">
+      ${feelIn(c.title) ? `<div class="feelit">Feel it in: <b>${feelIn(c.title)}</b></div>` : ""}
+      <div><h3>Technique</h3><ol>${g.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>
+      ${g.levels ? `<div><h3>Levels</h3><ol>${g.levels.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>` : ""}
+      <div><h3>Avoid</h3><ul class="avoid">${(g.avoid || []).map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      ${g.knee ? `<div class="knee"><b>Your knee:</b> ${esc(g.knee)}</div>` : ""}
+      ${g.talk ? `<div class="tipx"><b>How hard? The talk test</b> – Easy: full sentences · Steady: short sentences · Hard: only a few words.</div>` : ""}
+      ${g.tip ? `<div class="tipx"><b>Tip:</b> ${esc(g.tip)}</div>` : ""}
+      ${opts.video ? `<a class="vid" href="https://www.youtube.com/results?search_query=${encodeURIComponent(c.title + " proper form")}" target="_blank" rel="noopener">▶ Watch a video on YouTube</a>` : ""}
+    </div></div>`;
+}
 function guideHtml(e) {
+  const lc = typeof TWLIB !== "undefined" ? TWLIB.find(e.name) : null;
+  if (lc) {
+    const open = S.guides.has(e.id);
+    return `<button class="howbtn" data-act="guide" data-ex="${e.id}" id="how-${e.id}" aria-expanded="${open}"><span class="chev">›</span>How to do it</button>` + (open ? libCardHtml(lc, { video: true }) : "");
+  }
   const g = GUIDES[e.name.toLowerCase()];
   if (!g) return "";
   const open = S.guides.has(e.id);
@@ -1489,6 +1527,21 @@ function guideHtml(e) {
     ${g.knee ? `<div class="knee"><b>Your knee:</b> ${esc(g.knee)}</div>` : ""}
     ${g.tip ? `<div class="tipx"><b>Tip:</b> ${esc(g.tip)}</div>` : ""}
     <a class="vid" href="${vid}" target="_blank" rel="noopener">▶ Watch a video on YouTube</a></div>`;
+  return h;
+}
+function libView() {
+  const q = S.libQ.trim().toLowerCase(), cards = TWLIB.cards.filter(c => !q || (c.title + " " + c.fam + " " + c.section + " " + feelIn(c.title)).toLowerCase().includes(q));
+  let h = head(TWLIB.cards.length + " exercises", "Library") + `<label class="f libsearch">Search<input type="text" id="libq" value="${esc(S.libQ)}" placeholder="e.g. chest, band, balance" autocomplete="off"></label>`;
+  if (!cards.length) return h + `<p class="empty">Nothing matches "${esc(S.libQ)}".</p>`;
+  let last = null;
+  for (const c of cards) {
+    const grp = c.waveLabel + (c.section && c.section !== c.waveLabel ? " · " + c.section : "");
+    if (grp !== last) { h += `<h2 class="libgrp">${esc(grp)}</h2>`; last = grp; }
+    const open = S.libOpen === c.id;
+    h += `<section class="libitem ${open ? "open" : ""}"><button type="button" class="librow" data-act="libopen" data-c="${esc(c.id)}" aria-expanded="${open}">
+      <span class="lt"><b>${esc(c.title)}</b><small>${esc(c.fam)}</small></span><span class="chev">›</span></button>
+      ${open ? libCardHtml(c, { video: true }) : ""}</section>`;
+  }
   return h;
 }
 function advanceIfWeekDone(prevWeek) {
@@ -1720,6 +1773,8 @@ document.addEventListener("click", ev => {
     case "finish": { const l = S.logs[logId(S.week, S.wk)]; if (l) { l.finished = true; l.finishedAt = new Date().toISOString(); saveLog(l); S.timer = null; clearInterval(tick);
       if (!advanceIfWeekDone(S.week)) { const nk = REQ.find(k => !isDone(S.week, k)); toast(nk ? "Workout saved. Next up: " + wLabel(nk) + "." : "Workout saved."); }
       render(); } break; }
+    case "libopen": { const id = b.dataset.c; S.libOpen = S.libOpen === id ? null : id; render(); if (S.libOpen) document.querySelector(".libitem.open")?.scrollIntoView({ block: "nearest" }); break; }
+    case "libpick": { S.libPick[b.dataset.c] = +b.dataset.j; render(); break; }
     case "guide": { const id = b.dataset.ex; S.guides.has(id) ? S.guides.delete(id) : S.guides.add(id); render(); break; }
     case "reopen": { const l = S.logs[logId(S.week, S.wk)]; if (l) { l.finished = false; saveLog(l); render(); } break; }
     case "t15": if (S.timer) { S.timer.end += 15000; S.timer.total += 15; S.timer.beeped = false; S.timer.warned = (S.timer.end - Date.now()) / 1000 <= 10; renderTimer(); } break;
@@ -1753,6 +1808,7 @@ document.addEventListener("submit", ev => {
   render();
 });
 document.addEventListener("input", ev => {
+  if (ev.target.id === "libq") { S.libQ = ev.target.value; render(); return; }
   const t = ev.target, f = t.dataset.field; if (!f) return;
   const wo = S.program.phases[+t.dataset.p].workouts[t.dataset.k];
   if (f === "wname") wo.name = t.value;
