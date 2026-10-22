@@ -80,7 +80,7 @@ function timeFit(a) {
 }
 function obVisibleSteps(a) { return OB_STEPS.filter(s => s !== "home" || a.where === "Home"); }
 function obCanGo(step, a) {
-  if (step === "about") { const { kg, cm } = obMetric(a), age = obAge(a); return !!(kg && cm && a.sex && age && age >= 18 && age < 110); }
+  if (step === "about") { const { kg, cm } = obMetric(a), age = obAge(a); return !!(a.sex && age && age >= 18 && age < 110 && (!num(a.weight) || kg) && (cm || (!num(a.height) && !num(a.ft) && !num(a.inch)))); }   // weight and height are optional
   if (step === "goal") return !!a.goal;
   if (step === "shape") return !!a.shape;
   if (step === "week") return !!(a.level && a.days && a.time && a.where && (a.goal !== "Cardio" || a.machine));
@@ -101,13 +101,13 @@ function obView() {
   if (step === "welcome") {
     h += `<header class="top"><div><div class="eyebrow">Welcome</div><h1>Your 12-week plan, built around you</h1></div></header>
       <p class="obp">Answer a few quick questions and the app sets up your workouts, starting weights and weekly schedule.</p>
-      <ol class="obsteps"><li><b>About you</b><span>Weight, height and optional measurements</span></li><li><b>Your goal and body type</b><span>What you want to train for and look like</span></li><li><b>Your week</b><span>Days, time, focus areas and anything to go easy on</span></li></ol>
+      <ol class="obsteps"><li><b>About you</b><span>Year of birth, plus optional weight, height and measurements</span></li><li><b>Your goal and body type</b><span>What you want to train for and look like</span></li><li><b>Your week</b><span>Days, time, focus areas and anything to go easy on</span></li></ol>
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <p class="muted obsmall">About 2 minutes. Everything stays on your phone.</p>
       ${o.edit ? `<button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my answers</button>` : `<button type="button" class="linkbtn" data-act="obskip">DEV: skip setup and keep my current programme</button>`}`;
   } else if (step === "about") {
     h += `<header class="top"><div>${stepTag}<h1>About you</h1></div><button type="button" class="infobtn" data-act="obinfo" aria-expanded="${!!o.info}" aria-label="Privacy">i</button></header>
-      <p class="obp">Used to set sensible starting weights and as your baseline in the Body tab.</p>
+      <p class="obp">Weight and height are optional. They help set your starting weights and become your baseline in the Body tab.</p>
       ${o.info ? `<div class="note">Your answers stay on this phone. We do not collect information provided on this page nor do we have access to it. They are only used to set up your plan and are saved on your phone. You can change or delete them at any time in Settings.</div>` : ""}
       <div class="obrow"><span class="oblbl">Units</span><div class="seg">${chipB(!imp, "obunits", "metric", "kg · cm", ' data-seg="1"')}${chipB(imp, "obunits", "imperial", "lb · ft", ' data-seg="1"')}</div></div>
       <div class="obgrid2"><label class="f">Weight<span class="inu"><input type="text" inputmode="decimal" id="ob-weight" data-ob="weight" value="${esc(a.weight)}"><i>${imp ? "lb" : "kg"}</i></span></label>
@@ -115,7 +115,7 @@ function obView() {
         : `<label class="f">Height<span class="inu"><input type="text" inputmode="numeric" id="ob-height" data-ob="height" value="${esc(a.height)}"><i>cm</i></span></label>`}</div>
       <div class="obrow col"><span class="oblbl">Sex</span><div class="obchips">${["Female", "Male", "Prefer not to say"].map(v => chipB(a.sex === v, "obone", v, v, ' data-k="sex"')).join("")}</div></div>
       <label class="f">Year of birth<input type="text" inputmode="numeric" id="ob-year" data-ob="year" value="${esc(a.year)}" placeholder="e.g. 1985"></label>
-      ${obAge(a) !== null && obAge(a) < 18 ? `<p class="obwarn">Training Week is made for adults. You need to be 18 or older to use the app.</p>` : ""}
+      <p class="obwarn" id="ob-agewarn"${obAge(a) !== null && obAge(a) < 18 ? "" : " hidden"}>Training Week is made for adults. You need to be 18 or older to use the app.</p>
       <button type="button" class="obmore" data-act="obmeas" aria-expanded="${!!o.meas}"><span>More measurements <span class="muted">· optional</span></span><span class="chev">›</span></button>
       ${o.meas ? `<div class="obgrid2">${[["waist", "Waist"], ["chest", "Chest"], ["arm", "Upper arm"], ["shoulder", "Shoulders"], ["thigh", "Thigh"], ["fat", "Body fat"]].map(([k, l]) =>
         `<label class="f">${l}<span class="inu"><input type="text" inputmode="decimal" id="ob-m-${k}" data-obm="${k}" value="${esc(a.meas[k] ?? "")}"><i>${k === "fat" ? "%" : imp ? "in" : "cm"}</i></span></label>`).join("")}</div>
@@ -237,7 +237,13 @@ function obClick(a, b) {
 }
 function obInput(t) {
   if (!S.ob) return false;
-  if (t.dataset.ob) { S.ob.a[t.dataset.ob] = t.value; render(); return true; }
-  if (t.dataset.obm) { S.ob.a.meas[t.dataset.obm] = t.value; render(); return true; }
+  // typing must not redraw the page – that drops the phone keyboard after one character
+  if (t.dataset.ob) S.ob.a[t.dataset.ob] = t.value;
+  else if (t.dataset.obm) S.ob.a.meas[t.dataset.obm] = t.value;
+  else return false;
+  const a = S.ob.a, step = obVisibleSteps(a)[S.ob.i], nx = document.querySelector('[data-act="obnext"]'), w = document.getElementById("ob-agewarn");
+  if (nx) nx.disabled = !obCanGo(step, a);
+  if (w) w.hidden = !(obAge(a) !== null && obAge(a) < 18);
+  return true;
   return false;
 }
