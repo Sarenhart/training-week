@@ -1966,6 +1966,12 @@ const STRENGTH = {
        "Extra|cable tower: Rope overhead triceps extension 3 + Cable curl 3|incline bench, face down: Spider curl 3 + Rear-delt dumbbell fly 3|Bike 1"])
   ]
 };
+const BAL_ABOUT = [
+  "Static balance first: find your level on each balance exercise, next to a support. Strength with steady, controlled reps.",
+  "Eyes closed, head turns and the first dynamic balance work. Main lifts get heavier.",
+  "Balance pad and step-and-hold; jumps come in for those ready for them. Keep 1–3 reps in the tank.",
+  "Build strength and reactive balance: catching, hopping and the hardest combinations you've earned."
+];
 const PHASE_NAMES = ["Foundation", "Build", "Strength", "Build strength"];
 const PHASE_ABOUT = [
   "Learn the movements and find your working weights. Stop each set with 1–3 reps left.",
@@ -1991,7 +1997,6 @@ const FOCUS_ADD = { chest: ["Incline dumbbell press", "Cable fly (low-to-high)"]
   arms: ["Preacher curl", "Rope overhead triceps extension"], glutes: ["Bulgarian split squat", "Hip abduction machine"], thighs: ["Goblet squat", "Seated hamstring curl"],
   calves: ["Standing calf raise", "Single-leg calf raise"], core: ["Hanging knee raise", "Pallof press"] };
 
-function genSupported(a) { return a && a.goal === "Strength" && a.where === "Gym"; }
 function generatePlan(a) {
   const days = a.days || 3, dir = directionOf(a) || "Build muscle", D = DOSE[dir], lvl = a.level || "Some";
   const age = obAge(a) || 30, old = age >= 65, easy = new Set(a.easy || []);
@@ -2000,7 +2005,8 @@ function generatePlan(a) {
   const sexF = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9];
   const expF = { New: 0.6, Some: 1, Experienced: 1.4 }[lvl], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
   const minReps = old ? 8 : lvl === "New" ? 8 : age >= 50 ? 6 : age >= 40 ? 5 : 6;
-  const tpl = STRENGTH[days] || STRENGTH[3];
+  const bal = a.goal === "Balance", C = { lvl, old, easy };
+  const tpl = (bal ? BALANCE : STRENGTH)[days] || (bal ? BALANCE : STRENGTH)[3];
   const phases = tpl.map((W, pi) => {
     const used = new Set();                                      // no repeats within the week
     const plan = W.map(w => ({ name: w.name, groups: w.groups.map(g => ({ spot: g.spot, ex: g.ex.map(x => ({ ...x })) })) }));
@@ -2033,11 +2039,19 @@ function generatePlan(a) {
         const core = EX[x.name].m === "core";
         swap(x, core ? ["Seated knee lift", "Pallof press", "Incline plank", "Ab crunch machine", "Suitcase hold"] : ["Machine chest press", "Incline push-up", "Dumbbell hip thrust"]);
       }
+      // Balance, New: the static holds and the machines arrive in phase 4 (H9a) – 65+ keep machines from phase 1 (I3)
+      if (bal && lvl === "New" && pi < 3 && !old && EX[x.name]?.eq === "machine") swap(x, { "Hip abduction machine": ["Side-lying leg raise", "Glute bridge"], "Hip adduction machine": ["Glute bridge", "Side-lying leg raise"],
+        "Single-leg leg press": ["Reverse lunge", "Step-up"], "Calf raise on the leg press": ["Single-leg calf raise"], "Seated calf raise": ["Single-leg calf raise"], "Leg press": ["Goblet squat"] }[x.name] || []);
+      // Balance B-06: standing cable hip abduction replaces the side-lying hip raise for Some / Experienced
+      if (bal && lvl !== "New" && x.name === "Side-lying leg raise" && pi === 1) swap(x, ["Standing cable hip abduction"]);
+      if (bal && lvl === "Experienced" && x.name === "Cable woodchop") x.note = "Standing version.";
       // phase 4: every exercise must be loadable (priority-exercises.md)
       if (pi === 3 && EX[x.name] && (EX[x.name].nokg) && EX[x.name].m === "core") swap(x, ["Ab crunch machine", "Pallof press", "Suitcase hold", "Hanging knee raise"]);
     }
+    if (bal && lvl === "New" && pi < 3) plan.forEach(w => { w.groups = w.groups.filter(g => g.spot !== "static holds"); });
+    if (bal && lvl !== "Experienced") plan.forEach(w => { if (w.name === "Mobility & core") { const x = w.groups[0].ex[0]; x.name = used.has("Suitcase carry") ? "Farmer carry" : "Suitcase carry"; x.sets = 3; } });
     // thighs at least Build for Strength (programme-rules B) – the 3-day template was written for "go easy on knees"
-    if (days === 3 && !easy.has("Knees")) {
+    if (!bal && days === 3 && !easy.has("Knees")) {
       const fb = plan[2]; const add = [pi % 2 === 0 ? "Goblet squat" : "Bulgarian split squat"].filter(n => !used.has(n));
       if (add.length && !(lvl === "New" && add[0] === "Bulgarian split squat" && pi < 3)) { fb.groups.splice(1, 0, { spot: "", ex: [{ name: add[0], sets: 3 }] }); used.add(add[0]); }
     }
@@ -2060,7 +2074,7 @@ function generatePlan(a) {
     if (time <= 30) main.forEach(w => { w.groups = w.groups.slice(0, 3); w.groups.forEach(g => g.ex.forEach(x => x.sets = Math.min(x.sets, 3))); });
     if (time >= 60) main.forEach(w => w.groups.slice(1).forEach(g => g.ex.forEach(x => { if (focusMs.includes(EX[x.name]?.m) && x.sets < 4) x.sets++; })));
     // keep each workout inside its time: ~14 sets at 30 min, ~22 at 45, ~28 at 60 (supersets). Trim the least important first.
-    const cap = time <= 30 ? 14 : time >= 60 ? 28 : 22;
+    const cap = bal ? (time <= 30 ? 9 : time >= 60 ? 21 : 15) + 2 : time <= 30 ? 14 : time >= 60 ? 28 : 22;
     const ORDER = ["calves", "rear", "triceps", "biceps", "core", "shoulders", "ham", "thighs", "back", "chest", "glutes"];
     const rank = x => focusMs.includes(EX[x.name]?.m) ? 99 : Math.max(0, ORDER.indexOf(EX[x.name]?.m));
     for (const w of main) {
@@ -2082,6 +2096,14 @@ function generatePlan(a) {
     plan.forEach((w, wi) => {
       const key = w.name === "Extra" ? "c" : String(wi + 1);
       const exs = []; let letter = 0;
+      const push = (b, extra = {}) => exs.push({ name: b.name, sets: b.sets || 2, reps: b.reps, kg: 0, rest: 0, inc: 0, unit: b.unit, lib: b.lib, id: `g${pi + 1}${key}-${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}`, ...extra });
+      if (bal && key !== "c") {                                                // warm-up / balance block first (H3, H9)
+        const legDay = /Lower|Full body/.test(w.name);
+        if (legDay) push({ name: "Deep squat hold", lib: "Deep squat hold", reps: 30, unit: "sec", sets: 2 }, { note: "Warm-up, holding the rack. Heels down, chest up" + (old || easy.has("Knees") ? ", only as deep as feels fine." : ".") });
+        if (w.name === "Mobility & core") ["Half-kneeling hip-flexor stretch", "90/90 hip switches", "Ankle rocks", "Open-book upper-back rotation", "Deep squat hold"].forEach((n, i) => push({ name: n, lib: n, reps: 120, unit: "sec", sets: 1 }, { note: i === 0 ? "Mobility flow – follow along, about 10 min." : undefined }));
+        const blk = balanceBlock(w.name === "Mobility & core" ? 3 : wi, pi, C); letter = 1;
+        blk.forEach((b, i) => push({ ...b, sets: 2 }, { ss: "A" + (i + 1), rest: i === blk.length - 1 ? 30 : 0, note: i === 0 ? "Balance block – 2 rounds. Feather = easy, kettlebell = wobbly or touched down." : undefined }));
+      }
       w.groups.forEach((g, gi) => {
         const ss = g.ex.length > 1 ? String.fromCharCode(65 + letter++) : null;
         g.ex.forEach((x, xi) => {
@@ -2102,15 +2124,127 @@ function generatePlan(a) {
             id: `g${pi + 1}${key}-${x.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}` });
         });
       });
-      if (key !== "c" && D.fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: D.fin, kg: 0, rest: 0, inc: 0, unit: "min", note: "Hard but steady – you can only say a few words.", lib: "Bike", id: `g${pi + 1}${key}-finisher` });
-      if (key === "c" && pi === 0) exs.forEach(x => { x.reps = 35; x.note = "Easy pace, you can still talk."; });
-      workouts[key] = { name: key === "c" ? (pi === 0 ? "Walk or bike (optional)" : "Arms & rear shoulders (optional)") : w.name, exercises: exs };
+      if (bal && w.name === "Upper & core") push({ name: "Deep squat hold", lib: "Deep squat hold", reps: 45, unit: "sec", sets: 1 }, { note: "Cool-down, holding the rack." });
+      if (!bal && key !== "c" && D.fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: D.fin, kg: 0, rest: 0, inc: 0, unit: "min", note: "Hard but steady – you can only say a few words.", lib: "Bike", id: `g${pi + 1}${key}-finisher` });
+      if (key === "c" && pi === 0 && !bal) exs.forEach(x => { x.reps = 35; x.note = "Easy pace, you can still talk."; });
+      workouts[key] = { name: key === "c" ? (bal ? "Home balance and mobility (recommended)" : pi === 0 ? "Walk or bike (optional)" : "Arms & rear shoulders (optional)") : w.name, exercises: exs };
     });
-    return { name: PHASE_NAMES[pi], weeks: [pi * 3 + 1, pi * 3 + 2, pi * 3 + 3], about: PHASE_ABOUT[pi], workouts };
+    return { name: PHASE_NAMES[pi], weeks: [pi * 3 + 1, pi * 3 + 2, pi * 3 + 3], about: (bal ? BAL_ABOUT : PHASE_ABOUT)[pi], workouts };
   });
   const title = `${a.goal} · ${a.shape} · ${days} days · ${a.time}`;
   return { title, start: today(), mig: 2, generated: true, direction: dir, phases };
 }
+
+// ===== Balance goal (balance-plan-update.md H9 – overrides balance-workouts.md / balance-2day-4day.md where they differ)
+Object.assign(EX, {
+  "Single-leg Romanian deadlift": { m: "ham", eq: "db", ratio: .08, inc: 2, lower: true, lib: "Single-leg Romanian deadlift reach", note: "Dumbbell in the opposite hand." },
+  "Hip adduction machine": { m: "thighs", eq: "machine", ratio: .3, inc: 2.5, lower: true },
+  "Single-arm cable row": { m: "back", eq: "cable", ratio: .15, inc: 2.5, lib: "Single-arm cable row, split stance", note: "Split stance, reps per side." },
+  "Half-kneeling Pallof press": { m: "core", eq: "cable", ratio: .12, inc: 2.5, lib: "Kneeling Pallof press", note: "Reps per side." },
+  "Tall-kneeling Pallof press": { m: "core", eq: "cable", ratio: .12, inc: 2.5, lib: "Kneeling Pallof press", note: "Reps per side." },
+  "Wall sit": { m: "thighs", eq: "bw", nokg: true, unit: "sec", reps: 30 },
+  "Front plank": { m: "core", eq: "bw", nokg: true, floor: true, unit: "sec", reps: 30 },
+  "Glute bridge hold": { m: "glutes", eq: "bw", nokg: true, floor: true, unit: "sec", reps: 30 },
+  "Hollow hold": { m: "core", eq: "bw", nokg: true, floor: true, unit: "sec", reps: 20 },
+  "Copenhagen side plank": { m: "thighs", eq: "bw", nokg: true, floor: true, unit: "sec", reps: 15, note: "Short lever: knee on the bench. Seconds per side." },
+  "Side-lying leg raise": { m: "glutes", eq: "bw", nokg: true, floor: true, note: "Reps per side." },
+  "Standing cable hip abduction": { m: "glutes", eq: "cable", ratio: .05, inc: 2.5, lower: true, note: "Reps per side." },
+  "Suitcase carry": { m: "core", eq: "db", ratio: .25, inc: 2, unit: "m", reps: 20, lib: "Suitcase hold & carry", note: "Metres per side." },
+  "Farmer carry": { m: "core", eq: "db", ratio: .3, inc: 2, unit: "m", reps: 20, lib: "Farmer carry & march" },
+  "Farmer march": { m: "core", eq: "db", ratio: .2, inc: 2, unit: "m", reps: 20, lib: "Farmer carry & march", note: "Lift one knee, pause 1 s each step." },
+  "Overhead carry": { m: "shoulders", eq: "db", ratio: .1, inc: 2, unit: "m", reps: 20 },
+  "Turkish get-up": { m: "core", eq: "db", ratio: .06, inc: 2, reps: 2, note: "Reps per side, slow." },
+  "Sit-to-stand": { m: "thighs", eq: "db", ratio: .1, inc: 2, lower: true, note: "To a bench, dumbbell at the chest." },
+  "Cable woodchop": { m: "core", eq: "cable", ratio: .1, inc: 2.5, note: "Half-kneeling, turn from the upper back. Reps per side." },
+  "Single-leg Pallof press": { m: "core", eq: "cable", ratio: .08, inc: 2.5 },
+  "Reverse lunge": { m: "thighs", eq: "db", ratio: .06, inc: 2, lower: true, knee: true, note: "Reps per leg." },
+  "Home balance and mobility": { m: "cardio", eq: "cardio", unit: "min", reps: 15, nokg: true, lib: "Single-leg stand", note: "At home next to a kitchen counter: balance block at your level + 5 min mobility." }
+});
+const BALANCE = {
+  3: [
+    T(["Lower & balance|Step-up 3|rack + mat: Single-leg Romanian deadlift 3 + Dead bug 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2|Seated calf raise 2",
+       "Upper & core|One-arm dumbbell row 3|incline bench: Incline dumbbell press 3 + Incline Y-raise 3|cable tower: Pallof press 2 + Single-arm cable row 2|static holds: Wall sit 2 + Front plank 2",
+       "Full body & control|Goblet squat 3|lat pulldown + mat: Lat pulldown 3 + Bird dog 2|rack: Suitcase carry 2 + Dumbbell lateral raise 3|flat bench: Incline push-up 2 + Dumbbell hip thrust 3",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Step-up 4|rack + mat: B-stance Romanian deadlift 3 + Side plank 2|leg press: Single-leg leg press 3 + Calf raise on the leg press 2",
+       "Upper & core|One-arm dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 3|cable tower: Half-kneeling Pallof press 2 + Face pull 2|static holds: Wall sit 2 + Glute bridge hold 2",
+       "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Reverse crunch 2|rack: Farmer carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Side-lying leg raise 2",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Step-up 4|rack + bench: Bulgarian split squat 3 + Dead bug 2|Single-leg Romanian deadlift 3|Seated calf raise 2",
+       "Upper & core|One-arm dumbbell row 4|incline bench ~30°: Incline dumbbell press 3 + Incline Y-raise 3|cable tower: Tall-kneeling Pallof press 2 + Single-arm cable row 2|static holds: Hollow hold 2 + Side plank 2",
+       "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Bird dog 2|cable tower: Cable woodchop 2 + Cable lateral raise 3|Hip abduction machine 3",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Step-up 4|rack + mat: Single-leg Romanian deadlift 3 + Side plank 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2",
+       "Upper & core|One-arm dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 3|cable tower: Half-kneeling Pallof press 2 + Face pull 2|static holds: Wall sit 2 + Front plank 2",
+       "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Dead bug 2|rack: Suitcase carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Dumbbell hip thrust 3",
+       "Extra|Home balance and mobility 1"])
+  ],
+  2: [
+    T(["Lower & balance|Sit-to-stand 3|bench: Step-up 2 + Incline plank 2|leg press: Leg press 3 + Calf raise on the leg press 3",
+       "Upper & core|Chest-supported dumbbell row 3|incline bench: Incline dumbbell press 3 + Incline Y-raise 2|dumbbell rack: Suitcase hold 2 + Dumbbell lateral raise 2|Seated knee lift 2",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Sit-to-stand 4|bench: Step-up 3 + Incline plank 2|leg press: Leg press 3 + Calf raise on the leg press 2",
+       "Upper & core|Chest-supported dumbbell row 4|incline bench: Incline dumbbell press 3 + Incline Y-raise 2|cable tower: Pallof press 2 + Single-arm cable row 2 + Face pull 2",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Sit-to-stand 4|bench: Step-up 3 + Incline plank 2|leg press: Single-leg leg press 3 + Calf raise on the leg press 2",
+       "Upper & core|Chest-supported dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 2|cable tower: Pallof press 2 + Single-arm cable row 2|Seated knee lift 2",
+       "Extra|Home balance and mobility 1"]),
+    T(["Lower & balance|Sit-to-stand 4|leg press: Leg press 3 + Calf raise on the leg press 2|hip machine: Hip abduction machine 2 + Hip adduction machine 2",
+       "Upper & core|Chest-supported dumbbell row 4|incline bench: Incline dumbbell press 3 + Incline Y-raise 2|cable tower: Pallof press 2 + Face pull 2|Ab crunch machine 2|static holds: Wall sit 2 + Incline plank 2",
+       "Extra|Home balance and mobility 1"])
+  ]
+};
+const MOBILITY_DAY = [
+  "Mobility & core|Turkish get-up 3|mat: Hollow hold 2 + Copenhagen side plank 2|dumbbell rack: Farmer march 2 + Overhead carry 2",
+  "Mobility & core|Turkish get-up 4|mat: Front plank 2 + Copenhagen side plank 2|cable tower: Single-leg Pallof press 2 + Cable woodchop 2",
+  "Mobility & core|Turkish get-up 4|mat: Hollow hold 2 + Copenhagen side plank 2|dumbbell rack: Overhead carry 2 + Farmer march 2",
+  "Mobility & core|Turkish get-up 4|mat: Hollow hold 2 + Copenhagen side plank 2|dumbbell rack: Farmer march 2 + Overhead carry 2"
+];
+BALANCE[4] = BALANCE[3].map((W, pi) => { const t = T([MOBILITY_DAY[pi]])[0]; return [...W.slice(0, 3), t, W[3]]; });
+// balance blocks: [name, library card, reps, unit] – static, static, third = dynamic slot (H9b)
+const BS = (name, lib, reps = 30, unit = "sec") => ({ name, lib, reps, unit });
+const BLOCKS = [
+  [[BS("Single-leg stand", "Single-leg stand"), BS("Tandem stand", "Tandem stand & heel-to-toe walk"), BS("Calf-raise hold", "Toe stand & calf-raise hold")],
+   [BS("Single-leg stand", "Single-leg stand"), BS("Heel-to-toe walk", "Tandem stand & heel-to-toe walk"), BS("Toe stand", "Toe stand & calf-raise hold")],
+   [BS("Single-leg stand holding a light dumbbell", "Single-leg stand with a weight"), BS("Split-stance hold", "Split-stance hold"), BS("Tandem stand", "Tandem stand & heel-to-toe walk")],
+   [BS("Single-leg stand", "Single-leg stand"), BS("Single-leg star reach", "Single-leg star reach", 5, "reps"), BS("Tandem walk, eyes up", "Tandem stand & heel-to-toe walk")]],
+  [[BS("Single-leg stand with head turns", "Single-leg stand"), BS("Single-leg star reach", "Single-leg star reach", 5, "reps")],
+   [BS("Single-leg stand, eyes closed (hand by the support)", "Single-leg stand"), BS("Heel-to-toe walk with head turns", "Tandem stand & heel-to-toe walk")],
+   [BS("Single-leg stand passing a dumbbell hand to hand", "Single-leg stand with a weight"), BS("Split-stance hold, eyes closed", "Split-stance hold")],
+   [BS("Single-leg stand with head turns", "Single-leg stand"), BS("Single-leg star reach", "Single-leg star reach", 5, "reps")]],
+  [[BS("Single-leg stand on the pad", "Single-leg stand"), BS("Step-up and hold", "Step and hold", 5, "reps")],
+   [BS("Tandem stand on the pad", "Tandem stand & heel-to-toe walk"), BS("Single-leg stand, eyes closed", "Single-leg stand")],
+   [BS("Single-leg stand on the pad with head turns", "Single-leg stand"), BS("Split-stance hold on the pad", "Split-stance hold")],
+   [BS("Single-leg stand on the pad", "Single-leg stand"), BS("Split-stance hold, eyes closed", "Split-stance hold")]],
+  [[BS("Single-leg stand on the pad catching a ball", "Ball toss to a wall"), BS("Forward and back step and hold", "Step and hold", 5, "reps")],
+   [BS("Single-leg stand passing a weight around the body", "Single-leg stand with a weight"), BS("Heel-to-toe walk on a line, eyes up", "Tandem stand & heel-to-toe walk")],
+   [BS("Single-leg stand, ball toss to the wall", "Ball toss to a wall"), BS("Split-stance hold on the pad, eyes closed", "Split-stance hold")],
+   [BS("Single-leg stand passing a weight around the body", "Single-leg stand with a weight"), BS("Tandem walk on the pad", "Tandem stand & heel-to-toe walk")]]
+];
+const DYN = {
+  rlkd: BS("Reverse lunge to knee drive, hold 3 s", "Reverse lunge to knee drive", 5, "reps"), switch: BS("Step switch", "Jump lunge", 20), march: BS("March in place", "March or skip in place"),
+  rdl: BS("Single-leg RDL reach", "Single-leg Romanian deadlift reach", 6, "reps"), jlunge: BS("Jump lunge", "Jump lunge", 20), skip: BS("Skipping in place", "March or skip in place"),
+  spallof: BS("Single-leg Pallof press", "Single-leg Pallof press", 8, "reps"), pistol: BS("Pistol squat ladder", "Pistol squat ladder", 4, "reps"), hop: BS("Small hop and stick", "Small hop and stick", 5, "reps"),
+  skater: BS("Skater bound and stick", "Skater bound and stick", 5, "reps"), lateral: BS("Lateral step and hold", "Lateral step and hold", 5, "reps"), weight: BS("Single-leg stand passing a weight", "Single-leg stand with a weight"),
+  highmarch: BS("March with high knees", "March or skip in place"), shallow: BS("Step switch, shallow, hand on the support", "Jump lunge", 20)
+};
+// dynamic slot per phase × workout (Lower, Upper, Full, Mobility)
+const DYN_SOME = [[null, null, null, null], ["rlkd", "switch", "rdl", "lateral"], ["jlunge", "skip", "spallof", "hop"], ["pistol", "skip", "hop", "skater"]];
+const DYN_EXP = [["rlkd", "weight", "rdl", "rdl"], ["jlunge", "skip", "spallof", "lateral"], ["pistol", "skip", "skater", "hop"], ["pistol", "jlunge", "hop", "skater"]];
+const DYN_NEW = [null, "march", "switch", "skip"];
+function balanceBlock(wi, pi, C) {
+  const base = (BLOCKS[pi][wi] || BLOCKS[pi][0]).slice(0, 3).map(b => ({ ...b }));
+  let dyn = C.lvl === "Experienced" ? DYN_EXP[pi][wi] : C.lvl === "Some" ? DYN_SOME[pi][wi] : DYN_NEW[pi];
+  const jumpy = ["jlunge", "skip", "hop", "skater", "pistol"];
+  if (C.old) dyn = { jlunge: "shallow", skip: "highmarch", hop: "lateral", skater: "lateral", pistol: "lateral", switch: "shallow", march: "march" }[dyn] || dyn;
+  if (C.easy.has("Knees") && jumpy.concat(["rlkd", "switch"]).includes(dyn)) dyn = { jlunge: "switch", skip: "march", rlkd: "lateral", switch: "march" }[dyn] || "lateral";
+  if (C.easy.has("Knees") && dyn === "switch") dyn = "march";
+  if (dyn) base[2] = { ...DYN[dyn] }; else if (base.length < 3) base.push(BS("Single-leg stand", "Single-leg stand"));
+  if (dyn === "pistol") base[2].name = C.lvl === "Experienced" ? "Pistol squat ladder" : "Pistol squat ladder (steps 1–3, box)";
+  if (C.old) base.forEach(b => { if (!/support/.test(b.name)) b.name += " – support in reach"; });
+  return base;
+}
+function genSupported(a) { return a && (a.goal === "Strength" || a.goal === "Balance") && a.where === "Gym"; }
 
 // generator>>
 function libView() {
