@@ -1347,7 +1347,7 @@ function mergeColl(snap, prefix, current) {
 }
 async function connect() {
   loadLocal();
-  if (!S.program) { S.program = clone(SEED.program); S.body = {}; S.logs = {};   // DEV: a new user starts with an empty Body tab (SEED.body is Christian's own baseline) saveLocal(); }
+  if (!S.program) { S.program = clone(SEED.program); S.body = {}; S.logs = {}; saveLocal(); }   // DEV: a new user starts with an empty Body tab (SEED.body is Christian's own baseline)
   migrate(); syncKeys();
   S.loaded = true; S.mode = "local";
   if (!loadProfile()) { obStart(false); return; }
