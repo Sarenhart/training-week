@@ -26,9 +26,10 @@ for(let i=0;i<N;i++){PID=i;const a=profile(r);const kk=a.goal+'/'+a.where;pop[kk
     if(a.where==='Home'){if(gymOnly.test(n)&&!/^Band|Prone|Single-leg|Dumbbell hip thrust at home|any machine|^Finisher/.test(n))hit('Home: gym-only exercise',`${tag} P${pi+1}: ${n}`);
       for(const [re,need] of kitNeed)if(re.test(n)&&!need.some(k=>a.kit.includes(k)))hit('Home: needs kit not ticked',`${tag} P${pi+1}: ${n} needs ${need.join('/')}`);
       if(/Dumbbell|dumbbell|Goblet|Romanian deadlift$|Suitcase/.test(n)&&x.kg>a.dbMax+0.01)hit('Home: dumbbell heavier than the heaviest owned',`${tag}: ${n} ${x.kg} > ${a.dbMax}`);
+      if(x.kg>0&&!/Warm-up sets/.test(n)&&!/Dumbbell|dumbbell|Kettlebell|Goblet|Romanian deadlift$|Suitcase|Preacher|Spider|skull|Single-leg calf raise$|Bulgarian|Reverse lunge|Step-up$|Sit-to-stand|carry|march$|get-up|curl$|row$|raise$|press$|fly$/.test(n))hit('Home: body-weight exercise with kg',`${tag}: ${n} ${x.kg}`);
       if(n==='Pull-up'&&x.reps>10)hit('Home pull-ups: >10 reps per set',`${tag} P${pi+1}: ${x.sets}x${x.reps}`);}
     if(x.unit==='reps'&&x.reps>20)hit('more than 20 reps',`${tag}: ${n} ${x.reps}`);
-    if(!c.EX[n]?.nokg&&c.EX[n]&&!c.EX[n].bw&&x.kg===0&&cls(n)!=='cardio')hit('loaded exercise with 0 kg: '+n,`${tag}`);
+    if(!c.EX[n]?.nokg&&c.EX[n]&&!c.EX[n].bw&&!x.bw&&x.kg===0&&cls(n)!=='cardio')hit('loaded exercise with 0 kg: '+n,`${tag}`);
     if(cls(n)!=='cardio'&&!/^Finisher|^Warm-up|^Cool-down/.test(n)&&!LIB.find(x.lib||n)&&!LIB.find(n)&&!OLD.has(n.toLowerCase()))hit('no guide at all (no library card, no old guide)',n);
    }
    for(const g in groups){const s=groups[g].sort();if(s[0]!==1||s.some((v,i)=>v!==i+1))hit('superset labels out of order (e.g. A2 without A1)',`${tag} P${pi+1} ${w.name}: ${g}${s.join(',')}`);if(s.length===1)hit('superset with only one exercise',`${tag} P${pi+1} ${w.name}: ${g}${s}`);}

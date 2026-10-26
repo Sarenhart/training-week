@@ -303,7 +303,7 @@ function generatePlan(a) {
       const push = (b, extra = {}) => exs.push({ name: b.name, sets: b.sets || 2, reps: b.reps, kg: 0, rest: 0, inc: 0, unit: b.unit, lib: b.lib, id: `g${pi + 1}${key}-${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}`, ...extra });
       if (key !== "c") {
         if (w.name === "Mobility & core") push({ name: "Warm-up", reps: 3, unit: "min", sets: 1 }, { note: "3 min easy bike or walk – the mobility flow that follows is the rest of the warm-up." });
-        else push({ name: "Warm-up", reps: warm, unit: "min", sets: 1 }, { note: warmNote(w, a, C) });
+        else push({ name: "Warm-up", reps: warm - 2, unit: "min", sets: 1 }, { note: a.where === "Home" ? "Brisk walking or marching in place – easy, full sentences." : "Easy bike or walk – full sentences." });
         if (!bal && age >= 50) push(balanceOne(pi, C, a), { note: "Per leg, next to a support. Feather = steady, kettlebell = wobbly or touched down." });
       }
       if (bal && key !== "c") {                                                // warm-up / balance block first (H3, H9)
@@ -631,12 +631,12 @@ function homeify(P, a) {
       if (pick.note) x.note = [x.note, pick.note].filter(Boolean).join(" ");
       const oldUnit = x.unit; x.unit = e.unit || "reps"; if (x.unit !== oldUnit) x.reps = e.reps || (x.unit === "sec" ? 30 : 15);
       if (!isDb) { x.kg = 0; x.inc = pick.assist ? 0.25 : 0; if (pick.bw) x.bw = true; else delete x.bw; if (x.unit === "reps" && !/ladder/i.test(x.name) && !pick.assist) x.reps = Math.max(x.reps, 15); }
+      else { x.kg = dbKg(e); x.inc = 0.5; delete x.bw; }
       if (pick.assist) {                                                                   // M4: home pull-up ladder
         const exp = a.level === "Experienced", st = exp ? 2 : [0, 1, 2, 2][pi];
         x.reps = [4, 6, 5][st]; x.inc = 0; x.kg = 0;
         x.note = ["Ladder step 1 – slow negatives: step up to the top, lower in 3–5 s. 3–5 reps.", "Ladder step 2 – band-assisted pull-ups, 5–8 reps.", "Ladder step 3 – full pull-ups, 3–8 reps. Top of the range easy → add reps or a slower lowering."][st];
       }
-      else { x.kg = dbKg(e); x.inc = 0.5; delete x.bw; }
       x.id = x.id.replace(/-[^-]+$/, "") + "-" + pick.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20);
     }); w.exercises = w.exercises.filter(x => !x._drop); });
   });
@@ -748,6 +748,18 @@ function finalizePlan(P, a) {
       const seen = new Set();
       w.exercises = w.exercises.filter(x => { if (isCardioBlock(x) || !seen.has(x.name)) { seen.add(x.name); return true; }
         const D = ALT.dup || ALT.floor, alt = pickAlt((D[EX[x.name]?.m] || []).concat(D.core)); if (alt && !seen.has(alt)) { swapTo(x, alt); seen.add(alt); return true; } return false; });
+      // H1 (Christian 2026-10-26): warm up the muscles of the first lift with light sets of that lift – shown like a normal exercise
+      if (a.goal !== "Cardio" && key !== "c" && w.exercises.some(x => x.name === "Warm-up")) {
+        const i = w.exercises.findIndex(x => !isCardioBlock(x) && !isBalanceItem(x) && EX[x.name] && !/hold$|Ankle rocks|stretch|90\/90|rotation/.test(x.name) && w.exercises.indexOf(x) > 0);
+        const x = w.exercises[i];
+        if (x && !w.exercises.some(y => /^Warm-up sets/.test(y.name))) {
+          const e = EX[x.name] || {}, step = e.eq === "db" ? 2 : 2.5, half = Math.max(e.eq === "db" ? 2 : 5, Math.floor((x.kg || 0) / 2 / step) * step);
+          const bw = e.bw || e.nokg || x.bw || !x.kg, light = bw || half >= x.kg;              // already at the lightest weight → one easy set
+          w.exercises.splice(i, 0, { name: "Warm-up sets: " + x.name, sets: light ? 1 : 2, reps: light ? 6 : 8, kg: bw ? 0 : light ? x.kg : half, rest: 30, inc: x.inc || 0, unit: "reps",
+            lib: x.lib || e.lib || x.name, ...(x.bw ? { bw: true } : {}), warmup: true,
+            note: (light ? "One easy set, a few slow reps." : "Light – about half your working weight. Not work sets: easy, smooth reps.") + (easy.has("Wrists") && /push-up/i.test(x.name) ? " Push-ups on handles or fists, wrists straight." : ""), id: x.id + "-warm" });
+        }
+      }
       // L4: starting weight for loaded exercises that ended up at 0 kg; body weight at home
       for (const x of w.exercises) {
         const e = EX[x.name]; if (!e || isCardioBlock(x) || x.kg || e.nokg || e.bw || x.bw) continue;
