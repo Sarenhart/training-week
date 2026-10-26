@@ -260,7 +260,7 @@ function generatePlan(a) {
     if (time <= 30) main.forEach(w => { w.groups = w.groups.slice(0, 3); w.groups.forEach(g => g.ex.forEach(x => x.sets = Math.min(x.sets, 3))); });
     if (time >= 60) main.forEach(w => w.groups.slice(1).forEach(g => g.ex.forEach(x => { if (focusMs.includes(EX[x.name]?.m) && x.sets < 4) x.sets++; })));
     // keep each workout inside its time: ~14 sets at 30 min, ~22 at 45, ~28 at 60 (supersets). Trim the least important first.
-    const cap = (bal ? (time <= 30 ? 9 : time >= 60 ? 21 : 15) + 2 : time <= 30 ? 14 : time >= 60 ? 28 : 22) - Math.floor(warm / 2) - (age >= 50 && !bal ? 1 : 0) - (bal ? 0 : Math.floor((time <= 30 ? (warm >= 8 ? 0 : Math.min(D.fin, 5)) : D.fin) / 2.5));   // warm-up, 50+ balance exercise and finisher fit inside the chosen time
+    const cap = (bal ? (time <= 30 ? 9 : time >= 60 ? 21 : 15) + 2 : time <= 30 ? 14 : time >= 60 ? 28 : 22) - Math.floor(warm / 2) - (age >= 50 && !bal ? 1 : 0);   // warm-up and the 50+ balance exercise fit inside the chosen time; the finisher is an optional extra after it (Christian 2026-10-26)
     const ORDER = ["calves", "rear", "triceps", "biceps", "core", "shoulders", "ham", "thighs", "back", "chest", "glutes"];
     const rank = x => focusMs.includes(EX[x.name]?.m) ? 99 : Math.max(0, ORDER.indexOf(EX[x.name]?.m));
     for (const w of main) {
@@ -337,8 +337,8 @@ function generatePlan(a) {
         });
       });
       if (bal && w.name === "Upper & core") push(easy.has("Knees") ? { name: "Calf stretch", lib: "Calf stretch", reps: 45, unit: "sec", sets: 1 } : { name: "Deep squat hold", lib: "Deep squat hold", reps: 45, unit: "sec", sets: 1 }, { note: "Cool-down, holding the rack." });
-      const fin = time <= 30 ? (warm >= 8 ? 0 : Math.min(D.fin, 5)) : D.fin;      // the warm-up comes out of the same 30 minutes
-      if (!bal && key !== "c" && fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: fin, kg: 0, rest: 0, inc: 0, unit: "min", note: "Hard but steady – you can only say a few words.", lib: "Bike", id: `g${pi + 1}${key}-finisher` });
+      const fin = D.fin;                                                          // optional extra after the workout, not part of the chosen time
+      if (!bal && key !== "c" && fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: fin, kg: 0, rest: 0, inc: 0, unit: "min", optional: true, note: `Optional, +${fin} min if you have time – not part of your ${time} minutes. Hard but steady – you can only say a few words.`, lib: "Bike", id: `g${pi + 1}${key}-finisher` });
       if (key === "c" && pi === 0 && !bal) exs.forEach(x => { x.reps = 35; x.note = "Easy pace, you can still talk."; });
       workouts[key] = { name: key === "c" ? (bal ? (days === 2 ? "Home balance and mobility (recommended twice a week)" : "Home balance and mobility (recommended)") : pi === 0 ? "Walk or bike (optional)" : "Extra – the sets that didn't fit") : w.name, exercises: exs };
     });

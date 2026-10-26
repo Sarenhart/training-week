@@ -9,7 +9,7 @@ for(let i=0;i<N;i++){PID=i;const a=profile(r);const kk=a.goal+'/'+a.where;pop[kk
  const seenWeek=[];
  P.phases.forEach((ph,pi)=>{const names=new Map();
   for(const [k,w] of Object.entries(ph.workouts)){const opt=k==='c';
-   const m=minutes(w); if(!opt&&m>t+8)hit('time over chosen +8 min ('+a.goal+')',`${tag} P${pi+1} ${w.name} ~${m} min`);
+   const m=minutes({...w,exercises:w.exercises.filter(x=>!/^Finisher/.test(x.name))}); if(!opt&&m>t+8)hit('time over chosen +8 min ('+a.goal+')',`${tag} P${pi+1} ${w.name} ~${m} min`);
    const inW=new Set();const groups={};
    for(const x of w.exercises){const n=x.name;
     if(inW.has(n))hit('same exercise twice in one workout',`${tag} P${pi+1} ${w.name}: ${n}`);inW.add(n);
