@@ -136,6 +136,7 @@ function obView() {
     h += `<header class="top"><div>${stepTag}<h1>Your training week</h1></div></header>
       ${one("level", "Experience", "sets your starting weights", ["New", "Some", "Experienced"])}
       ${one("days", "Workouts per week", "plus an extra session", [2, 3, 4])}
+      ${a.goal === "Balance" && (obAge(a) || 0) >= 65 && a.days === 2 ? `<div class="obfit" role="note"><p>For balance, 3 days a week is recommended at 65+ – frequent practice gives the best protection against falls.</p><button type="button" class="btn small" data-act="obone" data-k="days" data-v="3">Switch to 3 days</button></div>` : ""}
       ${one("time", "Time per workout", "", ["30 min", "45 min", "60 min"])}
       ${one("where", "Where you train", "home: tick your equipment next", ["Gym", "Home"])}
       ${a.goal === "Cardio" ? one("machine", "Preferred cardio machine", "the rower, air bike, ski machine and running open up in later phases", ["Bike", "Cross-trainer", "Incline treadmill walk", "Stair climber", "Air bike", "Ski machine", "Rower", "Running"]) : ""}
@@ -166,12 +167,20 @@ function obView() {
       <div class="obchips static">${chips.map(c => `<span class="pill">${esc(c)}</span>`).join("")}</div>
       ${d ? `<div class="card obdir"><div class="eyebrow">Your direction</div><h2>${esc(d)}</h2><p>${esc(DIRECTIONS[d])}</p></div>` : ""}
       ${doctorNote(a) ? `<div class="obwarn">We recommend consulting with a doctor before starting a new training plan.</div>` : ""}
+      ${typeof planShort === "function" && planShort(a) ? `<div class="obfit" role="note"><p>With ${a.days} days of ${parseInt(a.time, 10)} minutes your plan keeps you healthy and strong, but won't give any visible change.</p></div>` : ""}
+      ${a.goal === "Balance" && (obAge(a) || 0) >= 65 ? `<div class="obfit" role="note"><p>${esc(balanceWeekText(a))}</p></div>` : ""}
       <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
       <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
       <div class="note">${typeof genSupported === "function" && genSupported(a) ? "DEV: \"Start week 1\" builds this plan and clears the workouts logged in DEV. Your main app is not touched." : "DEV: plans for " + (a.where === "Home" ? "home training" : a.goal) + " come in the next part of round 3. Until then your current programme is kept – your answers are saved."}</div>
       <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">Start week 1</button></div>`;
   }
   return h + `</div>`;
+}
+// M7: weekly total for 65+ Balance – workouts plus the recommended home sessions, against the 3 hours that protect best against falls
+function balanceWeekText(a) {
+  const min = a.days * (parseInt(a.time, 10) || 45) + (a.days === 2 ? 2 : 1) * 15, h = Math.floor(min / 60), m = min % 60;
+  const t = `About ${h ? h + " h" : ""}${h && m ? " " : ""}${m ? m + " min" : ""} a week with the home sessions`;
+  return min >= 180 ? t + " – that's the amount that gives the best protection against falls." : t + " – 3 hours gives the best protection against falls.";
 }
 function kitSummary(a) {
   const has = x => a.kit.includes(x), parts = [];

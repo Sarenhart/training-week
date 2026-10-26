@@ -13,7 +13,7 @@ for(let i=0;i<N;i++){PID=i;const a=profile(r);const kk=a.goal+'/'+a.where;pop[kk
    const inW=new Set();const groups={};
    for(const x of w.exercises){const n=x.name;
     if(inW.has(n))hit('same exercise twice in one workout',`${tag} P${pi+1} ${w.name}: ${n}`);inW.add(n);
-    if(!opt&&cls(n)!=='cardio'){if(names.has(n)&&names.get(n)!==k&&a.goal==='Strength')hit('exercise repeated in the week (Strength, '+a.where+')',`${tag} P${pi+1}: ${n}`);names.set(n,k);}
+    if(!opt&&cls(n)!=='cardio'&&cls(n)!=='balance'){if(names.has(n)&&names.get(n)!==k&&a.goal==='Strength')hit('exercise repeated in the week (Strength, '+a.where+')',`${tag} P${pi+1}: ${n}`);names.set(n,k);}
     if(x.ss){const g=x.ss[0];(groups[g]=groups[g]||[]).push(+x.ss.slice(1));}
     if(a.level==='New'&&pi===0&&/Barbell|barbell/.test(n))hit('New: barbell in phase 1',`${tag}: ${n}`);
     if(old&&a.where==='Gym'&&c.EX[n]?.floor)hit('65+: floor exercise in gym',`${tag} P${pi+1}: ${n}`);

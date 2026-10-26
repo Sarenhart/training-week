@@ -176,9 +176,10 @@ function generatePlan(a) {
   const time = parseInt(a.time, 10) || 45;
   const m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75));
   const sexF = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9];
-  const expF = { New: 0.6, Some: 1, Experienced: 1.4 }[lvl], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
+  const expF = { New: 0.6, Some: 1, Experienced: 1.6 }[lvl], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
   const minReps = old ? 8 : lvl === "New" ? 8 : age >= 50 ? 6 : age >= 40 ? 5 : 6;
   const bal = a.goal === "Balance", C = { lvl, old, easy };
+  const warm = age >= 50 ? 10 : age >= 40 ? 8 : 5;                         // H1 (2026-10-26): warm-up in every workout, inside the chosen time
   const tpl = (bal ? BALANCE : STRENGTH)[days] || (bal ? BALANCE : STRENGTH)[3];
   const phases = tpl.map((W, pi) => {
     const used = new Set();                                      // no repeats within the week
@@ -242,12 +243,24 @@ function generatePlan(a) {
         target.groups.push({ spot: "", ex: [{ name: cand, sets: 3 }] }); used.add(cand);
       }
     }
+    // M6 (2026-10-26): Balance plans – one lower-body/core pair per workout becomes a push + pull pair (upper body was light)
+    if (bal) main.forEach(w => {
+      if (/Upper/.test(w.name) || w.name === "Mobility & core") return;
+      const LOW = ["glutes", "thighs", "ham", "calves", "core"];
+      const gi = w.groups.findIndex((g, i) => i > 0 && g.spot !== "static holds" && g.ex.length === 2 && g.ex.every(x => LOW.includes(EX[x.name]?.m) && !(a.focus || []).flatMap(f => MUSCLE_OF_FOCUS[f]).includes(EX[x.name]?.m)));
+      if (gi < 0) return;
+      const pk = l => l.find(n => !used.has(n) && !(old && EX[n]?.floor) && !(easy.has("Shoulders") && /push-up/i.test(n)));
+      const push = pk(["Incline dumbbell press", "Dumbbell bench press", "Machine chest press", "Incline push-up"]), pull = pk(["One-arm dumbbell row", "Seated cable row", "Chest-supported dumbbell row", "Lat pulldown", "Machine row"]);
+      if (!push || !pull) return;
+      w.groups[gi].ex.forEach(x => used.delete(x.name));
+      w.groups[gi] = { spot: "bench", ex: [{ name: push, sets: 2 }, { name: pull, sets: 2 }] }; used.add(push); used.add(pull);
+    });
     // time: 30 min keeps the main lift + two groups (max 3 sets); 60 min adds a set to focus exercises
     const focusMs = (a.focus || []).flatMap(f => MUSCLE_OF_FOCUS[f]);
     if (time <= 30) main.forEach(w => { w.groups = w.groups.slice(0, 3); w.groups.forEach(g => g.ex.forEach(x => x.sets = Math.min(x.sets, 3))); });
     if (time >= 60) main.forEach(w => w.groups.slice(1).forEach(g => g.ex.forEach(x => { if (focusMs.includes(EX[x.name]?.m) && x.sets < 4) x.sets++; })));
     // keep each workout inside its time: ~14 sets at 30 min, ~22 at 45, ~28 at 60 (supersets). Trim the least important first.
-    const cap = bal ? (time <= 30 ? 9 : time >= 60 ? 21 : 15) + 2 : time <= 30 ? 14 : time >= 60 ? 28 : 22;
+    const cap = (bal ? (time <= 30 ? 9 : time >= 60 ? 21 : 15) + 2 : time <= 30 ? 14 : time >= 60 ? 28 : 22) - Math.floor(warm / 2) - (age >= 50 && !bal ? 1 : 0) - (bal ? 0 : Math.floor((time <= 30 ? (warm >= 8 ? 0 : Math.min(D.fin, 5)) : D.fin) / 2.5));   // warm-up, 50+ balance exercise and finisher fit inside the chosen time
     const ORDER = ["calves", "rear", "triceps", "biceps", "core", "shoulders", "ham", "thighs", "back", "chest", "glutes"];
     const rank = x => focusMs.includes(EX[x.name]?.m) ? 99 : Math.max(0, ORDER.indexOf(EX[x.name]?.m));
     for (const w of main) {
@@ -264,16 +277,40 @@ function generatePlan(a) {
       }
     }
     if (D.sets3) main.forEach(w => { const x = w.groups[0].ex[0]; x.sets = Math.min(x.sets, 3); });
+    // M1 (2026-10-26): 60 min gets more than 45 – sets for muscles below their target first, then the extra workout's groups
+    if (!bal && time >= 60) {
+      const extra = plan.find(w => w.name === "Extra");
+      const wk = () => weeklySets(main.flatMap(w => w.groups.flatMap(g => g.ex)));
+      for (const w of main) {
+        const total = () => w.groups.reduce((t, g) => t + g.ex.reduce((u, x) => u + x.sets, 0), 0);
+        let guard = 0;
+        while (total() < cap && guard++ < 40) {
+          const ws = wk(), need = grp => targetLow(a, grp, pi) - ws[grp];
+          const acc = w.groups.slice(1).flatMap(g => g.ex).filter(x => x.sets < 4 && GROUP_OF[EX[x.name]?.m] && need(GROUP_OF[EX[x.name].m]) > 0)
+            .sort((p, q) => need(GROUP_OF[EX[q.name].m]) - need(GROUP_OF[EX[p.name].m]));
+          if (acc.length) { acc[0].sets++; continue; }
+          const gi = extra ? extra.groups.findIndex(g => g.ex.every(x => EX[x.name]?.m !== "cardio") && total() + g.ex.reduce((u, x) => u + x.sets, 0) <= cap) : -1;
+          if (gi < 0) break;
+          w.groups.push(extra.groups.splice(gi, 1)[0]);
+        }
+      }
+    }
     // build the app's workout format
     const workouts = {};
     plan.forEach((w, wi) => {
       const key = w.name === "Extra" ? "c" : String(wi + 1);
       const exs = []; let letter = 0;
       const push = (b, extra = {}) => exs.push({ name: b.name, sets: b.sets || 2, reps: b.reps, kg: 0, rest: 0, inc: 0, unit: b.unit, lib: b.lib, id: `g${pi + 1}${key}-${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}`, ...extra });
+      if (key !== "c") {
+        if (w.name === "Mobility & core") push({ name: "Warm-up", reps: 3, unit: "min", sets: 1 }, { note: "3 min easy bike or walk – the mobility flow that follows is the rest of the warm-up." });
+        else push({ name: "Warm-up", reps: warm, unit: "min", sets: 1 }, { note: warmNote(w, a, C) });
+        if (!bal && age >= 50) push(balanceOne(pi, C, a), { note: "Per leg, next to a support. Feather = steady, kettlebell = wobbly or touched down." });
+      }
       if (bal && key !== "c") {                                                // warm-up / balance block first (H3, H9)
         const legDay = /Lower|Full body/.test(w.name);
-        if (legDay) push({ name: "Deep squat hold", lib: "Deep squat hold", reps: 30, unit: "sec", sets: 2 }, { note: "Warm-up, holding the rack. Heels down, chest up" + (old || easy.has("Knees") ? ", only as deep as feels fine." : ".") });
-        if (w.name === "Mobility & core") ["Half-kneeling hip-flexor stretch", "90/90 hip switches", "Ankle rocks", "Open-book upper-back rotation", "Deep squat hold"].forEach((n, i) => push({ name: n, lib: n, reps: 120, unit: "sec", sets: 1 }, { note: i === 0 ? "Mobility flow – follow along, about 10 min." : undefined }));
+        if (legDay) push(easy.has("Knees") ? { name: "Ankle rocks", lib: "Ankle rocks", reps: 30, unit: "sec", sets: 2 } : { name: "Deep squat hold", lib: "Deep squat hold", reps: 30, unit: "sec", sets: 2 },
+          { note: easy.has("Knees") ? "Holding the rack: knee gently forward over the toes, heel down. Seconds per side." : "Holding the rack. Heels down, chest up" + (old ? ", only as deep as feels fine." : ".") });
+        if (w.name === "Mobility & core") ["Half-kneeling hip-flexor stretch", "90/90 hip switches", "Ankle rocks", "Open-book upper-back rotation", "Deep squat hold"].forEach((n, i) => push({ name: n, lib: n, reps: time <= 45 ? 60 : 120, unit: "sec", sets: 1 }, { note: i === 0 ? `Mobility flow – follow along, about ${time <= 45 ? 5 : 10} min.` : undefined }));
         const blk = balanceBlock(w.name === "Mobility & core" ? 3 : wi, pi, C); letter = 1;
         blk.forEach((b, i) => push({ ...b, sets: 2 }, { ss: "A" + (i + 1), rest: i === blk.length - 1 ? 30 : 0, note: i === 0 ? "Balance block – 2 rounds. Feather = easy, kettlebell = wobbly or touched down." : undefined }));
       }
@@ -281,7 +318,9 @@ function generatePlan(a) {
         const ss = g.ex.length > 1 ? String.fromCharCode(65 + letter++) : null;
         g.ex.forEach((x, xi) => {
           const e = EX[x.name] || { m: "", eq: "db", ratio: .05, inc: 2 }, isMain = key !== "c" && gi === 0;
-          const reps = e.reps || (isMain ? Math.max(minReps, D.main[pi]) : D.acc);
+          // M3 (2026-10-26): Strength goal – main lift at least 12 → 10 → 8 → 8 whatever the direction
+          const reps = e.reps || (isMain ? Math.max(minReps, a.goal === "Strength" ? Math.min(D.main[pi], [12, 10, 8, 8][pi]) : D.main[pi]) : D.acc);
+          const mainRest = (a.goal === "Strength" ? Math.max(D.rest, 105) : D.rest) + (old ? 30 : 0);   // 65+: +30 s (Part 1)
           let kg = 0;
           if (e.fixed) kg = e.fixed;
           else if (e.ratio) { const sx = e.lower ? sexF[1] : sexF[0], raw = e.ratio * bwKg * expF * sx * ageF, step = e.eq === "db" ? 2 : 2.5; kg = Math.max(e.eq === "db" ? 2 : 5, Math.floor(raw / step) * step); }
@@ -292,15 +331,16 @@ function generatePlan(a) {
           if (g.spot && xi === 0 && ss) notes.push("Superset at the " + g.spot + ".");
           if (e.note) notes.push(e.note);
           if (x.note) notes.push(x.note);
-          exs.push({ name: x.name, sets: x.sets, reps, kg, rest: ss && !last ? 0 : isMain ? D.rest : 60, inc: e.inc || 0, unit: e.unit || "reps",
+          exs.push({ name: x.name, sets: x.sets, reps, kg, rest: ss && !last ? 0 : isMain ? mainRest : 60, inc: e.inc || 0, unit: e.unit || "reps",
             ...(e.bw ? { bw: true } : {}), ...(ss ? { ss: ss + (xi + 1) } : {}), ...(e.lib ? { lib: e.lib } : {}), ...(notes.length ? { note: notes.join(" ") } : {}),
             id: `g${pi + 1}${key}-${x.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}` });
         });
       });
-      if (bal && w.name === "Upper & core") push({ name: "Deep squat hold", lib: "Deep squat hold", reps: 45, unit: "sec", sets: 1 }, { note: "Cool-down, holding the rack." });
-      if (!bal && key !== "c" && D.fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: D.fin, kg: 0, rest: 0, inc: 0, unit: "min", note: "Hard but steady – you can only say a few words.", lib: "Bike", id: `g${pi + 1}${key}-finisher` });
+      if (bal && w.name === "Upper & core") push(easy.has("Knees") ? { name: "Calf stretch", lib: "Calf stretch", reps: 45, unit: "sec", sets: 1 } : { name: "Deep squat hold", lib: "Deep squat hold", reps: 45, unit: "sec", sets: 1 }, { note: "Cool-down, holding the rack." });
+      const fin = time <= 30 ? (warm >= 8 ? 0 : Math.min(D.fin, 5)) : D.fin;      // the warm-up comes out of the same 30 minutes
+      if (!bal && key !== "c" && fin) exs.push({ name: "Finisher: bike or rower", sets: 1, reps: fin, kg: 0, rest: 0, inc: 0, unit: "min", note: "Hard but steady – you can only say a few words.", lib: "Bike", id: `g${pi + 1}${key}-finisher` });
       if (key === "c" && pi === 0 && !bal) exs.forEach(x => { x.reps = 35; x.note = "Easy pace, you can still talk."; });
-      workouts[key] = { name: key === "c" ? (bal ? "Home balance and mobility (recommended)" : pi === 0 ? "Walk or bike (optional)" : "Arms & rear shoulders (optional)") : w.name, exercises: exs };
+      workouts[key] = { name: key === "c" ? (bal ? (days === 2 ? "Home balance and mobility (recommended twice a week)" : "Home balance and mobility (recommended)") : pi === 0 ? "Walk or bike (optional)" : "Extra – the sets that didn't fit") : w.name, exercises: exs };
     });
     return { name: PHASE_NAMES[pi], weeks: [pi * 3 + 1, pi * 3 + 2, pi * 3 + 3], about: (bal ? BAL_ABOUT : PHASE_ABOUT)[pi], workouts };
   });
@@ -431,14 +471,22 @@ const CARDIO_STR = [   // [Strength + intervals, Strength + tempo/steady] – ma
 ];
 const INTERVALS = ["8 × 30 s Hard / 90 s Easy", "8 × 45 s Hard / 75 s Easy", "4 × 3 min Hard / 2 min Easy", "5 × 2 min Hard / 2 min Easy"];
 const TEMPO = ["2 × 7 min Steady, 2 min Easy between", "2 × 8 min Steady, 2 min Easy between", "3 × 5 min Steady, 1 min Easy between", "2 × 8 min Steady + 2 min Hard finish"];
+const INTERVALS15 = ["6 × 30 s Hard / 90 s Easy", "6 × 45 s Hard / 75 s Easy", "2 × 3 min Hard / 2 min Easy", "3 × 2 min Hard / 2 min Easy"];
+const INTERVALS25 = ["10 × 30 s Hard / 90 s Easy", "10 × 45 s Hard / 75 s Easy", "4 × 3 min Hard / 2 min Easy", "5 × 2 min Hard / 2 min Easy"];
+const TEMPO15 = ["2 × 5 min Steady, 2 min Easy between", "2 × 5 min Steady, 2 min Easy between", "2 × 5 min Steady, 1 min Easy between", "2 × 5 min Steady + 1 min Hard finish"];
+const TEMPO25 = ["3 × 6 min Steady, 1 min Easy between", "3 × 6 min Steady, 1 min Easy between", "4 × 5 min Steady, 1 min Easy between", "3 × 6 min Steady + 2 min Hard finish"];
+// WHO counting: a Hard minute counts double – the extra minutes in a block's note
+function hardMinutes(note) { let h = 0; const m = (note || "").match(/(\d+) × (\d+) (s|min) Hard/); if (m) h += (+m[1]) * (+m[2]) / (m[3] === "s" ? 60 : 1); const f = (note || "").match(/\+ (\d+) min Hard/); if (f) h += +f[1]; return h; }
 const CORE_MOB = [["Bird dog", "Side plank", "Half-kneeling hip-flexor stretch"], ["Dead bug", "Side plank", "Half-kneeling hip-flexor stretch"], ["Bird dog", "Glute-bridge march", "90/90 hip switches"], ["Dead bug", "Side plank", "Ankle rocks"]];
 function generateCardio(a) {
   const days = a.days || 3, lvl = a.level || "Some", dir = directionOf(a) || "Reshape", D = DOSE[dir];
   const age = obAge(a) || 30, old = age >= 65, easy = new Set(a.easy || []), C = { lvl, old, easy };
   const m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75));
   const sexF = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9];
-  const expF = { New: 0.6, Some: 1, Experienced: 1.4 }[lvl], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
-  const warm = age >= 50 ? 10 : age >= 40 ? 8 : 5;
+  const expF = { New: 0.6, Some: 1, Experienced: 1.6 }[lvl], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
+  const time = parseInt(a.time, 10) || 45, short = time <= 30, long = time >= 60;          // H4 (2026-10-26): Cardio follows the chosen time
+  const warm = short ? 5 : age >= 50 ? 10 : age >= 40 ? 8 : 5;
+  const blockMin = short ? 15 : long ? 25 : 20;
   const pref = a.machine || "Bike";
   const kg = e => { if (!e.ratio) return 0; const sx = e.lower ? sexF[1] : sexF[0], raw = e.ratio * bwKg * expF * sx * ageF, st = e.eq === "db" ? 2 : 2.5; return Math.max(e.eq === "db" ? 2 : 5, Math.floor(raw / st) * st); };
   const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28);
@@ -456,13 +504,14 @@ function generateCardio(a) {
         if (old && EX[n]?.floor) return EX[n].m === "core" ? (n === "Dead bug" ? "Seated knee lift" : n === "Side plank" ? "Incline plank" : "Pallof press") : "Machine chest press";
         return n;
       };
-      const mx = parse(mainS); mx.name = swapEasy(mx.name);
+      const mx = parse(mainS); mx.name = swapEasy(mx.name); if (short) mx.sets = 2;
+      if (long) groups.push(pkey === "1" ? (old ? "cable tower: Pallof press 2 + Face pull 2" : "cable tower: Pallof press 2 + Face pull 2") : "dumbbell rack: Dumbbell lateral raise 2 + Single-leg calf raise 2");
       const e0 = EX[mx.name] || {};
-      out.push({ name: mx.name, sets: mx.sets, reps: Math.max(old || lvl === "New" ? 8 : 6, D.main[pi]), kg: kg(e0), rest: 90, inc: e0.inc || 2, unit: "reps", ...(e0.lib ? { lib: e0.lib } : {}), ...(e0.note ? { note: e0.note } : {}), id: `c${pi + 1}${pkey}-${slug(mx.name)}` });
+      out.push({ name: mx.name, sets: mx.sets, reps: Math.max(old || lvl === "New" ? 8 : 6, D.main[pi]), kg: kg(e0), rest: old ? 120 : 90, inc: e0.inc || 2, unit: "reps", ...(e0.lib ? { lib: e0.lib } : {}), ...(e0.note ? { note: e0.note } : {}), id: `c${pi + 1}${pkey}-${slug(mx.name)}` });
       for (const g of groups) {
         const mm = g.match(/^([^:]+):\s(.+)$/); let ex = (mm ? mm[2] : g).split(" + ").map(parse);
         // C-07: single-leg RDL + standing cable hip abduction rotate in (Some/Experienced phase 2, New phase 3) on the tempo/steady day
-        if (pkey !== "1" && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
+        if (pkey !== "1" && g === groups[0] && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
         ex.forEach((x, xi) => { x.name = swapEasy(x.name); const e = EX[x.name] || {};
           out.push({ name: x.name, sets: x.sets, reps: e.reps || 15, kg: e.nokg || e.bw ? 0 : kg(e), rest: xi < ex.length - 1 ? 0 : 60, inc: e.inc || 0, unit: e.unit || "reps", ss: "A" + (xi + 1),
             ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: [xi < ex.length - 1 ? "Go straight to A" + (xi + 2) + "." : "", e.note || ""].filter(Boolean).join(" ") || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
@@ -470,26 +519,30 @@ function generateCardio(a) {
       return out;
     };
     const warmup = { ...block("Warm-up", warm, "Easy – full sentences."), id: `c${pi + 1}-warm` };
-    const ivl = newP1 ? "8 × 30 s Steady / 90 s Easy (no Hard yet)" : old && run ? INTERVALS[pi] : INTERVALS[pi];
-    const intervalsBlock = { ...block(mach + " – intervals", 20, "3 min Easy · " + ivl + " · Easy to finish. Hard = only a few words."), id: `c${pi + 1}-int` };
-    const tempoBlock = { ...block(mach + " – tempo", 20, "2 min Easy · " + TEMPO[pi] + " · Easy to finish. Steady = short sentences."), id: `c${pi + 1}-tempo` };
-    const steadyMin = pi === 3 ? 40 : lvl === "New" && pi === 0 ? 30 : 35;
+    const IV = short ? INTERVALS15 : long ? INTERVALS25 : INTERVALS, TP = short ? TEMPO15 : long ? TEMPO25 : TEMPO;
+    const ivl = newP1 ? IV[0].replace("Hard", "Steady") + " (no Hard yet)" : IV[pi];
+    const intervalsBlock = { ...block(mach + " – intervals", blockMin, "3 min Easy · " + ivl + " · Easy to finish. Hard = only a few words."), id: `c${pi + 1}-int` };
+    const tempoBlock = { ...block(mach + " – tempo", blockMin, "2 min Easy · " + TP[pi] + " · Easy to finish. Steady = short sentences."), id: `c${pi + 1}-tempo` };
+    const steadyMin = Math.max(15, time - warm - 5 - (lvl === "New" && pi === 0 ? 5 : 0));          // warm-up + steady + ~5 min core & mobility = chosen time
     const walkRun = run && lvl === "New" ? (pi === 1 ? "Walk–run: 10 × (1 min jog / 2 min walk), then Easy." : pi === 2 ? "Walk–run: 8 × (2 min jog / 1 min walk), then Easy." : "Easy continuous running if you've reached it, otherwise walk–run.") : "";
     const steadyBlock = { ...block(mach + " – steady", steadyMin, walkRun || "Steady – short sentences the whole way."), id: `c${pi + 1}-steady` };
-    const cool = { ...block("Cool-down", 2, "Easy."), id: `c${pi + 1}-cool` };
-    const coreMob = CORE_MOB[pi].map((n, i) => { let nm = n; if (old && EX[n]?.floor) nm = n === "Dead bug" ? "Seated knee lift" : n === "Side plank" ? "Incline plank" : n === "Bird dog" ? "Pallof press" : nm;
+    const cool = { ...block("Cool-down", 2, "Easy."), id: `c${pi + 1}-cool` }, coolL = short ? [] : [cool];
+    const coreMob = CORE_MOB[pi].map((n, i) => { let nm = n; if (old && EX[n]?.floor) nm = n === "Dead bug" ? "Seated knee lift" : n === "Side plank" ? "Incline plank" : n === "Bird dog" ? "Pallof press" : n === "Glute-bridge march" ? "Standing cable hip abduction" : nm;
       const mob = /stretch|90\/90|rocks/i.test(nm); const e = EX[nm] || {};
       return { name: nm, sets: 1, reps: mob ? 60 : e.reps || (nm === "Glute-bridge march" ? 8 : 10), kg: 0, rest: 0, inc: 0, unit: mob ? "sec" : e.unit || "reps", lib: e.lib || nm, ...(i === 0 ? { note: "Core & mobility, about 5 min." } : {}), id: `c${pi + 1}-cm${i}` }; });
     const W = {};
-    W["1"] = { name: "Strength + intervals", exercises: [warmup, ...strength(CARDIO_STR[pi][0], "1"), intervalsBlock, cool].map(x => ({ ...x, id: x.id + "-1" })) };
-    if (days === 2) W["2"] = { name: "Strength + steady", exercises: [warmup, ...strength(CARDIO_STR[pi][1], "2"), { ...block(mach + " – steady", 20, "Steady – short sentences."), id: `c${pi + 1}-st20` }, cool].map(x => ({ ...x, id: x.id + "-2" })) };
+    W["1"] = { name: "Strength + intervals", exercises: [warmup, ...strength(CARDIO_STR[pi][0], "1"), intervalsBlock, ...coolL].map(x => ({ ...x, id: x.id + "-1" })) };
+    if (days === 2) W["2"] = { name: "Strength + steady", exercises: [warmup, ...strength(CARDIO_STR[pi][1], "2"), { ...block(mach + " – steady", blockMin, "Steady – short sentences."), id: `c${pi + 1}-st20` }, ...coolL].map(x => ({ ...x, id: x.id + "-2" })) };
     else {
       W["2"] = { name: "Steady endurance", exercises: [warmup, steadyBlock, ...coreMob].map(x => ({ ...x, id: x.id + "-2" })) };
-      W["3"] = { name: "Strength + tempo", exercises: [warmup, ...strength(CARDIO_STR[pi][1], "3"), tempoBlock, cool].map(x => ({ ...x, id: x.id + "-3" })) };
-      if (days === 4) W["4"] = { name: "Long & easy", exercises: [{ ...block("Long & easy – any machine or outdoors", pi >= 2 ? 45 : 40, "Easy – full sentences."), lib: "Incline treadmill walk", id: `c${pi + 1}-long-4` },
+      W["3"] = { name: "Strength + tempo", exercises: [warmup, ...strength(CARDIO_STR[pi][1], "3"), tempoBlock, ...coolL].map(x => ({ ...x, id: x.id + "-3" })) };
+      if (days === 4) W["4"] = { name: "Long & easy", exercises: [{ ...block("Long & easy – any machine or outdoors", time - 5, "Easy – full sentences."), lib: "Incline treadmill walk", id: `c${pi + 1}-long-4` },
         ...CORE_MOB[(pi + 2) % 4].slice(2).concat(["Calf stretch", "Open-book upper-back rotation"]).map((n, i) => ({ name: n, sets: 1, reps: 60, kg: 0, rest: 0, inc: 0, unit: "sec", lib: n, ...(i === 0 ? { note: "Mobility, about 5 min." } : {}), id: `c${pi + 1}-lm${i}-4` }))] };
     }
-    W.c = { name: days === 2 ? "Planned easy session (do it twice this week)" : "Planned easy session", exercises: [{ name: "Easy cardio – walk, bike, swim…", sets: 1, reps: newP1 ? 30 : 45, kg: 0, rest: 0, inc: 0, unit: "min", lib: "Incline treadmill walk", note: "Your choice of activity. Easy – full sentences. Counts toward your 150 minutes.", id: `c${pi + 1}-extra` }] };
+    const counted = Object.values(W).reduce((t, w) => t + w.exercises.reduce((u, x) => u + (x.unit === "min" ? x.reps * x.sets + hardMinutes(x.note) : 0), 0), 0);
+    const goalMin = lvl === "New" ? [120, 130, 140, 150][pi] : 150, nEasy = days === 2 || goalMin - counted > 60 ? 2 : 1;   // short workouts: two easy sessions rather than one very long one
+    const easyMin = Math.min(60, Math.max(lvl === "New" ? [30, 35, 40, 45][pi] : 45, Math.ceil((goalMin - counted) / nEasy / 5) * 5));
+    W.c = { name: nEasy === 2 ? "Planned easy session (do it twice this week)" : "Planned easy session", exercises: [{ name: "Easy cardio – walk, bike, swim…", sets: 1, reps: easyMin, kg: 0, rest: 0, inc: 0, unit: "min", lib: "Incline treadmill walk", note: "Your choice of activity. Easy – full sentences. Counts toward your 150 minutes.", id: `c${pi + 1}-extra` }] };
     return { name: PHASE_NAMES[pi], weeks: [pi * 3 + 1, pi * 3 + 2, pi * 3 + 3], about: CARDIO_ABOUT[pi] + (mach === pref ? "" : MACHINES[pref]?.run && (easy.has("Knees") || old) ? " (No running with knees on \"go easy\" or 65+ – bike instead.)" : ` (${pref} opens up in a later phase – ${mach} until then.)`), workouts: W };
   });
   return { title: `${a.goal} · ${a.shape} · ${days} days · ${a.time}`, start: today(), mig: 2, generated: true, direction: dir, machine: pref, phases };
@@ -534,6 +587,7 @@ homeSet(["Standing calf raise", "Seated calf raise", "Calf raise on the leg pres
 homeSet(["Pallof press", "Half-kneeling Pallof press", "Tall-kneeling Pallof press", "Single-leg Pallof press"], [H("Band Pallof press", ["band+anchor"]), H("Suitcase hold", ["Dumbbells"]), H("Side plank", [])]);
 homeSet(["Cable woodchop"], [H("Band Pallof press", ["band+anchor"]), H("Front plank", [])]);
 homeSet(["Ab crunch machine"], [H("Stability-ball crunch", ["Stability ball"]), H("Reverse crunch", [])]);
+homeSet(["Stability-ball crunch"], [H("SAME", ["Stability ball"]), H("Reverse crunch", [])]);                  // M5
 homeSet(["Hanging knee raise"], [H("Hanging knee raise", ["Pull-up bar"]), H("Reverse crunch", []), H("Seated knee lift", [])]);
 homeSet(["Suitcase carry", "Farmer carry", "Farmer march", "Overhead carry", "Suitcase hold", "Turkish get-up"], [H("SAME", ["Dumbbells"]), H("SAME", ["Kettlebell"]), H("Front plank", []), H("Hollow hold", [])]);
 homeSet(["Incline push-up", "Deficit push-up", "Decline push-up", "Close-grip push-up"], [H("SAME", ["Sturdy chair"]), H("Push-up ladder", [], { bw: true })]);
@@ -544,10 +598,12 @@ function homeify(P, a) {
   const kit = new Set(a.kit || []), easy = new Set(a.easy || []), anchor = a.anchor === true;
   const have = n => n === "band+anchor" ? kit.has("Long resistance band") && anchor : n === "susp" ? kit.has("Suspension trainer") && anchor : n.startsWith("!") ? !easy.has(n.slice(1)) : kit.has(n);
   const dbMax = a.dbMax || 10;
-  const cardioKit = [["Exercise bike", "Bike"], ["Cross-trainer", "Cross-trainer"], ["Treadmill", "Incline treadmill walk"], ["Rower", "Rower"], ["Jump rope", "Jump rope"], ["Outdoors nearby (walk, run, cycle)", "Outdoors walk, jog or bike"]].filter(([k]) => kit.has(k));
+  const oldOrKnees = (obAge(a) || 30) >= 65 || easy.has("Knees");                       // H2/H3: no jumping or running
+  const cardioKit = [["Exercise bike", "Bike"], ["Cross-trainer", "Cross-trainer"], ["Treadmill", "Incline treadmill walk"], ["Rower", "Rower"], ["Jump rope", "Jump rope"], ["Outdoors nearby (walk, run, cycle)", oldOrKnees ? "Outdoors walk or bike" : "Outdoors walk, jog or bike"]]
+    .filter(([k, v]) => kit.has(k) && !(oldOrKnees && v === "Jump rope"));
   const homeMach = (pref => { const lib = { "Bike": "Exercise bike", "Rower": "Rower", "Cross-trainer": "Cross-trainer", "Incline treadmill walk": "Treadmill", "Running": "Treadmill" }[pref]; const own = cardioKit.find(([k]) => k === lib); return own ? own[1] : cardioKit.length ? cardioKit[0][1] : "Body-weight cardio circuit"; })(a.machine || "Bike");
   const m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75)), age = obAge(a) || 30;
-  const sx = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9], expF = { New: 0.6, Some: 1, Experienced: 1.4 }[a.level || "Some"], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
+  const sx = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9], expF = { New: 0.6, Some: 1, Experienced: 1.6 }[a.level || "Some"], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
   const dbKg = e => e && e.ratio ? Math.min(dbMax, Math.max(1, Math.floor(e.ratio * bwKg * expF * (e.lower ? sx[1] : sx[0]) * ageF / 0.5) * 0.5)) : Math.min(dbMax, 2);
   P.phases.forEach((ph, pi) => {
     const used = new Set();
@@ -556,11 +612,13 @@ function homeify(P, a) {
         if (/ – (intervals|steady|tempo)$/.test(x.name)) { x.name = x.name.replace(/^.* – /, homeMach + " – "); }
         if (/^Finisher/.test(x.name)) x.name = "Finisher: " + homeMach.toLowerCase();
         if (/^Bike( or brisk walk)?$/.test(x.name)) x.name = cardioKit.length ? homeMach : "Brisk walk or body-weight circuit";
-        x.lib = homeMach === "Body-weight cardio circuit" ? "Body-weight cardio circuit" : homeMach === "Outdoors walk, jog or bike" ? "Walk–run" : homeMach === "Jump rope" ? "Jump rope" : homeMach;
-        if (homeMach === "Body-weight cardio circuit" && /intervals/.test(x.name)) x.note = (x.note || "") + " Circuit stations rotate: step jack, air squat, mountain climber, ball toss to the wall" + (easy.has("Knees") ? " (step versions, no jumping)." : ", skater hop.");
+        x.lib = homeMach === "Body-weight cardio circuit" ? "Body-weight cardio circuit" : /^Outdoors/.test(homeMach) ? "Walk–run" : homeMach === "Jump rope" ? "Jump rope" : homeMach;
+        if (homeMach === "Body-weight cardio circuit" && /intervals/.test(x.name)) x.note = (x.note || "") + (oldOrKnees ? " Circuit stations rotate: step jack, march with high knees, standing knee-to-elbow, ball toss to the wall (step versions, no jumping, no squats)." : " Circuit stations rotate: step jack, air squat, mountain climber, ball toss to the wall, skater hop.");
         return;
       }
       x.name = x.name.replace(/on the pad/g, "on a folded towel");
+      if (!kit.has("Dumbbells") && !kit.has("Kettlebell") && /^Single-leg stand .*(dumbbell|a weight)/.test(x.name))   // M5: no dumbbells → water bottle
+        x.name = x.name.replace(/a light dumbbell|a dumbbell|a weight/, "a filled water bottle");
       if (x.note) x.note = x.note.replace(/ Superset at the [^.]+\./, "").replace("holding the rack", "holding a door frame or a sturdy chair").trim() || undefined;
       const opts = HOME[x.name]; if (!opts) { used.add(x.name); inW.add(x.name); return; }
       const sameOk = ["db", "bw"].includes(EX[x.name]?.eq);
@@ -572,7 +630,12 @@ function homeify(P, a) {
       x.name = pick.name; x.lib = pick.lib || e.lib || pick.name;
       if (pick.note) x.note = [x.note, pick.note].filter(Boolean).join(" ");
       const oldUnit = x.unit; x.unit = e.unit || "reps"; if (x.unit !== oldUnit) x.reps = e.reps || (x.unit === "sec" ? 30 : 15);
-      if (!isDb) { x.kg = 0; x.inc = pick.assist ? 0.25 : 0; if (pick.bw) x.bw = true; else delete x.bw; if (x.unit === "reps" && !/ladder/i.test(x.name)) x.reps = Math.max(x.reps, 15); }
+      if (!isDb) { x.kg = 0; x.inc = pick.assist ? 0.25 : 0; if (pick.bw) x.bw = true; else delete x.bw; if (x.unit === "reps" && !/ladder/i.test(x.name) && !pick.assist) x.reps = Math.max(x.reps, 15); }
+      if (pick.assist) {                                                                   // M4: home pull-up ladder
+        const exp = a.level === "Experienced", st = exp ? 2 : [0, 1, 2, 2][pi];
+        x.reps = [4, 6, 5][st]; x.inc = 0; x.kg = 0;
+        x.note = ["Ladder step 1 – slow negatives: step up to the top, lower in 3–5 s. 3–5 reps.", "Ladder step 2 – band-assisted pull-ups, 5–8 reps.", "Ladder step 3 – full pull-ups, 3–8 reps. Top of the range easy → add reps or a slower lowering."][st];
+      }
       else { x.kg = dbKg(e); x.inc = 0.5; delete x.bw; }
       x.id = x.id.replace(/-[^-]+$/, "") + "-" + pick.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20);
     }); w.exercises = w.exercises.filter(x => !x._drop); });
@@ -583,3 +646,142 @@ function homeify(P, a) {
 function genSupported(a) { return a && ["Strength", "Balance", "Cardio"].includes(a.goal); }
 const _genGym = generatePlan;
 generatePlan = function (a) { const P = _genGym(a); return a.where === "Home" ? homeify(P, a) : P; };
+
+// ===== Plan test fixes (plan-test-report.md, approved by Christian 2026-10-26) – helpers + one final check on every plan
+// weekly sets per muscle group (direct sets; the extra workout not counted) and the app's own targets (programme-rules B)
+const GROUP_OF = { chest: "chest", back: "back", shoulders: "shoulders", rear: "shoulders", biceps: "arms", triceps: "arms", glutes: "glutes", thighs: "thighs", ham: "thighs", calves: "calves", core: "core" };
+function weeklySets(exs) { const s = { chest: 0, back: 0, shoulders: 0, arms: 0, glutes: 0, thighs: 0, calves: 0, core: 0 }; for (const x of exs) { const g = GROUP_OF[EX[x.name]?.m]; if (g) s[g] += x.sets; } return s; }
+const LEVEL_TABLE = { chest: ["B", "B", "F"], back: ["F", "F", "F"], shoulders: ["B", "F", "F"], arms: ["M", "B", "F"], glutes: ["F", "F", "B"], thighs: ["B", "B", "B"], calves: ["M", "M", "M"], core: ["F", "B", "B"] };
+function targetLow(a, g, pi) {
+  const R = { M: 0, B: 1, F: 2 }, up = { M: "B", B: "F", F: "F" }, low = { M: 4, B: 8, F: 12 };
+  let t = LEVEL_TABLE[g][["Slim", "Toned", "Built"].indexOf(a.shape) < 0 ? 1 : ["Slim", "Toned", "Built"].indexOf(a.shape)];
+  if (a.goal === "Strength" && ["chest", "back", "thighs"].includes(g) && R[t] < 1) t = "B";
+  if ((a.focus || []).includes(g)) t = "F";
+  else if (g === "arms" || g === "calves") { let s = "M"; for (let i = 0; i < pi; i++) s = up[s]; if (R[s] < R[t]) t = s; }   // small muscles step up per phase
+  if ((g === "thighs" && (a.easy || []).includes("Knees")) || (g === "shoulders" && (a.easy || []).includes("Shoulders"))) if (!(a.focus || []).includes(g)) t = "M";
+  return low[t];
+}
+// M2: the plan can't reach a visible change (big muscles well under Build in most phases) → setup note
+function planShort(a) {
+  if (!a || a.goal !== "Strength" || typeof generatePlan !== "function" || !(a.days === 2 || (parseInt(a.time, 10) || 45) <= 30)) return false;
+  const P = generatePlan(a); let shortPhases = 0;
+  P.phases.forEach(ph => { const ws = weeklySets(Object.entries(ph.workouts).filter(([k]) => k !== "c").flatMap(([, w]) => w.exercises));
+    if (["chest", "back", "glutes", "thighs"].filter(g => ws[g] < 6).length >= 2) shortPhases++; });
+  return shortPhases >= 2;
+}
+// H1: warm-up aimed at the day's muscles – general part, mobility for the muscles trained, light sets of the first lift
+function warmNote(w, a, C) {
+  const first = w.groups[0]?.ex[0]?.name || "", ms = new Set(w.groups.flatMap(g => g.ex).map(x => EX[x.name]?.m));
+  const focusMs = new Set((a.focus || []).flatMap(f => MUSCLE_OF_FOCUS[f]));
+  const day = [EX[first]?.m, ...[...ms].filter(m => focusMs.has(m))].filter(Boolean);
+  const moves = []; const add = t => { if (!moves.includes(t)) moves.push(t); };
+  for (const m of day.concat([...ms])) {
+    if (["chest", "triceps", "shoulders"].includes(m)) add("arm circles and band pull-aparts (or wall slides)");
+    else if (["back", "biceps", "rear"].includes(m)) add("cat-cow and upper-back rotations");
+    else if (["glutes", "ham"].includes(m)) add("hip circles and leg swings");
+    else if (m === "thighs") add(C.easy.has("Knees") ? "leg swings and 10 sit-to-stands to a high chair" : "leg swings and 10 slow body-weight squats");
+    if (moves.length >= 2) break;
+  }
+  const general = a.where === "Home" ? "2–3 min brisk walking or marching in place" : "2–3 min easy bike or walk";
+  const e = EX[first] || {}, light = e.bw || e.nokg || !e.ratio ? `1 easy set of ${first.toLowerCase()}, a few reps` : `1–2 light sets of ${first.toLowerCase()}: about half your working weight × 8`;
+  return `${general}, then ${moves.join(", then ") || "joint circles"}, then ${light}.`;
+}
+// H2: 50+ – one balance exercise in every workout, whatever the goal (progresses by phase)
+function balanceOne(pi, C, a) {
+  const L = ["Single-leg stand", "Single-leg stand with head turns", a.where === "Home" ? "Single-leg stand on a folded towel" : "Single-leg stand on the pad", "Single-leg stand, eyes closed (hand by the support)"];
+  return { name: L[pi] + (C.old && pi < 3 ? " – support in reach" : ""), lib: "Single-leg stand", reps: 30, unit: "sec", sets: 2 };
+}
+function finalizePlan(P, a) {
+  const easy = new Set(a.easy || []), age = obAge(a) || 30, old = age >= 65, home = a.where === "Home", kit = new Set(a.kit || []);
+  const anchor = a.anchor === true, have = n => n === "band+anchor" ? kit.has("Long resistance band") && anchor : kit.has(n);
+  const isCardioBlock = x => x.unit === "min" || /^Warm-up$|^Cool-down$|^Finisher/.test(x.name);
+  const isBalanceItem = x => /stand|Tandem|Heel-to-toe|step and hold|star reach|Step switch|March|hop and stick|Skater|RDL reach|Toe stand|Calf-raise hold|Split-stance|knee drive|Skipping|Jump lunge|Pistol|Single-leg Pallof/.test(x.name) && !EX[x.name];
+  // alternatives: [name, needs (home)] – first one not used this week (or at least not in this workout) wins
+  const ALT = {
+    kneesLegs: home ? [["Wall sit", []], ["Dumbbell hip thrust at home", ["Dumbbells"]], ["Band glute bridge", ["Long resistance band"]], ["Glute bridge", []], ["Single-leg glute bridge", []], ["Sliding leg curl", ["Smooth floor (for sliding)"]], ["Stability-ball leg curl", ["Stability ball"]]]
+      : [["Leg press", []], ["Single-leg leg press", []], ["Wall sit", []], ["Dumbbell hip thrust", []], ["Seated hamstring curl", []], ["Cable pull-through", []]],
+    back: home ? [["Band glute bridge", ["Long resistance band"]], ["Glute bridge", []], ["Single-leg glute bridge", []], ["Bird dog", []]] : [["Dumbbell hip thrust", []], ["Cable pull-through", []], ["Glute bridge", []], ["Bird dog", []]],
+    pull: home ? [["Band pulldown", ["band+anchor"]], ["Table row", ["Heavy table (for rows)"]], ["One-arm dumbbell row", ["Dumbbells"]], ["Backpack row", []], ["Prone towel pulldown", []], ["Prone Y-T-W raises", []]] : [["Lat pulldown", []], ["Seated cable row", []], ["Machine row", []]],
+    dup: home ? { core: [["Side plank", []], ["Reverse crunch", []], ["Seated knee lift", []], ["Bird dog", []], ["Front plank", []]], glutes: [["Glute bridge", []], ["Single-leg glute bridge", []], ["Side-lying leg raise", []]],
+      thighs: [["Wall sit", []]], ham: [["Single-leg glute bridge", []]], chest: [["Push-up ladder", []]], back: [["Backpack row", []], ["Prone towel pulldown", []]] } : null,
+    shoulders: home ? [["Dumbbell lateral raise", ["Dumbbells"]], ["Band lateral raise", ["Long resistance band"]], ["Wall slide", []], ["Prone Y-T-W raises", []], ["Push-up ladder", []]] : [["Incline dumbbell press", []], ["Machine chest press", []], ["Cable lateral raise", []], ["Dumbbell lateral raise", []], ["Lean-away lateral raise", []], ["Cable fly (mid)", []]],
+    floor: { core: [["Pallof press", []], ["Seated knee lift", []], ["Incline plank", []], ["Ab crunch machine", []], ["Suitcase hold", []]], thighs: [["Hip adduction machine", []], ["Wall sit", []], ["Leg press", []]],
+      glutes: [["Standing cable hip abduction", []], ["Hip abduction machine", []], ["Dumbbell hip thrust", []]], chest: [["Machine chest press", []], ["Incline push-up", []]], triceps: [["Rope pushdown", []]], back: [["Seated cable row", []]] }
+  };
+  const KNEE_BAD = /squat|lunge|^Step-up$|Jump|\bhops?\b|Skater|Skipping|Pistol|Bulgarian|Running|Jump rope/i;
+  P.phases.forEach((ph, pi) => {
+    const usedWeek = new Set(Object.values(ph.workouts).flatMap(w => w.exercises.map(x => x.name)));
+    const ladderCount = {};
+    Object.entries(ph.workouts).forEach(([key, w]) => {
+      const inW = () => new Set(w.exercises.map(x => x.name));
+      const pickAlt = list => { const ok = list.filter(([n, needs]) => !home || needs.every(have)).map(([n]) => n); const iw = inW(); return ok.find(n => !usedWeek.has(n) && !iw.has(n)) || ok.find(n => !iw.has(n)); };
+      const swapTo = (x, n, note) => { if (!n) return false; const e = EX[n] || {}; x.name = n; x.lib = e.lib || n; usedWeek.add(n);
+        x.unit = e.unit || "reps"; x.reps = e.reps || (x.unit === "sec" ? 30 : 12); if (e.bw || e.nokg) { x.kg = 0; if (e.bw) x.bw = true; } else delete x.bw;
+        x.inc = e.inc || 0; x.kg = 0; x.note = [e.note, note].filter(Boolean).join(" ") || undefined; return true; };
+      for (const x of w.exercises) {
+        if (isCardioBlock(x)) continue;
+        const n = x.name, m = EX[n]?.m;
+        // H3 knees (after the home swap and in Balance), L9 deep squat hold
+        if (easy.has("Knees")) {
+          if (n === "Deep squat hold") swapTo(x, "Ankle rocks", "Holding on: knee gently over the toes, heel down. Seconds per side.");
+          else if (isBalanceItem(x) && KNEE_BAD.test(n)) { x.name = "Lateral step and hold" + (old ? " – support in reach" : ""); x.lib = "Lateral step and hold"; x.unit = "reps"; x.reps = 5; }
+          else if (/^Step-up and hold/.test(n)) { x.name = n.replace("Step-up and hold", "Lateral step and hold"); x.lib = "Lateral step and hold"; }
+          else if (KNEE_BAD.test(n) && n !== "Wall sit") swapTo(x, pickAlt(ALT.kneesLegs));
+        }
+        // H3 back: no good-mornings or loaded hinges
+        if (easy.has("Back") && /good-morning|Romanian deadlift/i.test(x.name)) swapTo(x, pickAlt(ALT.back));
+        if (easy.has("Shoulders") && x.name === "Pull-up") swapTo(x, pickAlt(ALT.pull));
+        // L8 shoulders: no overhead pressing or dips
+        if (easy.has("Shoulders") && /shoulder press|overhead press|Pike push-up|Overhead carry|Chair dip|\bdips?\b/i.test(x.name)) swapTo(x, pickAlt(ALT.shoulders), /lateral raise/i.test(pickAlt(ALT.shoulders) || "") ? "Light – stop if it pinches." : undefined);
+        // H3 wrists: note on every push-up
+        if (easy.has("Wrists") && /push-up/i.test(x.name) && !/handles or fists/.test(x.note || "")) x.note = [x.note, "Push-ups on handles or fists, wrists straight."].filter(Boolean).join(" ");
+        // H2 65+: no jumps anywhere; no floor exercises in the gym
+        if (old && /Jump|\bhops?\b|Skater|Skipping|Pistol/i.test(x.name)) { x.name = "Lateral step and hold – support in reach"; x.lib = "Lateral step and hold"; x.unit = "reps"; x.reps = 5; }
+        if (old && !home && EX[x.name]?.floor) swapTo(x, pickAlt(ALT.floor[EX[x.name].m] || ALT.floor.core));
+      }
+      // H2: 50+ balance exercise in Cardio workouts too (Strength gets it in the builder, Balance has its block)
+      if (a.goal === "Cardio" && age >= 50 && key !== "c" && !w.exercises.some(isBalanceItem)) {
+        const b = balanceOne(pi, { old }, a), i = w.exercises.findIndex(x => x.name === "Warm-up") + 1;
+        w.exercises.splice(i, 0, { ...b, kg: 0, rest: 0, inc: 0, note: "Per leg, next to a support. Feather = steady, kettlebell = wobbly or touched down.", id: `f${pi + 1}${key}-balance` });
+      }
+      // L2 / same exercise twice in one workout: replace the second one, or drop it
+      const seen = new Set();
+      w.exercises = w.exercises.filter(x => { if (isCardioBlock(x) || !seen.has(x.name)) { seen.add(x.name); return true; }
+        const D = ALT.dup || ALT.floor, alt = pickAlt((D[EX[x.name]?.m] || []).concat(D.core)); if (alt && !seen.has(alt)) { swapTo(x, alt); seen.add(alt); return true; } return false; });
+      // L4: starting weight for loaded exercises that ended up at 0 kg; body weight at home
+      for (const x of w.exercises) {
+        const e = EX[x.name]; if (!e || isCardioBlock(x) || x.kg || e.nokg || e.bw || x.bw) continue;
+        if (e.ratio && !(home && !(kit.has("Dumbbells") || kit.has("Kettlebell")) && e.eq === "db") && !(home && e.eq !== "db")) x.kg = startKg(a, e);
+        else if (home && e.unit !== "sec") x.bw = true;
+      }
+      // L2 home ladders on several days: a different step each time
+      if (home && key !== "c") for (const x of w.exercises) if (/ladder$/i.test(x.name) && !/Pull-up/.test(x.name)) {
+        const c = ladderCount[x.name] = (ladderCount[x.name] || 0) + 1;
+        if (c === 2) x.note = [x.note, "Second time this week: one step easier than your current step, more reps."].filter(Boolean).join(" ");
+        if (c >= 3) x.note = [x.note, "Third time this week: your current step with a slow 3-second lowering."].filter(Boolean).join(" ");
+      }
+      // L1: renumber supersets after all swaps and drops; a "superset" of one becomes a normal exercise
+      const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null; const r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
+      let letter = 0;
+      for (const r of runs) {
+        if (!r.L) continue;
+        const strip = x => { if (x.note) x.note = x.note.replace(/ ?Go straight to [A-Z]\d\.?/g, "").trim() || undefined; };
+        if (r.xs.length === 1) { const x = r.xs[0]; delete x.ss; strip(x); if (!x.rest) x.rest = 60; continue; }
+        const L = String.fromCharCode(65 + letter++);
+        r.xs.forEach((x, i) => { strip(x); x.ss = L + (i + 1); const last = i === r.xs.length - 1;
+          if (!last) { x.rest = 0; x.note = ["Go straight to " + L + (i + 2) + ".", x.note].filter(Boolean).join(" "); } else if (!x.rest) x.rest = 60; });
+      }
+    });
+  });
+  return P;
+}
+function startKg(a, e) {
+  const age = obAge(a) || 30, m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75));
+  const sx = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9], expF = { New: 0.6, Some: 1, Experienced: 1.6 }[a.level || "Some"], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
+  const raw = e.ratio * bwKg * expF * (e.lower ? sx[1] : sx[0]) * ageF, step = e.eq === "db" ? 2 : 2.5;
+  let kg = Math.max(e.eq === "db" ? 2 : 5, Math.floor(raw / step) * step);
+  if (a.where === "Home" && e.eq === "db") kg = Math.min(a.dbMax || 10, kg);
+  return kg;
+}
+const _genBeforeFinal = generatePlan;
+generatePlan = function (a) { return finalizePlan(_genBeforeFinal(a), a); };
