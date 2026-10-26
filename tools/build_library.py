@@ -11,14 +11,14 @@ Output: <target>/library.js which defines one global, TWLIB:
 Everything else stays private, so it can't clash with the app's own (older) animation code.
 CSS for the drawings is injected once, scoped under .lib.
 
-Usage: python3 tools/build_library.py dev
+Usage: python3 tools/build_library.py dev   (writes ../training-week-dev/library.js)
 """
 import os, re, sys, json
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "library-src")
 ROOT = os.path.dirname(HERE)
-target = os.path.join(ROOT, sys.argv[1] if len(sys.argv) > 1 else "dev")
+target = os.path.join(ROOT, "..", "training-week-dev") if len(sys.argv) < 2 or sys.argv[1] == "dev" else os.path.join(ROOT, sys.argv[1])   # "dev" = the DEV repo next to this one
 
 # order = later waves win when two cards share a title (newest approved version)
 WAVES = [

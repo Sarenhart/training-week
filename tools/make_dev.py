@@ -1,3 +1,5 @@
+# NOTE 2026-10-26: DEV now lives in its own repo, SarenhartCo/training-week-dev (https://sarenhartco.github.io/training-week-dev/).
+# This script still writes a dev/ folder here and would overwrite DEV work - do not use it without rewriting it first.
 """Build the dev test app in dev/ from the main app files.
 
 The dev app lives at /training-week/dev/ and is fully separate from the main app on the phone:
