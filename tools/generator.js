@@ -469,7 +469,7 @@ const CARDIO_STR = [   // [Strength + intervals, Strength + tempo/steady] – ma
   ["Goblet squat 3|flat bench: Dumbbell bench press 2 + One-arm dumbbell row 2", "Romanian deadlift 3|lat pulldown + mat: Lat pulldown 2 + Side plank 2"],
   ["Goblet squat 3|incline bench: Incline dumbbell press 2 + Chest-supported dumbbell row 2", "Romanian deadlift 3|seated cable row + mat: Seated cable row 2 + Reverse crunch 2"]
 ];
-const INTERVALS = ["8 × 30 s Hard / 90 s Easy", "8 × 45 s Hard / 75 s Easy", "4 × 3 min Hard / 2 min Easy", "5 × 2 min Hard / 2 min Easy"];
+const INTERVALS = ["8 × 30 s Hard / 90 s Easy", "8 × 45 s Hard / 75 s Easy", "3 × 3 min Hard / 2 min Easy", "4 × 2 min Hard / 2 min Easy"];   // must fit the 20-min block with the 3-min Easy start (2026-10-27)
 const TEMPO = ["2 × 7 min Steady, 2 min Easy between", "2 × 8 min Steady, 2 min Easy between", "3 × 5 min Steady, 1 min Easy between", "2 × 8 min Steady + 2 min Hard finish"];
 const INTERVALS15 = ["6 × 30 s Hard / 90 s Easy", "6 × 45 s Hard / 75 s Easy", "2 × 3 min Hard / 2 min Easy", "3 × 2 min Hard / 2 min Easy"];
 const INTERVALS25 = ["10 × 30 s Hard / 90 s Easy", "10 × 45 s Hard / 75 s Easy", "4 × 3 min Hard / 2 min Easy", "5 × 2 min Hard / 2 min Easy"];
