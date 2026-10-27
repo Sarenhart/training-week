@@ -233,11 +233,11 @@ function generatePlan(a) {
     const main = plan.filter(w => w.name !== "Extra");
     const setsOf = ms => main.flatMap(w => w.groups.flatMap(g => g.ex)).filter(x => ms.includes(EX[x.name]?.m)).reduce((s, x) => s + x.sets, 0);
     for (const f of a.focus || []) {
-      const ms = MUSCLE_OF_FOCUS[f]; let guard = 0;
-      while (setsOf(ms) < 12 && guard++ < 12) {
+      const ms = MUSCLE_OF_FOCUS[f]; let guard = 0, goal = focusClash(a, f) ? 8 : 12;      // focus + "go easy" on the same area: go easy wins (Christian 2026-10-27)
+      while (setsOf(ms) < goal && guard++ < 12) {
         const xs = main.flatMap(w => w.groups.flatMap(g => g.ex)).filter(x => ms.includes(EX[x.name]?.m) && x.sets < 4);
         if (xs.length) { xs.sort((p, q) => p.sets - q.sets)[0].sets++; continue; }
-        const cand = FOCUS_ADD[f].find(n => !used.has(n) && !(old && EX[n]?.floor) && !(easy.has("Knees") && EX[n]?.knee));
+        const cand = FOCUS_ADD[f].find(n => !used.has(n) && !(old && EX[n]?.floor) && !(easy.has("Knees") && EX[n]?.knee) && !(easy.has("Shoulders") && /press|push-up|dip/i.test(n)));
         if (!cand) break;
         const target = main.reduce((b, w) => (w.groups.reduce((s, g) => s + g.ex.reduce((t, x) => t + x.sets, 0), 0) < b.n ? { w, n: w.groups.reduce((s, g) => s + g.ex.reduce((t, x) => t + x.sets, 0), 0) } : b), { w: main[0], n: 1e9 }).w;
         target.groups.push({ spot: "", ex: [{ name: cand, sets: 3 }] }); used.add(cand);
@@ -658,8 +658,21 @@ function targetLow(a, g, pi) {
   if (a.goal === "Strength" && ["chest", "back", "thighs"].includes(g) && R[t] < 1) t = "B";
   if ((a.focus || []).includes(g)) t = "F";
   else if (g === "arms" || g === "calves") { let s = "M"; for (let i = 0; i < pi; i++) s = up[s]; if (R[s] < R[t]) t = s; }   // small muscles step up per phase
-  if ((g === "thighs" && (a.easy || []).includes("Knees")) || (g === "shoulders" && (a.easy || []).includes("Shoulders"))) if (!(a.focus || []).includes(g)) t = "M";
+  if ((g === "thighs" && (a.easy || []).includes("Knees")) || (g === "shoulders" && (a.easy || []).includes("Shoulders"))) t = (a.focus || []).includes(g) ? "B" : "M";   // go easy wins over focus
   return low[t];
+}
+// focus on an area the user also wants to go easy on (focus shoulders + go easy shoulders, focus thighs + go easy knees)
+function focusClash(a, f) { const e = a.easy || []; return (f === "shoulders" && e.includes("Shoulders")) || (f === "thighs" && e.includes("Knees")); }
+// time-fit from the real plan (programme-rules B): at 45 min in the gym, big muscles that end up short in most phases → recommend 60
+function planTimeFit(a) {
+  if (!a || a.goal !== "Strength" || a.where !== "Gym" || a.days < 3 || parseInt(a.time, 10) !== 45 || typeof generatePlan !== "function") return null;   // 2 days: the plan-short note covers it
+  const P = generatePlan(a), short = {}, NAME = { chest: "chest", back: "upper back", shoulders: "side shoulders", glutes: "glutes", thighs: "thighs" };
+  P.phases.forEach((ph, pi) => { const ws = weeklySets(Object.entries(ph.workouts).filter(([k]) => k !== "c").flatMap(([, w]) => w.exercises));
+    for (const g of Object.keys(NAME)) if (ws[g] < targetLow(a, g, pi) - 1) short[g] = (short[g] || 0) + 1; });
+  const names = Object.keys(short).filter(g => short[g] >= 2).map(g => NAME[g]);
+  if (!names.length) return null;
+  const list = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names.at(-1) : names[0];
+  return `At 45 minutes, ${list} get a little less than they need. 60 minutes is recommended.`;
 }
 // M2: the plan can't reach a visible change (big muscles well under Build in most phases) → setup note
 function planShort(a) {

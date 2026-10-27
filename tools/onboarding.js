@@ -153,11 +153,14 @@ function obView() {
           <div class="obchips">${chipB(a.anchor === true, "obanchor", "yes", "Yes")}${chipB(a.anchor === false, "obanchor", "no", "No")}</div></div>` : ""}</div>`).join("")}
       <div class="note">${esc(kitSummary(a))}</div>${nav()}`;
   } else if (step === "focus") {
-    const max = focusMax(a), tf = timeFit(a);
+    const max = focusMax(a), tf = timeFit(a) || (typeof planTimeFit === "function" ? planTimeFit(a) : null);
+    const NM = { shoulders: ["shoulders", "Shoulders"], thighs: ["thighs", "Knees"] };
+    const clash = a.focus.filter(f => typeof focusClash === "function" && focusClash(a, f)).map(f => NM[f]);
     h += `<header class="top"><div>${stepTag}<h1>Your focus</h1></div></header>
       <p class="obp">Pick up to ${max} ${max === 1 ? "area" : "areas"}${a.goal === "Cardio" ? " – Cardio plans have two short strength days" : ` – you train ${a.days} days a week`}. The plan stays full body and adds extra sets for these. You can also skip this.</p>
       <div class="obgrid2 tight">${MUSCLES.map(([k, l]) => { const on = a.focus.includes(k), full = !on && a.focus.length >= max;
         return `<button type="button" class="obchip big" data-act="obfocus" data-v="${k}" aria-pressed="${on}" ${full ? "disabled" : ""}>${on ? "✓ " : ""}${l}</button>`; }).join("")}</div>
+      ${clash.map(([f, e]) => `<div class="obfit" role="note"><p>You picked ${f} as a focus and to go easy on your ${e.toLowerCase()}. Going easy comes first: your plan trains ${f} with exercises that work well but are kind to the joints.</p></div>`).join("")}
       ${tf ? `<div class="obfit" role="note"><p>${esc(tf)}</p>${a.time !== "60 min" ? `<button type="button" class="btn small" data-act="obone" data-k="time" data-v="60 min">Switch to 60 min</button>` : ""}</div>` : ""}
       ${nav()}`;
   } else if (step === "plan") {
