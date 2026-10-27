@@ -151,6 +151,7 @@ svg.anim{width:100%;max-width:300px;height:auto;display:block;margin:0 auto}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .empty{color:var(--muted);text-align:center;padding:28px 12px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.bkrem{display:grid;gap:8px;margin-bottom:14px;border:1.5px solid var(--accent)}.bkrem p{margin:0;font-size:14px}.bkrem small{font-size:13px}
 
 /* programme editor */
 .day{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
@@ -1389,9 +1390,29 @@ const FEEL_ICON = {
   light: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 3.8a6 6 0 0 0-8.5 0L5 10.5V19h8.5l6.7-6.7a6 6 0 0 0 0-8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`,
   heavy: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 11.6C5.5 7.3 7 3.4 12 3.4s6.5 3.9 5.4 8.2" stroke-width="2.6"/><path d="M6.9 19.6A7.1 7.1 0 1 1 17.1 19.6Z" fill="currentColor" stroke="none"/></svg>`
 };
+// Backup reminder (2026-10-26): 14 days after the last backup (never saved: after the first logged workout); "Later" hides it for 3 days.
+const dayDiff = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5);
+function backupDue() {
+  const used = Object.values(S.logs).filter(l => l && (l.finished || Object.values(l.sets || {}).some(ss => (ss || []).some(x => x && x.done))));
+  if (!used.length) return null;
+  let last = null, snooze = null; try { last = localStorage.getItem("tw.lastBackup"); snooze = localStorage.getItem("tw.backupSnooze"); } catch {}
+  const t = today();
+  if (snooze && t < snooze) return null;
+  const from = last || used.map(l => (l.finishedAt || "").slice(0, 10) || l.date).filter(Boolean).sort()[0];
+  if (!from) return null;
+  const d = dayDiff(from, t);
+  return d >= 14 ? { last, days: d } : null;
+}
+function backupReminder() {
+  const due = backupDue(); if (!due) return "";
+  return `<div class="card bkrem" role="note"><b>${due.last ? `It's been ${due.days} days since your last backup.` : "You haven't saved a backup yet."}</b>
+    <p>Your workouts are only stored on this phone.</p>
+    <div class="row"><button type="button" class="btn" data-act="backup">Save backup now</button><button type="button" class="btn ghost" data-act="bklater">Later</button></div>
+    <small class="muted">Then move the file to Google Drive or email it to yourself, so it survives if the phone is lost.</small></div>`;
+}
 function todayView() {
   const w = S.week, k = S.wk, ph = phaseOf(w), pi = phaseIndex(w), wo = workout(w, k), tw = totalWeeks(), cur = currentWeek();
-  let h = head(`Week ${w} of ${tw} · Phase ${pi + 1} ${ph.name}`, wo.name);
+  let h = head(`Week ${w} of ${tw} · Phase ${pi + 1} ${ph.name}`, wo.name) + backupReminder();
   // week checklist
   h += `<div class="weekcard"><div class="weeknav">
       <span class="wt">Week ${w}${w === cur ? "<small>this week</small>" : w < cur ? "<small>done</small>" : ""}</span>
@@ -1712,6 +1733,7 @@ document.addEventListener("click", ev => {
       if (i > 0) { [ex[i - 1], ex[i]] = [ex[i], ex[i - 1]]; saveProgram(); render(); } break; }
     case "metric": S.metric = b.dataset.m; render(); break;
     case "backup": doBackup(); break;
+    case "bklater": { const d = new Date(); d.setDate(d.getDate() + 3); try { localStorage.setItem("tw.backupSnooze", isoDate(d)); } catch {} render(); break; }
     case "bdel": { const id = b.dataset.id; if (S.confirmB !== id) { S.confirmB = id; render(); break; }
       S.confirmB = null; delete S.body[id]; removeDoc("body/" + id); render(); break; }
   }
@@ -1747,14 +1769,15 @@ function backupCard() {
     <div class="muted" style="font-size:14px">Everything is stored on this phone. Save a backup now and then, and after big changes, so nothing is lost if the phone is reset or replaced.${last ? ` Last backup: ${shortDate(last)}.` : " No backup saved yet."}</div>
     <div class="row"><button class="btn" data-act="backup" id="b-backup">Save backup file</button>
     <label class="btn ghost" for="b-restore" style="cursor:pointer">Restore from file</label>
-    <input type="file" id="b-restore" accept="application/json,.json" hidden></div></div>`;
+    <input type="file" id="b-restore" accept="application/json,.json" hidden></div>
+    <small class="muted">The file lands in Downloads. Move it to Google Drive or email it to yourself, so it survives if the phone is lost.</small></div>`;
 }
 function doBackup() {
   const data = { app: "training-week", version: 1, savedAt: new Date().toISOString(), program: S.program, logs: S.logs, body: S.body };
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `training-week-backup-${today()}.json`;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-  try { localStorage.setItem("tw.lastBackup", today()); } catch {}
+  try { localStorage.setItem("tw.lastBackup", today()); localStorage.removeItem("tw.backupSnooze"); } catch {}
   toast("Backup saved to your Downloads folder."); render();
 }
 document.addEventListener("change", ev => {
