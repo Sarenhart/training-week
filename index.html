@@ -1259,6 +1259,12 @@ function migrate() {
     p.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => { if (/^pull-up$/i.test(e.name.trim()) && e.inc === 2.5) e.inc = 0.25; })));
     p.mig = 2; saveProgram();
   }
+  if (p.mig < 3) {              // 2026-11-02 (Christian): parallel bar dips are a phase-4 exercise – before that, the assisted dip machine
+    p.phases.forEach((ph, pi) => { if (pi >= 3) return; Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => {
+      if (/^parallel bar dips$/i.test(e.name.trim())) { e.name = "Assisted parallel bar dips"; e.kg = -25; e.inc = 0.25; e.bw = true;
+        e.note = "Dip handles on the assisted machine – machine help shown as minus kg. Feather = less help next time."; } })); });
+    p.mig = 3; saveProgram();
+  }
 }
 function mergeColl(snap, prefix, current) {
   const next = {};
@@ -1391,6 +1397,7 @@ const FEEL_IN = [
   [/dead bug|knee raise|ab wheel|crunch|plank|hollow|bird dog/i, "Abs"],
   [/farmer|suitcase|carry/i, "Grip and core"]
 ];
+if (typeof GUIDES !== "undefined" && GUIDES["parallel bar dips"]) GUIDES["assisted parallel bar dips"] = GUIDES["parallel bar dips"];
 function feelIn(name) { const m = FEEL_IN.find(([re]) => re.test(name || "")); return m ? m[1] : ""; }
 const FEEL_ICON = {
   light: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 3.8a6 6 0 0 0-8.5 0L5 10.5V19h8.5l6.7-6.7a6 6 0 0 0 0-8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`,
