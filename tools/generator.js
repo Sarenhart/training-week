@@ -746,6 +746,8 @@ function finalizePlan(P, a) {
         if (easy.has("Shoulders") && x.name === "Pull-up") swapTo(x, pickAlt(ALT.pull));
         // L8 shoulders: no overhead pressing or dips
         if (easy.has("Shoulders") && /shoulder press|overhead press|Pike push-up|Overhead carry|Chair dip|\bdips?\b/i.test(x.name)) swapTo(x, pickAlt(ALT.shoulders), /lateral raise/i.test(pickAlt(ALT.shoulders) || "") ? "Light – stop if it pinches." : undefined);
+        // Christian 2026-11-02: parallel bar dips only in phase 4, for every experience level
+        if (pi < 3 && /parallel bar dips?|^dips?$|weighted dips?/i.test(x.name)) swapTo(x, pickAlt([["Rope pushdown", []], ["Close-grip push-up", []]]));
         // H3 wrists: note on every push-up
         if (easy.has("Wrists") && /push-up/i.test(x.name) && !/handles or fists/.test(x.note || "")) x.note = [x.note, "Push-ups on handles or fists, wrists straight."].filter(Boolean).join(" ");
         // H2 65+: no jumps anywhere; no floor exercises in the gym
