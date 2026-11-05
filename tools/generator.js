@@ -813,6 +813,13 @@ function finalizePlan(P, a) {
           used.add(x); used.add(y); w.exercises.splice(w.exercises.indexOf(y), 1); w.exercises.splice(w.exercises.indexOf(x) + 1, 0, y);
           const t = tag(); x.ss = t + "1"; y.ss = t + "2"; }
         for (const x of loose) if (!x.ss && !x.rest) x.rest = 60; }
+      // Same machine twice in one workout (Christian 2026-11-05): don't make the user go back to a machine they've left –
+      // in a busy gym it may be taken. The second exercise on that machine moves right after the first one.
+      { const fam = x => { const e = EX[x.name] || {}; if (/leg press/i.test(x.name)) return "legpress"; if (/hip (ab|ad)duction machine/i.test(x.name)) return "hipmachine";
+          return e.eq === "machine" ? x.name : /^seated cable row$/i.test(x.name) ? "cablerow" : /^lat pulldown$/i.test(x.name) ? "pulldown" : null; };
+        for (let i = 0; i < w.exercises.length; i++) { const x = w.exercises[i], f = fam(x); if (!f || x.ss || /^Warm-up sets/.test(x.name)) continue;
+          let at = i; for (let j = i + 1; j < w.exercises.length; j++) { const y = w.exercises[j]; if (fam(y) !== f || y.ss || /^Warm-up sets/.test(y.name)) continue;
+            if (j !== at + 1) { w.exercises.splice(j, 1); w.exercises.splice(at + 1, 0, y); } at++; } } }
       // L1: renumber supersets after all swaps and drops; a "superset" of one becomes a normal exercise
       const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null; const r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
       let letter = 0;
