@@ -113,7 +113,7 @@ const SAMPLES = {
   "lat pulldown": {
     fam: "Vertical pull · cable",
     cap: ["Start: arms straight up, wide grip", "End: bar to the upper chest"],
-    cam: camera(-30, 10, 116, 220, 0.78), dur: 3000,
+    cam: camera(-30, 10, 92, 222, 0.76), dur: 3000,
     frame(u) {
       const pose = u => {
         const J = {};
@@ -125,10 +125,12 @@ const SAMPLES = {
         return J;
       };
       const J = pose(u), P = [9, 222, 0], bm = mid3(J.wriL, J.wriR), bm0 = mid3(pose(0).wriL, pose(0).wriR);
-      const st = stack(-22, 0, V.len(V.sub(bm, P)) - V.len(V.sub(bm0, P)));
+      // Christian 2026-11-05: the machine sits in front of the user (stack and column beyond the knees), not behind
+      const st = stack(70, 0, V.len(V.sub(bm, P)) - V.len(V.sub(bm0, P)));
       const pad = V.add(mid3(J.kneL, J.kneR), [-2, 9, 0]);
-      return { items: [...floor3(-50, 80, 50), box3(-18, 18, 44, 14), ...benchLegs([-12, 12], 44), post(-34, 0, 0, 226), L3([-34, 226, 0], [12, 226, 0], "an3col"),
-        ...st.items, L3([-22, 222, 0], st.top, "an3cable"), D3(P, 4, "an3eqf"), D3([-22, 222, 0], 4, "an3eqf"),
+      return { items: [...floor3(-40, 100, 50), post(84, 0, 0, 226), L3([84, 226, 0], [6, 226, 0], "an3col"),
+        ...st.items, L3([70, 222, 0], st.top, "an3cable"), L3(P, [70, 222, 0], "an3cable"), D3(P, 4, "an3eqf"), D3([70, 222, 0], 4, "an3eqf"),
+        box3(-18, 18, 44, 14), ...benchLegs([-12, 12], 44),
         L3([6, 0, 0], [6, pad[1], 0], "an3eq"), ...body3(J, "R"), L3(V.add(pad, [0, 0, -20]), V.add(pad, [0, 0, 20]), "an3pad"),
         L3(bm, P, "an3cable"), L3(V.add(bm, [0, 0, -40]), V.add(bm, [0, 0, 40]), "an3bar"), D3(J.wriL, 4, "an3grip"), D3(J.wriR, 4, "an3grip")], J };
     },
