@@ -789,6 +789,30 @@ function finalizePlan(P, a) {
         if (c === 2) x.note = [x.note, "Second time this week: one step easier than your current step, more reps."].filter(Boolean).join(" ");
         if (c >= 3) x.note = [x.note, "Third time this week: your current step with a slow 3-second lowering."].filter(Boolean).join(" ");
       }
+      // Superset rules (Christian 2026-11-05): partners must share one spot. Dumbbells with dumbbells, cables only with the same
+      // handle, floor/mat exercises go with anything; machines stand alone; barbell and dumbbells aren't mixed. Groups that break this
+      // are split, and the exercises split off are re-paired with each other where they fit, so the workout doesn't get much longer.
+      { const stn = x => { const n = x.name, e = EX[n] || {};
+          if (/Back extension/i.test(n)) return "st:backext"; if (/Hanging|Captain|Pull-up|Chin-up|\bdips?\b/i.test(n)) return "st:bar";
+          if (e.eq === "cable") return "cable:" + (/rope|face pull|pull-through|cable crunch|kneeling crunch/i.test(n) ? "rope" : /seated cable row/i.test(n) ? "row" : /lat pulldown/i.test(n) ? "pulldown"
+            : /^cable curl|straight-bar|bar pushdown/i.test(n) ? "bar" : /hip abduction|kickback/i.test(n) ? "ankle" : /lateral raise|fly|crossover|pallof|face-away|one-arm|single-arm|rear-delt|woodchop/i.test(n) ? "handle" : n);
+          return e.eq === "bw" ? "free" : e.eq || "x:" + n; };
+        const fits = xs => { const f = new Set(xs.map(stn).filter(t => t !== "free")); return f.size <= 1 && ![...f].some(t => t === "machine" || t === "cardio" || t.startsWith("x:")); };
+        const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null, r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
+        let tmp = 0; const tag = () => String.fromCharCode(0x3b1 + tmp++), loose = [], spotless = x => { if (x.note) x.note = x.note.replace(/ ?Superset at the [^.]+\./, "").trim() || undefined; };
+        for (const r of runs) { if (!r.L) continue;
+          if (r.xs.some(x => isBalanceItem(x) || /ladder/i.test(x.name)) || fits(r.xs)) { const t = tag(); r.xs.forEach(x => x.ss = t + x.ss.slice(1)); continue; }
+          const subs = []; for (const x of r.xs) { const g = subs.find(g => fits(g.concat(x))); if (g && fits([x])) g.push(x); else subs.push([x]); }
+          const at = w.exercises.indexOf(r.xs[0]); w.exercises.splice(at, r.xs.length, ...subs.flat());       // keep each new group together
+          for (const g of subs) { g.forEach(x => { spotless(x); if (x.note) x.note = x.note.replace(/ ?Go straight to [A-Z]\d\.?/g, "").trim() || undefined; });
+            if (g.length > 1) { const t = tag(); g.forEach((x, i) => x.ss = t + (i + 1)); } else { delete g[0].ss; loose.push(g[0]); } } }
+        // re-pair the split-off exercises with each other (never machines)
+        const used = new Set();
+        for (const x of loose) { if (used.has(x) || !fits([x])) continue;
+          const y = loose.find(z => z !== x && !used.has(z) && fits([x, z])); if (!y) continue;
+          used.add(x); used.add(y); w.exercises.splice(w.exercises.indexOf(y), 1); w.exercises.splice(w.exercises.indexOf(x) + 1, 0, y);
+          const t = tag(); x.ss = t + "1"; y.ss = t + "2"; }
+        for (const x of loose) if (!x.ss && !x.rest) x.rest = 60; }
       // L1: renumber supersets after all swaps and drops; a "superset" of one becomes a normal exercise
       const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null; const r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
       let letter = 0;
