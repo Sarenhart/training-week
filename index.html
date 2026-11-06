@@ -390,6 +390,10 @@ const GUIDES = {
     steps: ["Hold the bar on the angled grips, palms up, arms straight.", "Keep the elbows at your sides and curl the bar up.", "Squeeze at the top, then lower slowly to straight arms."],
     avoid: ["Swinging the hips or leaning back.", "Elbows moving forward.", "Stopping short of straight arms at the bottom."]
   },
+  "dumbbell curl": {
+    steps: ["Stand tall, dumbbells at your sides, palms facing forward.", "Keep the elbows at your sides and curl the weights up.", "Squeeze at the top, then lower slowly."],
+    avoid: ["Swinging the body.", "Elbows drifting forward.", "Dropping the weight on the way down."]
+  },
   "barbell curl": {
     steps: ["Shoulder-width grip, palms up, arms straight.", "Keep the elbows at your sides and curl the bar up.", "Squeeze at the top, then lower slowly."],
     avoid: ["Swinging the body.", "Elbows drifting forward.", "Bending the wrists back."]
@@ -979,6 +983,12 @@ const ANIM4 = {
     frame: u => curlFrame(u, { hz: 14, half: 30, plate: 9 }),
     cues: [{ when: "all", pt: J => J.elbR, off: [50, -10], text: "Elbows at sides" }, { when: "all", pt: J => J.pelvis, off: [-50, 20], text: "No swinging" }]
   },
+  "dumbbell curl": {
+    cap: ["Start: arms straight, palms forward", "Top: curled up, elbows still"],
+    cam: camera(-30, 10, 116, 210, 0.92), dur: 2600,
+    frame: u => curlFrame(u, { db: true, hz: 20 }),
+    cues: [{ when: "all", pt: J => J.elbR, off: [60, 10], text: "Elbows still" }, { when: "B", pt: J => J.wriR, off: [60, -24], text: "Squeeze at the top" }]
+  },
   "barbell curl": {
     cap: ["Start: arms straight", "Top: curled up, elbows at your sides"],
     cam: camera(-30, 10, 116, 210, 0.92), dur: 2600,
@@ -1274,6 +1284,12 @@ function migrate() {
       if (!l.sets?.[id]) continue; if (l.names) l.names[id] = "Pull-up";
       if (!l.sets[id].some(x => x.done)) delete l.sets[id]; }
     p.mig = 4; saveProgram(); saveLocal();
+  }
+  if (p.mig < 5) {              // 2026-11-06 (Christian): phase 3 Pull superset A2 – barbell curl → dumbbell curl
+    const w = p.phases[2]?.workouts?.["3"], e = w?.exercises?.find(x => /^barbell curl$/i.test(x.name));
+    if (e) { e.name = "Dumbbell curl"; e.kg = 10; e.inc = 2; e.note = "kg per dumbbell.";
+      for (const l of Object.values(S.logs || {})) if (l.sets?.[e.id]) { if (l.names) l.names[e.id] = "Dumbbell curl"; if (!l.sets[e.id].some(x => x.done)) delete l.sets[e.id]; } }
+    p.mig = 5; saveProgram(); saveLocal();
   }
 }
 function mergeColl(snap, prefix, current) {
