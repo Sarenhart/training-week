@@ -1265,6 +1265,16 @@ function migrate() {
         e.note = "Dip handles on the assisted machine – machine help shown as minus kg. Feather = less help next time."; } })); });
     p.mig = 3; saveProgram();
   }
+  if (p.mig < 4) {              // 2026-11-06 (Christian): no weighted pull-ups before you can do them without help – plain pull-ups,
+    const ids = new Set();      // which follow the machine help from your last pull-up session and only add belt weight once you're past body weight
+    p.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => {
+      if (/^weighted pull-up$/i.test(e.name.trim())) { ids.add(e.id); e.name = "Pull-up"; e.kg = -20; e.inc = 0.25; e.bw = true;
+        e.note = "Use the assisted machine until all reps go without help – then a belt adds weight."; } })));
+    for (const l of Object.values(S.logs || {})) for (const id of ids) {          // a workout opened but not started yet gets the new suggestion
+      if (!l.sets?.[id]) continue; if (l.names) l.names[id] = "Pull-up";
+      if (!l.sets[id].some(x => x.done)) delete l.sets[id]; }
+    p.mig = 4; saveProgram(); saveLocal();
+  }
 }
 function mergeColl(snap, prefix, current) {
   const next = {};
