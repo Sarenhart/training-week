@@ -104,7 +104,7 @@ function obView() {
       <ol class="obsteps"><li><b>About you</b><span>Year of birth, plus optional weight, height and measurements</span></li><li><b>Your goal and body type</b><span>What you want to train for and look like</span></li><li><b>Your week</b><span>Days, time, focus areas and anything to go easy on</span></li></ol>
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <p class="muted obsmall">About 2 minutes. Everything stays on your phone.</p>
-      ${o.edit ? `<button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my answers</button>` : `<label class="linkbtn" for="ob-restore" style="cursor:pointer">Moving from another phone? Restore a backup file</label><input type="file" id="ob-restore" accept="application/json,.json" hidden>
+      ${o.edit ? `<button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my answers</button>` : `<label class="linkbtn" for="ob-restore" style="cursor:pointer">Moving from another phone? Restore a backup file</label><input type="file" id="ob-restore" accept="application/json,.json,text/plain,.txt" hidden>
         <button type="button" class="linkbtn" data-act="obskip">DEV: skip setup and keep my current programme</button>`}`;
   } else if (step === "about") {
     h += `<header class="top"><div>${stepTag}<h1>About you</h1></div><button type="button" class="infobtn" data-act="obinfo" aria-expanded="${!!o.info}" aria-label="Privacy">i</button></header>
