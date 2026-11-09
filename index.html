@@ -1187,6 +1187,7 @@ const ANIM4 = {
   "bike intervals": { ...BIKE, cap: ["Hard: spin fast for 30 s", "Easy: 60 s to recover"], dur: 800 }
 };
 for (const k in ANIM4) ANIM[k] = ANIM3[k] = ANIM4[k];
+if (ANIM["parallel bar dips"]) ANIM["assisted parallel bar dips"] = ANIM["parallel bar dips"];   // same movement, help from the machine
 
 const WK = ["1","2","3","c"];                 // workout keys; "c" = optional cardio
 const REQ = ["1","2","3"];
@@ -1291,6 +1292,14 @@ function migrate() {
       for (const l of Object.values(S.logs || {})) if (l.sets?.[e.id]) { if (l.names) l.names[e.id] = "Dumbbell curl"; if (!l.sets[e.id].some(x => x.done)) delete l.sets[e.id]; } }
     p.mig = 5; saveProgram(); saveLocal();
   }
+  if (p.mig < 6) {              // 2026-11-09 (Christian): barbell 2.5 kg, machines and cables 1 kg, dumbbells 1 kg to 10 kg then 2 kg (stepOf)
+    p.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => {
+      if (!e.inc || e.bw || /kettlebell/i.test(e.name)) return;
+      if (/barbell|ez-bar|^romanian deadlift$/i.test(e.name)) e.inc = 2.5;
+      else if (isDb(e)) { e.db = true; e.inc = 2; }
+      else if (e.inc === 2.5) e.inc = 1; })));
+    p.mig = 6; saveProgram();
+  }
 }
 function mergeColl(snap, prefix, current) {
   const next = {};
@@ -1336,12 +1345,16 @@ function prevBest(name, beforeId) {
   }
   return null;
 }
+// Weight steps (Christian 2026-11-09): barbell ±2.5 kg; machines and cables 1 kg (assisted pull-ups/dips 0.25 kg, as set);
+// dumbbells 1 kg up to 10 kg, then 2 kg per step (9 → 10 → 12, and back 12 → 10 → 9).
+function isDb(e) { return !e.bw && (e.db || /dumbbell|farmer/i.test(e.name) || /kg per (dumbbell|hand)/i.test(e.note || "")); }
+function stepOf(e, kg, dir) { if (!e.inc) return 0; if (isDb(e)) return dir > 0 ? (kg < 10 ? 1 : 2) : (kg <= 10 ? 1 : 2); return e.inc; }
 function suggest(e, id) {
   const last = prevBest(e.name, id);
   if (!last) return { kg: e.kg, last: null, up: false };
-  if (!e.inc) return { kg: last.kg || e.kg, last, up: false };
+  if (!e.inc) return { kg: last.kg || e.kg, last, up: false };   // steps: see stepOf()
   const up = last.feel === "light" ? true : last.feel === "heavy" ? false : last.allReps && last.reps >= e.reps;
-  return { kg: up ? last.kg + e.inc : e.bw ? last.kg : Math.max(last.kg, 0), last, up };
+  return { kg: up ? Math.round((last.kg + stepOf(e, last.kg, 1)) * 100) / 100 : e.bw ? last.kg : Math.max(last.kg, 0), last, up };
 }
 function ensureLog(w, k) {
   const id = logId(w, k), wo = workout(w, k);
@@ -1482,10 +1495,10 @@ function todayView() {
     const kgLabel = x => e.bw ? (x > 0 ? "+" + fmt(x) + " kg" : x < 0 ? "−" + fmt(-x) + " kg" : "BW") : x ? fmt(x) + " kg" : "";
     const kgWord = x => e.bw && x < 0 ? fmt(-x) + " kg help" : fmt(x) + " kg";
     const cols = `grid-template-columns:repeat(${Math.max(sets.length, 1)},minmax(0,1fr))`;
-    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(e.inc) + " kg today"}</span>` : ""}</div>
+    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(Math.round((sg.kg - sg.last.kg) * 100) / 100) + " kg today"}</span>` : ""}</div>
         <div class="lastrow num ${sets.length > 3 ? "tight" : ""}" style="${cols}">${sg.last.sets.map(x => `<span>${x.reps}${unit ? " " + unit : ""}${x.kg && !e.bw ? " × " + fmt(x.kg) + " kg" : e.bw && x.kg ? " × " + kgLabel(x.kg) : ""}</span>`).join("")}</div>` : "";
     const feel = l?.feel?.[e.id] || null;
-    const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(kgNow + e.inc)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`}</div>` : "";
+    const feelNote = feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(Math.round((kgNow + stepOf(e, kgNow, 1)) * 100) / 100)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`}</div>` : "";
     h += `<section class="ex ${complete ? "complete" : ""} ${ssCls}">
       <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}
         ${feelIn(e.name) ? `<div class="feelit">Feel it in: <b>${feelIn(e.name)}</b></div>` : ""}
@@ -1500,9 +1513,9 @@ function todayView() {
         <div class="feel"><button class="fbtn light ${feel === "light" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="light" aria-pressed="${feel === "light"}" aria-label="Felt light" title="Felt light">${FEEL_ICON.light(22)}</button>
           <button class="fbtn heavy ${feel === "heavy" ? "on" : ""}" data-act="feel" data-ex="${e.id}" data-f="heavy" aria-pressed="${feel === "heavy"}" aria-label="Felt heavy" title="Felt heavy">${FEEL_ICON.heavy(22)}</button></div></div>
       ${e.inc ? `<div class="kgrow"><span>${e.bw ? (kgNow < 0 ? "Machine help" : "Added") : "Weight"}</span>
-        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${-e.inc}" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "Less weight (more machine help)" : "Less weight"}">−</button>
+        <button class="step" data-act="kg" data-ex="${e.id}" data-d="-1" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "Less weight (more machine help)" : "Less weight"}">−</button>
         <span class="kg num">${e.bw && kgNow < 0 ? fmt(-kgNow) + " kg" : kgLabel(kgNow) || "0 kg"}</span>
-        <button class="step" data-act="kg" data-ex="${e.id}" data-d="${e.inc}" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "More weight (less machine help)" : "More weight"}">+</button></div>` : ""}
+        <button class="step" data-act="kg" data-ex="${e.id}" data-d="1" data-min="${e.bw ? -80 : 0}" aria-label="${e.bw ? "More weight (less machine help)" : "More weight"}">+</button></div>` : ""}
       ${feelNote}
       ${guideHtml(e)}
     </section>`;
@@ -1694,7 +1707,7 @@ function renderTimer() {
   timerEl.hidden = false;
   timerEl.innerHTML = `<div class="clock num ${left <= 0 ? "over" : ""}">${left < 0 ? "+" : ""}${mm}:${ss}</div>
     <div class="lbl">${left <= 0 ? "Rest over. Next set!" : "Resting after " + esc(t.label)}<div class="bar"><span style="width:${pct}%"></span></div></div>
-    <button class="btn ghost small" data-act="t15">+15 s</button><button class="btn small" data-act="tstop">${left <= 0 ? "Done" : "Skip"}</button>`;
+    <button class="btn ghost small" data-act="t15">+15 s</button><button class="btn small" data-act="tstop">${left <= 10 ? "Done" : "Skip"}</button>`;
 }
 function beep() {
   const ctx = S.audio; if (!ctx) return;
@@ -1844,7 +1857,8 @@ document.addEventListener("click", ev => {
     }
     case "kg": {
       const l = ensureLog(S.week, S.wk), arr = l.sets[b.dataset.ex], d = +b.dataset.d;
-      const left = arr.filter(x => !x.done); const lo = +(b.dataset.min || 0); (left.length ? left : arr).forEach(x => x.kg = Math.max(lo, Math.round(((x.kg || 0) + d) * 100) / 100));
+      const ex = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex) || {};
+      const left = arr.filter(x => !x.done); const lo = +(b.dataset.min || 0); (left.length ? left : arr).forEach(x => x.kg = Math.max(lo, Math.round(((x.kg || 0) + d * stepOf(ex, x.kg || 0, d)) * 100) / 100));
       saveLog(l); render(); break;
     }
     case "finish": { const l = S.logs[logId(S.week, S.wk)]; if (l) { l.finished = true; l.finishedAt = new Date().toISOString(); saveLog(l); S.timer = null; clearInterval(tick);
