@@ -49,8 +49,8 @@ const EX = {
   "Glute bridge": { m: "glutes", eq: "bw", bw: true, floor: true },
   "Cable pull-through": { m: "glutes", eq: "cable", ratio: .3, inc: 1, lower: true },
   "Hip abduction machine": { m: "glutes", eq: "machine", ratio: .35, inc: 1, lower: true },
-  "Romanian deadlift": { m: "ham", eq: "db", ratio: .15, inc: 2, lower: true, lib: "Dumbbell romanian deadlift", note: "Dumbbells, kg per hand." },
-  "B-stance Romanian deadlift": { m: "ham", eq: "db", ratio: .12, inc: 2, lower: true },
+  "Dumbbell Romanian deadlift": { m: "ham", eq: "db", ratio: .15, inc: 2, lower: true, lib: "Dumbbell romanian deadlift", note: "Dumbbells, kg per hand." },
+  "B-stance dumbbell Romanian deadlift": { m: "ham", eq: "db", ratio: .12, inc: 2, lower: true, lib: "B-stance Romanian deadlift" },
   "Lying hamstring curl": { m: "ham", eq: "machine", ratio: .25, inc: 1, lower: true },
   "Seated hamstring curl": { m: "ham", eq: "machine", ratio: .25, inc: 1, lower: true },
   "Back extension": { m: "glutes", eq: "bw", bw: true, lib: "Back extension (45°)" },
@@ -85,56 +85,56 @@ const T = (w) => w.map(s => { const [name, ...groups] = s.split("|"); return { n
   return { spot, ex: body.split(" + ").map(x => { const mm = x.trim().match(/^(.*?)\s(\d+)$/); return { name: mm[1], sets: +mm[2] }; }) }; }) }; });
 const STRENGTH = {
   3: [
-    T(["Push|Dumbbell bench press 3|incline bench ~30°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 3 + Romanian deadlift 3 + Single-leg calf raise 2",
+    T(["Push|Dumbbell bench press 3|incline bench ~30°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 3 + Dumbbell Romanian deadlift 3 + Single-leg calf raise 2",
        "Pull|Lat pulldown 3|flat bench: One-arm dumbbell row 3 + Incline push-up 3|seated cable row + mat: Seated cable row 3 + Dead bug 3|back-extension bench + mat: Back extension 3 + Bird dog 3",
        "Full body|Barbell hip thrust 3|upright bench + mat: Seated dumbbell shoulder press 3 + Side plank 2|cable crossover: Cable fly (low-to-high) 3 + Cable lateral raise 3|Lying hamstring curl 2|Standing calf raise 2",
        "Extra|Bike or brisk walk 1"]),
-    T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Side-lying lateral raise 4|dumbbell rack: Lean-away lateral raise 4 + B-stance Romanian deadlift 3",
+    T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Side-lying lateral raise 4|dumbbell rack: Lean-away lateral raise 4 + B-stance dumbbell Romanian deadlift 3",
        "Pull|Lat pulldown 4|row machine + mat: Machine row 3 + Reverse crunch 3|flat bench: Dumbbell pullover 3 + Deficit push-up 3|back-extension bench + mat: Back extension 3 + Side plank 2",
        "Full body|Barbell hip thrust 3|cable crossover: Cable fly (mid) 3 + Cable lateral raise 3|low cable: Cable pull-through 3 + Pallof press 3|Seated hamstring curl 2|Calf raise on the leg press 4",
        "Extra|cable tower, rope: Face pull 3 + Rope overhead triceps extension 3|incline bench: Incline dumbbell curl 3 + Rear-delt dumbbell fly 2|dumbbell rack: Dumbbell hammer curl 2 + Single-leg calf raise 2|Bike 1"]),
-    T(["Push|Dumbbell bench press 4|incline bench ~30°: Incline dumbbell fly 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 4 + Romanian deadlift 3 + Overhead dumbbell triceps extension 3",
+    T(["Push|Dumbbell bench press 4|incline bench ~30°: Incline dumbbell fly 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 4 + Dumbbell Romanian deadlift 3 + Overhead dumbbell triceps extension 3",
        "Pull|Lat pulldown 4|flat bench: One-arm dumbbell row 3 + Decline push-up 3|seated cable row: Seated cable row 3 + Cable curl 2 + Dead bug 3|back-extension bench + mat: Back extension 3 + Bird dog 3",
        "Full body|Barbell hip thrust 4|upright bench: Seated dumbbell shoulder press 3 + Single-leg calf raise 2 + Side plank 2|cable crossover: Cable fly (high-to-low) 3 + Cable lateral raise 3 + Face pull 2|Lying hamstring curl 2|Standing calf raise 2",
        "Extra|cable crossover: Rope pushdown 3 + Cable rear-delt fly 3|incline bench: Incline dumbbell curl 3 + Dumbbell skull crusher 3|dumbbell rack: Dumbbell hammer curl 2 + Lean-away lateral raise 2|Bike 1"]),
-    T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 4 + Side-lying lateral raise 4|dumbbell rack: Lean-away lateral raise 4 + B-stance Romanian deadlift 3 + Suitcase hold 2",
+    T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 4 + Side-lying lateral raise 4|dumbbell rack: Lean-away lateral raise 4 + B-stance dumbbell Romanian deadlift 3 + Suitcase hold 2",
        "Pull|Lat pulldown 4|row machine + mat: Machine row 4 + Reverse crunch 3|flat bench: Dumbbell pullover 3 + Deficit push-up 3|back-extension bench + mat: Back extension 3 + Bird dog 2",
        "Full body|Barbell hip thrust 4|cable crossover: Cable fly (low-to-high) 3 + Cable lateral raise 4 + Face pull 2|low cable: Cable pull-through 3 + Pallof press 2|Seated hamstring curl 2|Calf raise on the leg press 4",
        "Extra|cable tower: Rope overhead triceps extension 4 + Cable curl 3|incline bench, face down: Spider curl 3 + Rear-delt dumbbell fly 3|Overhead dumbbell triceps extension 4|Bike 1"])
   ],
   2: [
     T(["Full body · Push|Dumbbell bench press 3|Goblet squat 3|incline bench ~30°, face down: Chest-supported dumbbell row 3 + Incline Y-raise 2|dumbbell rack + mat: Dumbbell lateral raise 3 + Dead bug 3",
-       "Full body · Pull|One-arm dumbbell row 3|Romanian deadlift 3|flat bench: Incline push-up 3 + Dumbbell hip thrust 3|upright bench + mat: Seated dumbbell shoulder press 3 + Side plank 2|Single-leg calf raise 2",
+       "Full body · Pull|One-arm dumbbell row 3|Dumbbell Romanian deadlift 3|flat bench: Incline push-up 3 + Dumbbell hip thrust 3|upright bench + mat: Seated dumbbell shoulder press 3 + Side plank 2|Single-leg calf raise 2",
        "Extra|Bike or brisk walk 1"]),
     T(["Full body · Push|Dumbbell bench press 3|Goblet squat 3|cable crossover: Cable fly (low-to-high) 3 + Cable lateral raise 3 + Cable pull-through 3|lat pulldown + mat: Lat pulldown 3 + Dead bug 3",
-       "Full body · Pull|One-arm dumbbell row 3|Romanian deadlift 3|seated cable row + mat: Seated cable row 3 + Side plank 2|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 3 + Single-leg calf raise 2|Dumbbell hip thrust 3",
+       "Full body · Pull|One-arm dumbbell row 3|Dumbbell Romanian deadlift 3|seated cable row + mat: Seated cable row 3 + Side plank 2|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 3 + Single-leg calf raise 2|Dumbbell hip thrust 3",
        "Extra|leg press + mat: Leg press 3 + Reverse crunch 2|incline bench, face down: Chest-supported dumbbell row 3 + Incline Y-raise 2|cable tower, rope: Face pull 3 + Rope pushdown 2|Dumbbell hammer curl 2"]),
     T(["Full body · Push|Dumbbell bench press 3|Goblet squat 3|incline bench ~30°: Incline dumbbell press 3 + Chest-supported dumbbell row 3|Cable lateral raise 3|back-extension bench + mat: Back extension 3 + Dead bug 3",
-       "Full body · Pull|One-arm dumbbell row 3|Romanian deadlift 3|lat pulldown + mat: Lat pulldown 3 + Side plank 2|flat bench: Dumbbell hip thrust 3 + Incline push-up 2|dumbbell rack: Lean-away lateral raise 3 + Overhead dumbbell triceps extension 2 + Single-leg calf raise 2",
+       "Full body · Pull|One-arm dumbbell row 3|Dumbbell Romanian deadlift 3|lat pulldown + mat: Lat pulldown 3 + Side plank 2|flat bench: Dumbbell hip thrust 3 + Incline push-up 2|dumbbell rack: Lean-away lateral raise 3 + Overhead dumbbell triceps extension 2 + Single-leg calf raise 2",
        "Extra|one cable: Cable pull-through 3 + Cable curl 2 + Face pull 2|seated cable row + mat: Seated cable row 3 + Reverse crunch 2|Leg press 3|Dumbbell lateral raise 3"]),
     T(["Full body · Push|Dumbbell bench press 3|Goblet squat 3|cable crossover: Cable fly (low-to-high) 3 + Cable lateral raise 3|lat pulldown + mat: Lat pulldown 3 + Dead bug 3|Back extension 3",
-       "Full body · Pull|One-arm dumbbell row 3|Romanian deadlift 3|seated cable row + mat: Seated cable row 3 + Reverse crunch 3|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 3 + Single-leg calf raise 2|Dumbbell hip thrust 3",
+       "Full body · Pull|One-arm dumbbell row 3|Dumbbell Romanian deadlift 3|seated cable row + mat: Seated cable row 3 + Reverse crunch 3|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 3 + Single-leg calf raise 2|Dumbbell hip thrust 3",
        "Extra|incline bench: Chest-supported dumbbell row 3 + Incline Y-raise 3 + Incline dumbbell curl 2|cable tower, rope: Face pull 3 + Rope overhead triceps extension 2|leg press: Leg press 3 + Calf raise on the leg press 2"])
   ],
   4: [
     T(["Push|Dumbbell bench press 3|incline bench ~30°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 3 + Single-leg calf raise 2",
        "Pull|Lat pulldown 3|flat bench + floor: One-arm dumbbell row 3 + Deficit push-up 3|seated cable row + mat: Seated cable row 3 + Dead bug 3|cable tower: Cable lateral raise 3 + Pallof press 2",
-       "Lower|Goblet squat 3|dumbbell rack + bench: Romanian deadlift 3 + Bulgarian split squat 2|lying hamstring curl + mat: Lying hamstring curl 2 + Side plank 2|Seated calf raise 2|back-extension bench + mat: Back extension 3 + Bird dog 2",
+       "Lower|Goblet squat 3|dumbbell rack + bench: Dumbbell Romanian deadlift 3 + Bulgarian split squat 2|lying hamstring curl + mat: Lying hamstring curl 2 + Side plank 2|Seated calf raise 2|back-extension bench + mat: Back extension 3 + Bird dog 2",
        "Full body|Barbell hip thrust 3|upright bench: Seated dumbbell shoulder press 3 + Lean-away lateral raise 3|chest-press machine + mat: Machine chest press 3 + Reverse crunch 2|Machine row 3",
        "Extra|Bike or brisk walk 1"]),
     T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Side-lying lateral raise 4|dumbbell rack: Overhead dumbbell triceps extension 2 + Single-leg calf raise 2",
        "Pull|Lat pulldown 4|flat bench: Dumbbell pullover 3 + Decline push-up 3|seated cable row + mat: Seated cable row 3 + Reverse crunch 3|cable tower: Cable lateral raise 4 + Face pull 2",
-       "Lower|Barbell back squat 4|B-stance Romanian deadlift 3|seated hamstring curl + mat: Seated hamstring curl 2 + Side plank 2|Standing calf raise 2|back-extension bench + mat: Back extension 3 + Dead bug 2",
+       "Lower|Barbell back squat 4|B-stance dumbbell Romanian deadlift 3|seated hamstring curl + mat: Seated hamstring curl 2 + Side plank 2|Standing calf raise 2|back-extension bench + mat: Back extension 3 + Dead bug 2",
        "Full body|Barbell hip thrust 4|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 4|cable crossover: Cable fly (mid) 3 + Pallof press 2|Machine row 3",
        "Extra|cable tower, rope: Rope overhead triceps extension 3 + Cable curl 2|incline bench: Incline dumbbell curl 3 + Rear-delt dumbbell fly 3|Bike 1"]),
     T(["Push|Dumbbell bench press 4|incline bench ~30°: Incline dumbbell fly 3 + Chest-supported dumbbell row 3 + Incline Y-raise 3|dumbbell rack: Dumbbell lateral raise 3 + Overhead dumbbell triceps extension 3 + Single-leg calf raise 2",
        "Pull|Lat pulldown 4|flat bench + floor: One-arm dumbbell row 3 + Deficit push-up 3|seated cable row station: Seated cable row 3 + Cable curl 2 + Dead bug 2|cable tower: Cable lateral raise 3 + Face pull 2",
-       "Lower|Barbell back squat 4|dumbbell rack + bench: Romanian deadlift 3 + Bulgarian split squat 2|lying hamstring curl + mat: Lying hamstring curl 2 + Side plank 2|Seated calf raise 2|back-extension bench + mat: Back extension 3 + Bird dog 2",
+       "Lower|Barbell back squat 4|dumbbell rack + bench: Dumbbell Romanian deadlift 3 + Bulgarian split squat 2|lying hamstring curl + mat: Lying hamstring curl 2 + Side plank 2|Seated calf raise 2|back-extension bench + mat: Back extension 3 + Bird dog 2",
        "Full body|Barbell hip thrust 4|upright bench: Seated dumbbell shoulder press 3 + Lean-away lateral raise 3|chest-press machine + mat: Machine chest press 3 + Reverse crunch 2|Machine row 3",
        "Extra|cable crossover: Rope pushdown 3 + Cable rear-delt fly 3|incline bench, face up: Incline dumbbell curl 3 + Dumbbell skull crusher 3|Dumbbell hammer curl 2|Bike 1"]),
     T(["Push|Dumbbell bench press 4|incline bench ~45°: Incline dumbbell press 3 + Chest-supported dumbbell row 3 + Side-lying lateral raise 4|dumbbell rack: Overhead dumbbell triceps extension 3 + Single-leg calf raise 2",
        "Pull|Lat pulldown 4|flat bench + floor: One-arm dumbbell row 3 + Deficit push-up 3|seated cable row + mat: Seated cable row 3 + Reverse crunch 3|cable tower: Cable lateral raise 4 + Face pull 2",
-       "Lower|Barbell back squat 4|dumbbell rack + bench: Romanian deadlift 3 + Bulgarian split squat 3|seated hamstring curl + mat: Seated hamstring curl 2 + Side plank 2|Standing calf raise 2|back-extension bench + mat: Back extension 3 + Dead bug 2",
+       "Lower|Barbell back squat 4|dumbbell rack + bench: Dumbbell Romanian deadlift 3 + Bulgarian split squat 3|seated hamstring curl + mat: Seated hamstring curl 2 + Side plank 2|Standing calf raise 2|back-extension bench + mat: Back extension 3 + Dead bug 2",
        "Full body|Barbell hip thrust 4|upright bench: Seated dumbbell shoulder press 3 + Dumbbell lateral raise 3|cable crossover: Cable fly (low-to-high) 3 + Pallof press 2|Machine row 3",
        "Extra|cable tower: Rope overhead triceps extension 3 + Cable curl 3|incline bench, face down: Spider curl 3 + Rear-delt dumbbell fly 3|Bike 1"])
   ]
@@ -350,7 +350,7 @@ function generatePlan(a) {
 
 // ===== Balance goal (balance-plan-update.md H9 – overrides balance-workouts.md / balance-2day-4day.md where they differ)
 Object.assign(EX, {
-  "Single-leg Romanian deadlift": { m: "ham", eq: "db", ratio: .08, inc: 2, lower: true, lib: "Single-leg Romanian deadlift reach", note: "Dumbbell in the opposite hand." },
+  "Single-leg dumbbell Romanian deadlift": { m: "ham", eq: "db", ratio: .08, inc: 2, lower: true, lib: "Single-leg Romanian deadlift reach", note: "Dumbbell in the opposite hand." },
   "Hip adduction machine": { m: "thighs", eq: "machine", ratio: .3, inc: 1, lower: true },
   "Single-arm cable row": { m: "back", eq: "cable", ratio: .15, inc: 1, lib: "Single-arm cable row, split stance", note: "Split stance, reps per side." },
   "Half-kneeling Pallof press": { m: "core", eq: "cable", ratio: .12, inc: 1, lib: "Kneeling Pallof press", note: "Reps per side." },
@@ -375,19 +375,19 @@ Object.assign(EX, {
 });
 const BALANCE = {
   3: [
-    T(["Lower & balance|Step-up 3|rack + mat: Single-leg Romanian deadlift 3 + Dead bug 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2|Seated calf raise 2",
+    T(["Lower & balance|Step-up 3|rack + mat: Single-leg dumbbell Romanian deadlift 3 + Dead bug 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2|Seated calf raise 2",
        "Upper & core|One-arm dumbbell row 3|incline bench: Incline dumbbell press 3 + Incline Y-raise 3|cable tower: Pallof press 2 + Single-arm cable row 2|static holds: Wall sit 2 + Front plank 2",
        "Full body & control|Goblet squat 3|lat pulldown + mat: Lat pulldown 3 + Bird dog 2|rack: Suitcase carry 2 + Dumbbell lateral raise 3|flat bench: Incline push-up 2 + Dumbbell hip thrust 3",
        "Extra|Home balance and mobility 1"]),
-    T(["Lower & balance|Step-up 4|rack + mat: B-stance Romanian deadlift 3 + Side plank 2|leg press: Single-leg leg press 3 + Calf raise on the leg press 2",
+    T(["Lower & balance|Step-up 4|rack + mat: B-stance dumbbell Romanian deadlift 3 + Side plank 2|leg press: Single-leg leg press 3 + Calf raise on the leg press 2",
        "Upper & core|One-arm dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 3|cable tower: Half-kneeling Pallof press 2 + Face pull 2|static holds: Wall sit 2 + Glute bridge hold 2",
        "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Reverse crunch 2|rack: Farmer carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Side-lying leg raise 2",
        "Extra|Home balance and mobility 1"]),
-    T(["Lower & balance|Step-up 4|rack + bench: Bulgarian split squat 3 + Dead bug 2|Single-leg Romanian deadlift 3|Seated calf raise 2",
+    T(["Lower & balance|Step-up 4|rack + bench: Bulgarian split squat 3 + Dead bug 2|Single-leg dumbbell Romanian deadlift 3|Seated calf raise 2",
        "Upper & core|One-arm dumbbell row 4|incline bench ~30°: Incline dumbbell press 3 + Incline Y-raise 3|cable tower: Tall-kneeling Pallof press 2 + Single-arm cable row 2|static holds: Hollow hold 2 + Side plank 2",
        "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Bird dog 2|cable tower: Cable woodchop 2 + Cable lateral raise 3|Hip abduction machine 3",
        "Extra|Home balance and mobility 1"]),
-    T(["Lower & balance|Step-up 4|rack + mat: Single-leg Romanian deadlift 3 + Side plank 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2",
+    T(["Lower & balance|Step-up 4|rack + mat: Single-leg dumbbell Romanian deadlift 3 + Side plank 2|hip machine: Hip abduction machine 3 + Hip adduction machine 2",
        "Upper & core|One-arm dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 3|cable tower: Half-kneeling Pallof press 2 + Face pull 2|static holds: Wall sit 2 + Front plank 2",
        "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Dead bug 2|rack: Suitcase carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Dumbbell hip thrust 3",
        "Extra|Home balance and mobility 1"])
@@ -464,10 +464,10 @@ const MACHINES = { "Bike": { lib: "Bike", p: [0, 0] }, "Cross-trainer": { lib: "
   "Stair climber": { lib: "Stair climber", p: [0, 0] }, "Rower": { lib: "Rower", p: [2, 1] }, "Air bike": { lib: "Air bike", p: [1, 0] }, "Ski machine": { lib: "Ski machine", p: [1, 0] },
   "Running": { lib: "Walk–run", p: [1, 0], run: true } };                   // p = first phase index for [New, Some/Experienced]
 const CARDIO_STR = [   // [Strength + intervals, Strength + tempo/steady] – main lifts stay, the superset changes each phase (J9)
-  ["Goblet squat 3|flat bench: Dumbbell bench press 2 + One-arm dumbbell row 2", "Romanian deadlift 3|lat pulldown + mat: Lat pulldown 2 + Dead bug 2"],
-  ["Goblet squat 3|incline bench: Incline dumbbell press 2 + Chest-supported dumbbell row 2", "Romanian deadlift 3|seated cable row + mat: Seated cable row 2 + Reverse crunch 2"],
-  ["Goblet squat 3|flat bench: Dumbbell bench press 2 + One-arm dumbbell row 2", "Romanian deadlift 3|lat pulldown + mat: Lat pulldown 2 + Side plank 2"],
-  ["Goblet squat 3|incline bench: Incline dumbbell press 2 + Chest-supported dumbbell row 2", "Romanian deadlift 3|seated cable row + mat: Seated cable row 2 + Reverse crunch 2"]
+  ["Goblet squat 3|flat bench: Dumbbell bench press 2 + One-arm dumbbell row 2", "Dumbbell Romanian deadlift 3|lat pulldown + mat: Lat pulldown 2 + Dead bug 2"],
+  ["Goblet squat 3|incline bench: Incline dumbbell press 2 + Chest-supported dumbbell row 2", "Dumbbell Romanian deadlift 3|seated cable row + mat: Seated cable row 2 + Reverse crunch 2"],
+  ["Goblet squat 3|flat bench: Dumbbell bench press 2 + One-arm dumbbell row 2", "Dumbbell Romanian deadlift 3|lat pulldown + mat: Lat pulldown 2 + Side plank 2"],
+  ["Goblet squat 3|incline bench: Incline dumbbell press 2 + Chest-supported dumbbell row 2", "Dumbbell Romanian deadlift 3|seated cable row + mat: Seated cable row 2 + Reverse crunch 2"]
 ];
 const INTERVALS = ["8 × 30 s Hard / 90 s Easy", "8 × 45 s Hard / 75 s Easy", "3 × 3 min Hard / 2 min Easy", "4 × 2 min Hard / 2 min Easy"];   // must fit the 20-min block with the 3-min Easy start (2026-10-27)
 const TEMPO = ["2 × 7 min Steady, 2 min Easy between", "2 × 8 min Steady, 2 min Easy between", "3 × 5 min Steady, 1 min Easy between", "2 × 8 min Steady + 2 min Hard finish"];
@@ -511,7 +511,7 @@ function generateCardio(a) {
       for (const g of groups) {
         const mm = g.match(/^([^:]+):\s(.+)$/); let ex = (mm ? mm[2] : g).split(" + ").map(parse);
         // C-07: single-leg RDL + standing cable hip abduction rotate in (Some/Experienced phase 2, New phase 3) on the tempo/steady day
-        if (pkey !== "1" && g === groups[0] && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
+        if (pkey !== "1" && g === groups[0] && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg dumbbell Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
         ex.forEach((x, xi) => { x.name = swapEasy(x.name); const e = EX[x.name] || {};
           out.push({ name: x.name, sets: x.sets, reps: e.reps || 15, kg: e.nokg || e.bw ? 0 : kg(e), rest: xi < ex.length - 1 ? 0 : 60, inc: e.inc || 0, unit: e.unit || "reps", ss: "A" + (xi + 1),
             ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: [xi < ex.length - 1 ? "Go straight to A" + (xi + 2) + "." : "", e.note || ""].filter(Boolean).join(" ") || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
@@ -576,9 +576,9 @@ homeSet(["Rope overhead triceps extension", "Rope pushdown", "Overhead dumbbell 
 homeSet(["Goblet squat", "Barbell back squat", "Leg press", "Single-leg leg press", "Sit-to-stand"], [H("Goblet squat", ["Dumbbells"]), H("Squat ladder", [], { note: "To a chair → full → pause → split squat, one step at a time." }), H("Sit-to-stand", ["Sturdy chair"])]);
 homeSet(["Bulgarian split squat", "Reverse lunge"], [H("SAME", ["Dumbbells"]), H("Bulgarian split squat", ["Sturdy chair"], { lib: "Squat ladder", note: "Back foot on a chair, body weight." }), H("Squat ladder", [], { note: "Split squat step." })]);
 homeSet(["Step-up"], [H("Step-up", ["Stairs or a sturdy step"]), H("Reverse lunge", [])]);
-homeSet(["Romanian deadlift", "B-stance Romanian deadlift", "Single-leg Romanian deadlift"], [H("SAME", ["Dumbbells"]), H("Romanian deadlift", ["Dumbbells"]), H("Band good-morning", ["Long resistance band"]), H("Backpack Romanian deadlift", [], { lib: "Backpack curl and RDL" }), H("Single-leg RDL reach", [], { lib: "Single-leg Romanian deadlift reach" })]);
+homeSet(["Dumbbell Romanian deadlift", "B-stance dumbbell Romanian deadlift", "Single-leg dumbbell Romanian deadlift"], [H("SAME", ["Dumbbells"]), H("Dumbbell Romanian deadlift", ["Dumbbells"]), H("Band good-morning", ["Long resistance band"]), H("Backpack Romanian deadlift", [], { lib: "Backpack curl and RDL" }), H("Single-leg RDL reach", [], { lib: "Single-leg Romanian deadlift reach" })]);
 homeSet(["Barbell hip thrust", "Dumbbell hip thrust"], [H("Dumbbell hip thrust at home", ["Dumbbells"], { note: "Upper back on a sofa that can't slide, or on the floor." }), H("Band glute bridge", ["Long resistance band"]), H("Single-leg glute bridge", [])]);
-homeSet(["Cable pull-through"], [H("Band good-morning", ["Long resistance band"]), H("Single-leg Romanian deadlift", ["Dumbbells"]), H("Glute bridge", [])]);
+homeSet(["Cable pull-through"], [H("Band good-morning", ["Long resistance band"]), H("Single-leg dumbbell Romanian deadlift", ["Dumbbells"]), H("Glute bridge", [])]);
 homeSet(["Hip abduction machine", "Standing cable hip abduction"], [H("Mini-band lateral walk", ["Mini band (loop)"], { lib: "Mini-band glute moves" }), H("Side-lying leg raise", [])]);
 homeSet(["Hip adduction machine"], [H("Copenhagen side plank", [])]);
 homeSet(["Lying hamstring curl", "Seated hamstring curl"], [H("Lying dumbbell hamstring curl", ["Dumbbells"]), H("Band leg curl", ["band+anchor"]), H("Sliding leg curl", ["Smooth floor (for sliding)"]), H("Stability-ball leg curl", ["Stability ball"]), H("Single-leg glute bridge", [])]);
