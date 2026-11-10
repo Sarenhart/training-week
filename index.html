@@ -1467,7 +1467,8 @@ function prevBest(name, beforeId) {
 }
 // Weight steps (Christian 2026-11-09): barbell ±2.5 kg; machines and cables 1 kg (assisted 0.25 / set per exercise);
 // dumbbells 1 kg up to 10 kg, then 2 kg per step (9 → 10 → 12, back 12 → 10 → 9).
-function isDb(e) { return !e.bw && (e.db || (typeof EX !== "undefined" && EX[e.name]?.eq === "db") || /dumbbell|farmer/i.test(e.name) || /kg per (dumbbell|hand)/i.test(e.note || "")); }
+// a 2.5 kg step means barbell – e.g. Christian's barbell "Romanian deadlift", which shares its name with the plan builder's dumbbell version (2026-11-10)
+function isDb(e) { return !e.bw && e.inc !== 2.5 && (e.db || (typeof EX !== "undefined" && EX[e.name]?.eq === "db") || /dumbbell|farmer/i.test(e.name) || /kg per (dumbbell|hand)/i.test(e.note || "")); }
 function stepOf(e, kg, dir) { if (!e.inc) return 0; if (isDb(e)) return dir > 0 ? (kg < 10 ? 1 : 2) : (kg <= 10 ? 1 : 2); return e.inc; }
 function snapKg(e, v) { if (isDb(e)) return v < 10 ? Math.round(v) : 2 * Math.round(v / 2); return Math.round(Math.round(v / e.inc) * e.inc * 100) / 100; }
 function suggest(e, id) {
