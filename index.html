@@ -3281,14 +3281,21 @@ function tipsCard() {      // Settings on the Programme tab: How the app works +
 // ---- Swap (programme-rules D4, approved; Christian 2026-10-31: small "Swap" next to the name, new alternative starts in finding mode)
 // 2–3 alternatives for the same muscle that respect "go easy on", 65+, New phase 1 (no barbell) and home equipment; ▶ preview;
 // "Just today" (this workout only) or "Rest of this phase" (the programme); undo. Sets and reps stay, so weekly sets are unchanged.
+// the same lift with the other tool – offered first when the equipment is busy (Christian 2026-11-12)
+const SWAP_TWIN = (() => { const pairs = [["Barbell bench press", "Dumbbell bench press"], ["Barbell overhead press", "Seated dumbbell shoulder press"], ["Barbell overhead press", "Standing dumbbell shoulder press"],
+  ["Romanian deadlift", "Dumbbell Romanian deadlift"], ["Barbell bent-over row", "One-arm dumbbell row"], ["Barbell hip thrust", "Dumbbell hip thrust"], ["Barbell back squat", "Goblet squat"],
+  ["Barbell curl", "Dumbbell curl"], ["EZ-bar curl", "Dumbbell curl"], ["EZ-bar skull crusher", "Dumbbell skull crusher"], ["Incline barbell bench press", "Incline dumbbell press"]], t = {};
+  for (const [a, b] of pairs) { (t[a] = t[a] || []).push(b); (t[b] = t[b] || []).push(a); } return t; })();
 const SWAP_REASONS = [["hard", "Too hard"], ["easy", "Too easy"], ["busy", "Equipment busy"], ["feel", "Doesn't feel right"]];
-const EQ_NAME = { db: "Dumbbells", bb: "Barbell", cable: "Cable", machine: "Machine", bw: "Body weight" };
+const EQ_NAME = { db: "Dumbbells", kb: "Kettlebell", bb: "Barbell", cable: "Cable", machine: "Machine", bw: "Body weight" };
 function swapProfile() { return loadProfile()?.answers || null; }
 function swapOptions(e, reason) {
   if (typeof EX === "undefined") return [];
   const cur = EX[e.name] || EX[e.swappedFrom?.name] || {}, m = cur.m; if (!m || m === "cardio") return [];
   const a = swapProfile() || {}, easy = new Set(a.easy || []), age = typeof obAge === "function" ? obAge(a) || 30 : 30, old = age >= 65, home = a.where === "Home", kit = new Set(a.kit || []);
   const pi = phaseIndex(S.week), inWeek = new Set(Object.values(phaseOf(S.week).workouts).flatMap(w => w.exercises.map(x => x.name)));
+  for (const k of Object.keys(phaseOf(S.week).workouts)) { const sw = S.logs[logId(S.week, k)]?.swaps; if (sw) Object.values(sw).forEach(x => inWeek.add(x.name)); }   // today's swaps count as used (Christian 2026-11-12)
+  const twin = SWAP_TWIN[e.name];
   const near = { shoulders: ["rear"], rear: ["shoulders"], thighs: ["ham", "glutes"], ham: ["glutes"], glutes: ["ham", "thighs"], biceps: [], triceps: [], chest: [], back: [], calves: [], core: [] };
   const ok = n => { const x = EX[n]; if (!x || n === e.name || inWeek.has(n) || x.m === "cardio") return false;
     if (easy.has("Knees") && x.knee) return false;
@@ -3296,21 +3303,24 @@ function swapOptions(e, reason) {
     if (easy.has("Shoulders") && /shoulder press|overhead|pike|dip|Pull-up|push-up/i.test(n)) return false;
     if (old && !home && x.floor) return false;
     if (a.level === "New" && pi === 0 && x.eq === "bb") return false;
+    if (pi < 3 && /parallel bar dips/i.test(n)) return false;                     // dips are a phase-4 exercise
     if (home && !(x.eq === "bw" || (x.eq === "db" && (kit.has("Dumbbells") || kit.has("Kettlebell"))))) return false;
     return true; };
   let list = Object.keys(EX).filter(n => EX[n].m === m && ok(n));
+  if (twin) twin.forEach(n => { if (ok(n) && !list.includes(n)) list.push(n); });
   if (list.length < 3) list = list.concat(Object.keys(EX).filter(n => (near[m] || []).includes(EX[n].m) && ok(n) && !list.includes(n)));
   const score = n => { const x = EX[n]; let s = 0;
     if (reason === "hard") s += (x.eq === "machine" || x.eq === "cable" ? 3 : 0) + (/incline|supported|seated/i.test(n) ? 2 : 0) - (x.eq === "bb" ? 3 : 0);
     if (reason === "easy") s += (x.eq === "bb" || x.eq === "db" ? 2 : 0) + (/single-leg|Bulgarian|deficit|decline|weighted/i.test(n) ? 2 : 0);
-    if (reason === "busy") s += x.eq !== cur.eq ? 3 : 0;
+    if (reason === "busy") s += (x.eq !== cur.eq ? 3 : 0) + (twin && twin.includes(n) ? 10 : 0);   // equipment busy → same lift with the other tool first
     if (reason === "feel") s += (x.eq !== cur.eq ? 2 : 0) + (x.m === m ? 1 : 0);
     s += x.m === m ? 2 : 0; s += typeof TWLIB !== "undefined" && TWLIB.find(x.lib || n) ? 1 : 0;   // same muscle first; with a guide
     return s; };
   return list.sort((p, q) => score(q) - score(p)).slice(0, 3);
 }
 function swapExFields(n, e) {
-  const x = EX[n] || {}, a = swapProfile() || {};
+  // no setup answers (a programme carried over from before round 4) → the setup defaults, so startKg() has what it needs (Christian 2026-11-12: Just today did nothing)
+  const x = EX[n] || {}, a = { ...(typeof defaultAnswers === "function" ? defaultAnswers() : {}), ...(swapProfile() || {}) };
   const kg = x.ratio && typeof startKg === "function" ? startKg(a, x) : 0;
   return { name: n, lib: x.lib || n, unit: x.unit || "reps", reps: x.unit && x.unit !== e.unit ? (x.reps || e.reps) : (x.unit === "sec" ? (x.reps || e.reps) : e.reps), kg,
     inc: x.inc || 0, ...(x.bw ? { bw: true } : { bw: false }), note: x.note || undefined };
@@ -3360,6 +3370,17 @@ function swapUndo(id) {
 if (typeof EX !== "undefined") Object.assign(EX, {
   "Barbell bench press": { m: "chest", eq: "bb", ratio: .4, inc: 2.5, note: "Bar to lower chest, feet planted. Use a rack with safety bars." },
   "Barbell overhead press": { m: "shoulders", eq: "bb", ratio: .3, inc: 2.5, note: "Squeeze glutes, no leaning back." },
+  // exercises from the hand-built programme, so they can be swapped too (2026-11-12)
+  "Dumbbell curl": { m: "biceps", eq: "db", ratio: .1, inc: 2, note: "kg per dumbbell." },
+  "Barbell curl": { m: "biceps", eq: "bb", ratio: .25, inc: 2.5 },
+  "EZ-bar curl": { m: "biceps", eq: "bb", ratio: .22, inc: 2.5 },
+  "EZ-bar skull crusher": { m: "triceps", eq: "bb", ratio: .2, inc: 2.5 },
+  "Parallel bar dips": { m: "triceps", eq: "bw", bw: true, inc: 0.25 },
+  "Assisted parallel bar dips": { m: "triceps", eq: "machine", bw: true, inc: 0.25, assist: true },
+  "Push-up": { m: "chest", eq: "bw", bw: true },
+  "Ab wheel rollout": { m: "core", eq: "bw", bw: true, floor: true },
+  "Farmer's carry": { m: "core", eq: "db", ratio: .3, inc: 2, unit: "m", reps: 40, note: "kg per hand." },
+  "Kettlebell swing": { m: "glutes", eq: "kb", ratio: .2, inc: 4 },
   "Romanian deadlift": { m: "ham", eq: "bb", ratio: .5, inc: 2.5, lower: true, note: "Soft knees, push the hips back, bar close to the legs." },
   "Barbell bent-over row": { m: "back", eq: "bb", ratio: .45, inc: 2.5, note: "Hinge to about 45°, pull to the lower ribs." }
 });
