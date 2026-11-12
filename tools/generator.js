@@ -24,7 +24,7 @@ const EX = {
   "Seated cable row": { m: "back", eq: "cable", ratio: .45, inc: 1 },
   "Machine row": { m: "back", eq: "machine", ratio: .5, inc: 1 },
   "Incline Y-raise": { m: "rear", eq: "db", ratio: .02, inc: 1, lib: "Incline y-raise" },
-  "Face pull": { m: "rear", eq: "cable", ratio: .15, inc: 1 },
+  "Face pull": { m: "rear", eq: "cable", ratio: .15, inc: 0.25 },   // the face-pull stack moves in small, uneven jumps (Christian 2026-11-12)
   "Rear-delt dumbbell fly": { m: "rear", eq: "db", ratio: .04, inc: 1 },
   "Cable rear-delt fly": { m: "rear", eq: "cable", ratio: .06, inc: 1 },
   "Dumbbell lateral raise": { m: "shoulders", eq: "db", ratio: .04, inc: 1 },

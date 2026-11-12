@@ -1412,6 +1412,10 @@ function migrate() {
       else if (e.inc === 2.5) e.inc = 1; })));
     p.mig = 6; saveProgram();
   }
+  if (p.mig < 7) {              // 2026-11-12 (Christian): face pull steps 0.25 kg (the app's own increases go by ~5 %, progStep)
+    p.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => { if (/^face pull$/i.test(e.name.trim())) e.inc = 0.25; })));
+    p.mig = 7; saveProgram();
+  }
 }
 function mergeColl(snap, prefix, current) {
   const next = {};
@@ -1470,6 +1474,9 @@ function prevBest(name, beforeId) {
 // a 2.5 kg step means barbell – e.g. Christian's barbell "Romanian deadlift", which shares its name with the plan builder's dumbbell version (2026-11-10)
 function isDb(e) { return !e.bw && e.inc !== 2.5 && (e.db || (typeof EX !== "undefined" && EX[e.name]?.eq === "db") || /dumbbell|farmer/i.test(e.name) || /kg per (dumbbell|hand)/i.test(e.note || "")); }
 function stepOf(e, kg, dir) { if (!e.inc) return 0; if (isDb(e)) return dir > 0 ? (kg < 10 ? 1 : 2) : (kg <= 10 ? 1 : 2); return e.inc; }
+// The app's own changes (all reps done, feather, too heavy twice) on a fine-step machine (steps under 1 kg, e.g. face pull 0.25)
+// go by about 5 % of the weight, rounded to the step – a single 0.25 step would hardly move it. + / − still move one step. (Christian 2026-11-12)
+function progStep(e, kg, dir) { if (!e.bw && e.inc && e.inc < 1) return Math.max(e.inc, Math.round(Math.abs(kg) * 0.05 / e.inc) * e.inc); return stepOf(e, kg, dir); }
 function snapKg(e, v) { if (isDb(e)) return v < 10 ? Math.round(v) : 2 * Math.round(v / 2); return Math.round(Math.round(v / e.inc) * e.inc * 100) / 100; }
 function suggest(e, id) {
   const wm = e.name.match(/^Warm-up sets: (.+)$/);            // warm-up sets follow the lift they warm up: about half its weight
@@ -1481,9 +1488,9 @@ function suggest(e, id) {
   // Too heavy twice → one step lighter (Christian 2026-11-03): two sessions in a row marked heavy or with missed reps,
   // at the same weight (a step-down session starts the count again). Finding sessions don't count. Then normal rules again.
   const hard = x => x && !x.finding && (x.feel === "heavy" || !x.allReps), prev = hard(last) ? prevBest(e.name, last.id) : null;
-  if (hard(last) && hard(prev) && last.kg >= prev.kg) { const kg = Math.round((last.kg - stepOf(e, last.kg, -1)) * 100) / 100; return { kg: e.bw ? kg : Math.max(0, kg), last, up: false, down: true }; }
+  if (hard(last) && hard(prev) && last.kg >= prev.kg) { const kg = Math.round((last.kg - progStep(e, last.kg, -1)) * 100) / 100; return { kg: e.bw ? kg : Math.max(0, kg), last, up: false, down: true }; }
   const up = last.feel === "light" ? true : last.feel === "heavy" ? false : last.allReps && last.reps >= e.reps;
-  return { kg: up ? Math.round((last.kg + stepOf(e, last.kg, 1)) * 100) / 100 : e.bw ? last.kg : Math.max(last.kg, 0), last, up };
+  return { kg: up ? Math.round((last.kg + progStep(e, last.kg, 1)) * 100) / 100 : e.bw ? last.kg : Math.max(last.kg, 0), last, up };
 }
 // ---- "Finding your weight" (programme-rules D2 + M8, round 4): week 1, and the first session of any exercise not done before.
 // The feather / kettlebell then apply to the set just ticked: feather → next sets +2 steps, kettlebell → −1 step, no mark → same weight.
@@ -1667,7 +1674,7 @@ function todayView() {
     const feel = finding ? (lastDone >= 0 ? l?.setFeel?.[e.id]?.[lastDone] || null : null) : l?.feel?.[e.id] || null;
     const findNote = finding ? `<div class="findnote">${lastDone < 0 ? "Finding your weight: tick a set, then feather if 4+ more reps were possible (next set about +20 %) or kettlebell if it was too heavy (about −10 %)."
       : complete ? `Found: ${kgWord(sets[sets.length - 1].kg)} is your starting weight next time.` : l && findState(l, e).found != null ? `Found: ${kgWord(findState(l, e).found)} – between too easy and too heavy. The rest of the sets stay here.` : `Set ${lastDone + 1}${feel === "light" ? " felt light" : feel === "heavy" ? " felt heavy" : ": no mark"} → next set ${kgWord(sets.find((x, i) => i > lastDone && !x.done)?.kg ?? kgNow)}.`}</div>` : "";
-    const feelNote = finding ? findNote : feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(Math.round((kgNow + stepOf(e, kgNow, 1)) * 100) / 100)}.` : (() => { const pv = prevBest(e.name, id), twice = pv && !pv.finding && (pv.feel === "heavy" || !pv.allReps) && kgNow >= pv.kg; return twice ? `Felt heavy twice: next time one step lighter, ${kgWord(Math.round((kgNow - stepOf(e, kgNow, -1)) * 100) / 100)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`; })()}</div>` : "";
+    const feelNote = finding ? findNote : feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(Math.round((kgNow + progStep(e, kgNow, 1)) * 100) / 100)}.` : (() => { const pv = prevBest(e.name, id), twice = pv && !pv.finding && (pv.feel === "heavy" || !pv.allReps) && kgNow >= pv.kg; return twice ? `Felt heavy twice: next time one step lighter, ${kgWord(Math.round((kgNow - progStep(e, kgNow, -1)) * 100) / 100)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`; })()}</div>` : "";
     const exCls = [/^Warm-up/.test(e.name) ? "wu" : "", isFinding(e, w, id) ? "finding" : "", e.unit === "min" && !/^Warm-up$|^Cool-down$/.test(e.name) ? "cardio" : "", /stand|Tandem|Heel-to-toe|step and hold|star reach|Step switch|March|hop and stick|Skater|knee drive|Skipping|Toe stand|Calf-raise hold|Split-stance|RDL reach|Single-leg Pallof|Pistol/.test(e.name) && !e.inc ? "bal" : "", /ladder/i.test(e.name) ? "ladder" : "", /Barbell back squat/.test(e.name) ? "bbsquat" : "", e.unit === "sec" ? "timed" : ""].filter(Boolean).join(" ");
     { const bo = bbOffer(e); if (bo) h += bbCard(e, bo); }
     if (e.ss && e.ss.endsWith("1") && nextSs && nextSs[0] === e.ss[0]) {          // superset header: "Superset A · incline bench" (approved)
@@ -2036,7 +2043,7 @@ const EX = {
   "Seated cable row": { m: "back", eq: "cable", ratio: .45, inc: 1 },
   "Machine row": { m: "back", eq: "machine", ratio: .5, inc: 1 },
   "Incline Y-raise": { m: "rear", eq: "db", ratio: .02, inc: 1, lib: "Incline y-raise" },
-  "Face pull": { m: "rear", eq: "cable", ratio: .15, inc: 1 },
+  "Face pull": { m: "rear", eq: "cable", ratio: .15, inc: 0.25 },   // the face-pull stack moves in small, uneven jumps (Christian 2026-11-12)
   "Rear-delt dumbbell fly": { m: "rear", eq: "db", ratio: .04, inc: 1 },
   "Cable rear-delt fly": { m: "rear", eq: "cable", ratio: .06, inc: 1 },
   "Dumbbell lateral raise": { m: "shoulders", eq: "db", ratio: .04, inc: 1 },
