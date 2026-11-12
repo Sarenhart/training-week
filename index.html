@@ -1540,6 +1540,14 @@ function ensureLog(w, k) {
 // Body-weight exercises count the body weight you actually lift: pull-ups, chin-ups and dips the whole body,
 // push-ups about 65 % (the floor takes the rest). Machine help is taken off, a belt is added.
 // Uses the body weight logged on or before the workout date; none logged = 0.
+// Kg lifted: the weight shown is per dumbbell, so exercises with a dumbbell in each hand count twice (Christian 2026-11-12).
+// One dumbbell: goblet squat, overhead dumbbell triceps extension, pullover, suitcase hold, single-leg calf raise / RDL with one dumbbell, kettlebell.
+// One-arm row counts twice too: the reps are per side.
+function dbHands(name) {
+  const n = name || "", db = /dumbbell|farmer/i.test(n) || (typeof EX !== "undefined" && EX[n]?.eq === "db");
+  if (!db || /^Warm-up sets/.test(n)) return 1;
+  return /goblet|overhead dumbbell triceps|pullover|suitcase|single-leg calf|single-leg dumbbell romanian|kettlebell/i.test(n) ? 1 : 2;
+}
 function bwShare(name) { const n = name || ""; return /pull-up|chin-up|\bdips?\b/i.test(n) ? 1 : /push-up/i.test(n) ? 0.65 : 0; }
 function bodyWeightOn(date) {
   let best = null;
@@ -1550,8 +1558,8 @@ function stats(l) {
   let done = 0, total = 0, vol = 0;
   const bw = bodyWeightOn(l.date);
   Object.entries(l.sets || {}).forEach(([eid, a]) => {
-    const share = bwShare(l.names?.[eid]), warm = /^Warm-up sets/.test(l.names?.[eid] || "");   // warm-up sets don't count as kg lifted
-    a.forEach(x => { total++; if (x.done) { done++; if (!warm) vol += Math.max(0, share * bw + (x.kg || 0)) * (x.reps || 0); } });
+    const share = bwShare(l.names?.[eid]), warm = /^Warm-up sets/.test(l.names?.[eid] || ""), hands = dbHands(l.names?.[eid]);   // warm-up sets don't count as kg lifted
+    a.forEach(x => { total++; if (x.done) { done++; if (!warm) vol += Math.max(0, share * bw + (x.kg || 0) * hands) * (x.reps || 0); } });
   });
   return { done, total, vol };
 }
