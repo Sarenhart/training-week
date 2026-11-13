@@ -109,7 +109,7 @@ function wuCards(s) {
     } });
   // 2 · stronger: the bars swoosh in first, "Wow!" lands last
   const w = s.lifts.filter(l => !l.help), maxp = Math.max(1, ...w.map(l => l.pct));
-  const word = w.length ? (w[0].pct >= 15 ? "Wow!" : "Nice!") : "Solid!";
+  const word = w.length ? (w[0].pct >= 15 ? "WOW!" : "NICE!") : "SOLID!";   // caps (Christian 2026-11-13)
   const R0 = 700, RS = 480, wowAt = R0 + s.lifts.length * RS + 450;
   const row = (l, i) => { const r = l.help ? `−${fmt(l.b - l.a)} kg help` : `+${l.pct} %`, wd = l.help ? Math.min(100, Math.round((1 - l.b / l.a) * 100)) : Math.round(l.pct / maxp * 90);
     return `<div class="wurow" style="--d:${R0 + i * RS}ms"><div><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><b style="color:${WU_GREEN}">${r}</b></div><i><span style="width:${Math.max(6, wd)}%;background:${WU_GREEN};box-shadow:0 0 10px ${WU_GREEN}"></span></i></div>`; };
