@@ -4,7 +4,7 @@ const PROFILE_KEY = "twdev.profile";
 const OB_DEV = PROFILE_KEY.indexOf("twdev") === 0;   // false in the main app (tools/promote.py turns the keys into tw.*)
 // Main app: someone with logged workouts keeps their programme when they change their answers – no rebuild, no lost history
 // (the next programme is built from the answers – 12-week wrap-up). DEV rebuilds and clears its test logs on purpose.
-function obKeepsProgramme() { return !OB_DEV && Object.keys(S.logs || {}).length > 0; }
+function obKeepsProgramme() { return !OB_DEV && !S.ob?.newProg && Object.keys(S.logs || {}).length > 0; }   // a new programme (wrap-up / Programme tab) always builds
 const OB_STEPS = ["welcome", "about", "goal", "shape", "week", "home", "focus", "plan"];
 const MUSCLES = [["chest", "Chest", true], ["back", "Upper back", true], ["shoulders", "Shoulders"], ["arms", "Arms"], ["glutes", "Glutes", true], ["thighs", "Thighs", true], ["calves", "Calves"], ["core", "Core"]];
 const KIT = [
@@ -102,7 +102,12 @@ function obView() {
     <button type="button" class="btn" data-act="obnext" ${obCanGo(step, a) ? "" : "disabled"}>${label}</button></div>`;
   const imp = a.units === "imperial";
   let h = `<div class="ob">`;
-  if (step === "welcome") {
+  if (step === "welcome" && o.newProg) {
+    h += `<header class="top"><div><div class="eyebrow">New programme</div><h1>Build your next 12 weeks</h1></div></header>
+      <p class="obp">Go through the questions again and change anything you like. Your answers from last time are filled in.</p>
+      <button type="button" class="btn wide" data-act="obnext">Get started</button>
+      <button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my current programme</button>`;
+  } else if (step === "welcome") {
     h += `<header class="top"><div><div class="eyebrow">Welcome</div><h1>Your 12-week plan, built around you</h1></div></header>
       <p class="obp">Answer a few quick questions and the app sets up your workouts, starting weights and weekly schedule.</p>
       <ol class="obsteps"><li><b>About you</b><span>Year of birth, plus optional weight, height and measurements</span></li><li><b>Your goal and body type</b><span>What you want to train for and look like</span></li><li><b>Your week</b><span>Days, time, focus areas and anything to go easy on</span></li></ol>
@@ -179,9 +184,10 @@ function obView() {
       ${a.goal === "Balance" && (obAge(a) || 0) >= 65 ? `<div class="obfit" role="note"><p>${esc(balanceWeekText(a))}</p></div>` : ""}
       <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
       <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
-      ${obKeepsProgramme() ? `<div class="note">Your answers are saved. Your current programme carries on with all your history – your next programme will be built from these answers.</div>`
+      ${o.newProg ? `<div class="note">Your current programme is saved in your history on the Progress tab. Your badges and totals stay.</div>`
+        : obKeepsProgramme() ? `<div class="note">Your answers are saved. Your current programme carries on with all your history – your next programme will be built from these answers.</div>`
         : OB_DEV ? `<div class="note">${typeof genSupported === "function" && genSupported(a) ? "DEV: \"Start week 1\" builds this plan and clears the workouts logged in DEV. Your main app is not touched." : "DEV: plans for " + (a.where === "Home" ? "home training" : a.goal) + " come in the next part of round 3. Until then your current programme is kept – your answers are saved."}</div>` : ""}
-      <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">${obKeepsProgramme() ? "Save my answers" : "Start week 1"}</button></div>`;
+      <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">${o.newProg ? "Start my new programme" : obKeepsProgramme() ? "Save my answers" : "Start week 1"}</button></div>`;
   }
   return h + `</div>`;
 }
@@ -223,7 +229,8 @@ function obFinish(skipped) {
     for (const k of ["waist", "chest", "arm", "shoulder", "thigh", "fat"]) { const v = num(a.meas[k]); if (v != null) b[k] = k === "fat" || !imp ? v : Math.round(v * 2.54 * 10) / 10; }
     S.body[d] = b; try { saveLocal(); } catch {}
   }
-  if (!skipped && !obKeepsProgramme() && typeof genSupported === "function" && genSupported(a)) {      // round 3: build the plan from the answers
+  if (!skipped && S.ob.newProg && typeof npBuild === "function") npBuild(a);    // wrap-up / "Start new programme": history saved, weights carried
+  else if (!skipped && !obKeepsProgramme() && typeof genSupported === "function" && genSupported(a)) {      // round 3: build the plan from the answers
     S.program = generatePlan(a); S.logs = {}; syncKeys(); S.week = null; S.wk = null; S.guides = new Set();
     try { saveLocal(); } catch {}
   }
