@@ -93,33 +93,35 @@ function wuCards(s) {
   const chip = (t, c) => `<span class="wuchip" style="color:${c}">${t}</span>`;
   const glow = c => `<div class="wuglow" style="background:${c}"></div>`;
   const later = (W, ms, f) => setTimeout(() => { if (S.wrap === W) f(); }, ms);
-  // 1 · kg lifted: the weight
+  // 1 · kg lifted: the weight counts up, drops all the way to the floor (thud, shake) and breaks it (dark 3D cracks); the shadow figure rises behind
   const t = s.kg >= 10000, cmp = wuCompare(s.kg);
   cards.push({ c: P, dur: 8200, h: `${glow(P)}<div class="wuk" style="color:${P}">Your ${s.weeks} weeks</div>
-    <div class="wustage"><svg class="wushadow" viewBox="0 0 24 24" fill="currentColor" style="color:${P}">${BADGE_ART[cmp.art] || ""}</svg>
-      <svg class="wucrack" viewBox="0 0 240 44" fill="none" stroke="${P}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="1" d="M120 3 104 15 88 12 70 27 50 24 34 34M104 15 99 33M120 3 139 17 157 13 176 29 198 26 214 36M139 17 144 38M120 3 122 25 116 40"/></svg>
-      <div class="wufloor" style="background:linear-gradient(90deg,transparent,${P}66,transparent)"></div>
-      <div class="wuwt"><i class="wuhandle"></i><div class="wubody" style="--c:${P}"><span data-hero="1" data-count="${t ? Math.round(s.kg / 1000) : s.kg}">0</span><small>${t ? "t" : "kg"}</small></div></div></div>
-    <div class="wusub wuafter c">${nsp(s.kg)} kg lifted.<br><b>${esc(cmp.txt)}</b></div>`,
+    <div class="wustage"><div class="wusub wuafter">${nsp(s.kg)} kg lifted.<br><b>${esc(cmp.txt)}</b></div>
+      <svg class="wushadow" viewBox="0 0 24 24" fill="currentColor" style="color:${P}">${BADGE_ART[cmp.art] || ""}</svg>
+      ${wuFloor(P)}
+      <div class="wuwt"><i class="wuhandle"></i><div class="wubody" style="--c:${P}"><span data-hero="1" data-count="${t ? Math.round(s.kg / 1000) : s.kg}">0</span><small>${t ? "t" : "kg"}</small></div></div></div>`,
     run(ph, W) {
-      wuCount(ph, 1700, () => { const wt = ph.querySelector(".wuwt"); wt.classList.add("drop");
-        later(W, 360, () => { wuSfx("thud"); wuBuzz([90, 40, 50]); ph.classList.add("shake"); ph.querySelector(".wustage").classList.add("hit");
-          wuBurst(ph.querySelector(".wufloor"), ["#9aa0b0", "#c9ccd6", "#6b7080"], 16, true); });
-        later(W, 900, () => ph.querySelector(".wustage").classList.add("ghost"));
-        later(W, 1400, () => ph.querySelector(".wuafter").classList.add("on")); });
+      wuCount(ph, 1700, () => { ph.querySelector(".wuwt").classList.add("drop"); wuSfx("fall");
+        later(W, 520, () => { wuSfx("thud"); wuBuzz([110, 40, 60]); ph.classList.add("shake"); ph.querySelector(".wustage").classList.add("hit");
+          wuBurst(ph.querySelector(".wuimpact"), ["#9aa0b0", "#c9ccd6", "#6b7080"], 18, true); });
+        later(W, 1100, () => ph.querySelector(".wustage").classList.add("ghost"));
+        later(W, 1600, () => ph.querySelector(".wuafter").classList.add("on")); });
     } });
-  // 2 · stronger: Wow! + swooshing bars (no counting)
+  // 2 · stronger: the bars swoosh in first, "Wow!" lands last
   const w = s.lifts.filter(l => !l.help), maxp = Math.max(1, ...w.map(l => l.pct));
   const word = w.length ? (w[0].pct >= 15 ? "Wow!" : "Nice!") : "Solid!";
+  const R0 = 700, RS = 480, wowAt = R0 + s.lifts.length * RS + 450;
   const row = (l, i) => { const r = l.help ? `−${fmt(l.b - l.a)} kg help` : `+${l.pct} %`, wd = l.help ? Math.min(100, Math.round((1 - l.b / l.a) * 100)) : Math.round(l.pct / maxp * 90);
-    return `<div class="wurow" style="--d:${1100 + i * 450}ms"><div><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><b style="color:${WU_GREEN}">${r}</b></div><i><span style="width:${Math.max(6, wd)}%;background:${WU_GREEN};box-shadow:0 0 10px ${WU_GREEN}"></span></i></div>`; };
-  cards.push({ c: WU_GREEN, dur: 7000, h: `${glow(WU_GREEN)}<div class="wuk" style="color:${WU_GREEN}">Stronger</div>
-    <div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div>
-    ${w.length ? `<div class="wusub">${esc(w[0].n)} <b>${fmt(w[0].a)} → ${fmt(w[0].b)} kg</b></div>` : `<div class="wusub"><b>${nsp(s.sets)} sets</b> done – every one of them counts.</div>`}
+    return `<div class="wurow" style="--d:${R0 + i * RS}ms"><div><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><b style="color:${WU_GREEN}">${r}</b></div><i><span style="width:${Math.max(6, wd)}%;background:${WU_GREEN};box-shadow:0 0 10px ${WU_GREEN}"></span></i></div>`; };
+  cards.push({ c: WU_GREEN, dur: wowAt + 3600, h: `${glow(WU_GREEN)}<div class="wuk" style="color:${WU_GREEN}">Stronger</div>
     <div class="wurows">${s.lifts.map(row).join("")}</div>
+    <div class="wuwowbox" style="--wd:${wowAt}ms"><div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div>
+    ${w.length ? `<div class="wusub">${esc(w[0].n)} <b>${fmt(w[0].a)} → ${fmt(w[0].b)} kg</b></div>` : `<div class="wusub"><b>${nsp(s.sets)} sets</b> done – every one of them counts.</div>`}</div>
     <div class="wubot">${s.pbs ? chip(`${s.pbs} personal best${s.pbs > 1 ? "s" : ""}`, WU_GREEN) : ""}${chip(`${nsp(s.sets)} sets`, WU_GREEN)}</div>`,
-    run(ph, W) { later(W, 250, () => { wuSfx("pop"); wuBuzz(15); });
-      ph.querySelectorAll(".wurow").forEach(r => later(W, parseInt(r.style.getPropertyValue("--d")), () => wuSfx("swoosh"))); } });
+    run(ph, W) {
+      ph.querySelectorAll(".wurow").forEach(r => later(W, parseInt(r.style.getPropertyValue("--d")), () => wuSfx("swoosh")));
+      later(W, wowAt + 150, () => { wuSfx("land"); wuBuzz([20, 40, 30]); wuBurst(ph.querySelector(".wuwow"), [WU_GREEN, "#fff", "#ffd75e"], 24); });
+    } });
   // 3 · showing up: the calendar glimmers, then the best weeks
   const circ = 2 * Math.PI * 50, frac = s.weeks ? s.best / s.weeks : 0, per = 3;
   const lit = []; s.grid.forEach((g, i) => { if (g === 2) lit.push(i); });
@@ -127,26 +129,25 @@ function wuCards(s) {
   const best = (s.wk || []).map((x, i) => ({ ...x, w: i + 1 })).filter(x => x.n).sort((a, b) => isCardioGoal(s) ? b.min - a.min : (b.kg - a.kg) || (b.n - a.n)).slice(0, 3);
   let cal = ""; for (let r = 0; r * per < s.grid.length; r++) cal += `<div class="wucrow"><span>Phase ${r + 1}</span>${s.grid.slice(r * per, r * per + per).map((g, j) => `<i class="g${g}" data-w="${r * per + j}" style="--o:${O}">${r * per + j + 1}</i>`).join("")}</div>`;
   cards.push({ c: O, dur: Math.max(7500, bestAt + 4200), h: `${glow(O)}<div class="wuk" style="color:${O}">Showing up</div>
-    <div class="wustreak"><svg class="wuring sm" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#232734" stroke-width="12"/><circle class="wuarc" cx="60" cy="60" r="50" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(circ * frac).toFixed(1)} 400" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 6px ${O})"/><text x="60" y="74" text-anchor="middle" font-size="46" font-weight="900" fill="#fff">${s.best}</text></svg>
+    <div class="wustreak"><svg class="wuring sm" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#232734" stroke-width="12"/><circle class="wuarc2" cx="60" cy="60" r="50" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 400" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 6px ${O})"/><text class="wuringn" x="60" y="74" text-anchor="middle" font-size="46" font-weight="900" fill="#fff">0</text></svg>
       <div><b>${s.best >= s.weeks ? `All ${s.weeks} weeks` : `${s.best} week${s.best === 1 ? "" : "s"}`} in a row</b><span>${s.workouts}/${s.planned} workouts${s.extras ? ` · +${s.extras} extra${s.extras > 1 ? "s" : ""}` : ""}</span></div></div>
     <div class="wucal">${cal}</div>
     ${best.length ? `<div class="wubest"><div class="wusec2">Best weeks</div>${best.map((x, i) => `<div class="wubw" style="--d:${i * 160}ms"><b style="color:${O}">${i + 1}</b><span>Week ${x.w}</span><small>${x.n} workout${x.n > 1 ? "s" : ""}${isCardioGoal(s) ? ` · ${x.min} min` : x.kg ? ` · ${nsp(x.kg)} kg` : ""}</small></div>`).join("")}</div>` : ""}`,
     run(ph, W) {
-      lit.forEach((wi, k) => later(W, GL + k * GS, () => { const box = ph.querySelector(`.wucal i[data-w="${wi}"]`); if (!box) return; box.classList.add("lit"); wuSfx("glim", k); wuBurst(box, [O, "#fff", "#ffd75e"], 7, false, 34); }));
+      const arc = ph.querySelector(".wuarc2"), num = ph.querySelector(".wuringn");
+      lit.forEach((wi, k) => later(W, GL + k * GS, () => { const box = ph.querySelector(`.wucal i[data-w="${wi}"]`); if (!box) return; box.classList.add("lit"); wuSfx("glim", k); wuBurst(box, [O, "#fff", "#ffd75e"], 7, false, 34);
+        const f = (k + 1) / lit.length; arc.setAttribute("stroke-dasharray", `${(circ * frac * f).toFixed(1)} 400`); num.textContent = Math.round(s.best * f); }));
       later(W, bestAt, () => { ph.querySelector(".wubest")?.classList.add("on"); if (best.length) wuSfx("pop"); });
     } });
   // 4 · on the move: a line spirals in to the figure while the hours add up
   if (s.cardioMin >= 30) {
     const life = s.cardioMin + (s.key === progKey() ? histPast().cardioMin : 0), J = journeyBadges(life), got = J.filter(j => j[4]), next = J.find(j => !j[4]);
     const hrs = s.cardioMin / 60, nh = next ? Math.round(parseFloat(next[3].replace(/[ ,]/g, ""))) : 0, fig = got[got.length - 1] || J[0];
-    let d = ""; for (let k = 0; k <= 160; k++) { const u = k / 160, a = -Math.PI * 0.75 + u * Math.PI * 4.4, r = 138 - u * 82; d += (k ? " L" : "M") + (150 + Math.cos(a) * r).toFixed(1) + " " + (150 + Math.sin(a) * r).toFixed(1); }
-    cards.push({ c: P, dur: 7500, h: `${glow(P)}<div class="wuk" style="color:${P}">On the move</div>${hrs >= 1 ? `<div class="wubig" style="color:${P};text-shadow:0 0 24px ${P}88"><span data-hero="1" data-count="${Math.round(hrs)}">0</span><span class="wuu"> h</span></div>` : `<div class="wubig" style="color:${P};text-shadow:0 0 24px ${P}88"><span data-hero="1" data-count="${s.cardioMin}">0</span><span class="wuu"> min</span></div>`}
+    cards.push({ c: P, dur: 8000, h: `${glow(P)}<div class="wuk" style="color:${P}">On the move</div>${hrs >= 1 ? `<div class="wubig" style="color:${P};text-shadow:0 0 24px ${P}88"><span data-hero="1" data-count="${Math.round(hrs)}">0</span><span class="wuu"> h</span></div>` : `<div class="wubig" style="color:${P};text-shadow:0 0 24px ${P}88"><span data-hero="1" data-count="${s.cardioMin}">0</span><span class="wuu"> min</span></div>`}
       <div class="wusub">of cardio${got.length ? ` – you've made it <b>${esc(fig[2])}</b>.` : "."}</div>
-      <svg class="wuroute" viewBox="0 0 300 300"><path class="wuline" pathLength="1" d="${d}" fill="none" stroke="${P}" stroke-width="4" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${P})"/>
-        <g class="wufig" style="color:${P}"><svg x="105" y="105" width="90" height="90" viewBox="0 0 24 24" fill="currentColor">${BADGE_ART[fig[5] || fig[0]] || BADGE_ICON.mile}</svg></g></svg>
+      ${wuGps(P, BADGE_ART[fig[5] || fig[0]] || BADGE_ICON.mile)}
       ${next ? `<div class="wubot"><div class="wunext">Next stop · ${esc(next[2])} · ${Math.max(1, Math.ceil(nh - life / 60))} h</div><i class="wubar"><span style="width:${Math.min(100, Math.round(life / 60 / nh * 100))}%;background:${P};box-shadow:0 0 10px ${P}"></span></i></div>` : ""}`,
-      run(ph, W) { const ln = ph.querySelector(".wuline"); ln.style.animationDuration = "1900ms"; ln.classList.add("go");
-        wuCount(ph, 1900, () => { const f = ph.querySelector(".wufig"); f.classList.add("on"); wuSfx("land"); wuBuzz(18); wuBurst(f, cols, 22); }); } });
+      run(ph, W) { wuGpsRun(ph, W, 2300); wuCount(ph, 2300, () => { const f = ph.querySelector(".wufig"); f.classList.add("on"); wuSfx("land"); wuBuzz(18); wuBurst(f, cols, 22); }); } });
   }
   // 5 · finale: trophy, workouts, body, newest badges
   const bchips = s.body.filter(b => ["weight", "waist", "arm", "chest", "thigh"].includes(b.k)).slice(0, 3).map((b, i) => {
@@ -156,19 +157,65 @@ function wuCards(s) {
   const nb = (s.badgeIds || []).map(id => BL[id]).filter(Boolean).slice(0, 6);
   const bico = b => { const c = b.icon === "phase" ? P : WU_BCOL[b.icon] || WU_GREEN; return `<div class="wubdg" style="--bc:${c}"><span><svg viewBox="0 0 24 24" fill="currentColor">${BADGE_ART[b.art || b.id] || BADGE_ICON[b.icon] || ""}</svg></span><small>${esc(b.title)}</small></div>`; };
   cards.push({ c: O, fin: true, h: `${glow(O)}<div class="wuk c" style="color:${P}">Programme complete</div>
-    <div class="wutrophywrap sm"><div class="wurays" style="--rc:${O}"></div><svg class="wutrophy" viewBox="0 0 24 24" fill="${O}" style="filter:drop-shadow(0 0 18px ${O})">${WU_TROPHY}</svg></div>
+    <div class="wutrophywrap sm"><div class="wurays" style="--rc:${O}"></div><svg class="wutrophy" viewBox="0 0 24 24" fill="${O}" style="filter:drop-shadow(0 0 18px ${O})">${WU_TROPHY}
+      <path class="wurim" pathLength="1" d="M7.2 3.1H16.8" fill="none" stroke="#fff" stroke-width=".7" stroke-linecap="round"/>
+      <g class="wuflare"><circle cx="16.8" cy="3.1" r="4.2" fill="url(#wufg)"/><path d="M16.8 -7 17.3 2.6 27 3.1 17.3 3.6 16.8 13.2 16.3 3.6 6.6 3.1 16.3 2.6z" fill="#fff"/><path d="M16.8 3.1 19.6 .3M16.8 3.1 14 5.9M16.8 3.1 19.6 5.9M16.8 3.1 14 .3" stroke="#fff" stroke-width=".35" stroke-linecap="round"/><defs><radialGradient id="wufg"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs></g></svg></div>
     <div class="wufin">${s.workouts}<span class="dim">/${s.planned}</span></div>
     <div class="wusub c">workouts${s.extras ? ` · +${s.extras} extra${s.extras > 1 ? "s" : ""}` : ""}</div>
     <div class="wuchips">${bchips}</div>
     ${nb.length ? `<div class="wubadges"><div class="wusec2 c">Newest badges · ${s.badges} earned</div><div class="wubgrid">${nb.map(bico).join("")}</div></div>` : ""}
     <div class="wubot"><button type="button" class="wucta" data-act="wusum" style="background:${P};box-shadow:0 0 20px ${P}88">See your summary →</button></div>`,
     run(ph, W) {
-      later(W, 650, () => { confetti(); wuSfx("fanfare"); wuBuzz([40, 60, 40, 60, 120]); wuBurst(ph.querySelector(".wutrophy"), cols, 30); });
-      ph.querySelectorAll(".wubdg").forEach((el, i) => later(W, 2100 + i * 260, () => { el.classList.add("on"); wuSfx("glim", i + 2); wuBurst(el, [el.style.getPropertyValue("--bc"), "#fff"], 8, false, 40); }));
+      later(W, 650, () => { wuSfx("fanfare"); wuBuzz([40, 60, 40, 60, 120]); });
+      later(W, 1300, () => ph.querySelector(".wutrophywrap").classList.add("shine"));
+      later(W, 1950, () => { wuSfx("shing"); wuBuzz(25); });
+      ph.querySelectorAll(".wubdg").forEach((el, i) => later(W, 2600 + i * 260, () => { el.classList.add("on"); wuSfx("glim", i + 2); wuBurst(el, [el.style.getPropertyValue("--bc"), "#fff"], 8, false, 40); }));
     } });
   return cards;
 }
 const isCardioGoal = s => s.goal === "Cardio";
+// card 1 floor: a perspective slab, a dent and dark cracks with a lit upper edge (fake depth); fixed pattern so it looks the same each time
+function wuFloor(P) {
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280, ox = 150, oy = 18, cracks = [];
+  for (let b = 0; b < 9; b++) {
+    let a = (b / 9) * Math.PI * 2 + rnd() * 0.5, x = ox, y = oy, w = 7.5; const L = [], R = [], E = [];
+    for (let k = 0; k < 7; k++) { a += (rnd() - 0.5) * 0.9; const st = 14 + rnd() * 18, nx = x + Math.cos(a) * st, ny = Math.max(4, y + Math.sin(a) * st * 0.32);
+      const px = -Math.sin(a), py = Math.cos(a) * 0.32; L.push([x + px * w, y + py * w]); R.unshift([x - px * w, y - py * w]); E.push([x, y]); x = nx; y = ny; w *= 0.74; }
+    L.push([x, y]); cracks.push({ poly: L.concat(R), edge: E.concat([[x, y]]) });
+  }
+  const pts = p => p.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ");
+  return `<svg class="wufloorsvg" viewBox="0 0 300 90" preserveAspectRatio="none"><defs><linearGradient id="wuslab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2130"/><stop offset="1" stop-color="#0b0d12"/></linearGradient>
+    <radialGradient id="wudent"><stop offset="0" stop-color="#000" stop-opacity=".85"/><stop offset=".6" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+    <polygon points="34,0 266,0 300,90 0,90" fill="url(#wuslab)"/><line x1="34" y1="0" x2="266" y2="0" stroke="${P}" stroke-opacity=".55" stroke-width="1.2"/>
+    <g class="wucr"><ellipse cx="${ox}" cy="${oy}" rx="92" ry="11" fill="url(#wudent)"/>
+    ${cracks.map(c => `<polyline points="${pts(c.edge.map(q => [q[0], q[1] - 1.3]))}" fill="none" stroke="#5a6278" stroke-opacity=".7" stroke-width="1.1" stroke-linejoin="round"/><polygon points="${pts(c.poly)}" fill="#020203"/><polyline points="${pts(c.edge.map(q => [q[0], q[1] + 1.1]))}" fill="none" stroke="#000" stroke-opacity=".6" stroke-width="1.4"/>`).join("")}</g>
+    <circle class="wuimpact" cx="${ox}" cy="${oy}" r="1" fill="none"/></svg>`;
+}
+// card 4: a GPS-style route on a ground plane, drawn from the bottom of the screen into the distance; the figure is the end point
+function wuProj(x, z) { const sc = 1 / (1 + z * 4.2); return [150 + x * 150 * sc, 34 + 286 * sc, sc]; }
+function wuGps(P, art) {
+  let grid = ""; for (let i = 1; i <= 7; i++) { const [, y] = wuProj(0, i / 7); grid += `<line x1="0" y1="${y.toFixed(1)}" x2="300" y2="${y.toFixed(1)}"/>`; }
+  for (let i = -4; i <= 4; i++) { const a = wuProj(i * 0.5, 0), b = wuProj(i * 0.5, 1); grid += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
+  const [ex, ey] = wuProj(wuRouteX(1), 1);
+  return `<svg class="wugps" viewBox="0 0 300 330"><defs><linearGradient id="wuhz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P}" stop-opacity=".35"/><stop offset="1" stop-color="${P}" stop-opacity="0"/></linearGradient></defs>
+    <rect x="0" y="${(ey - 30).toFixed(0)}" width="300" height="60" fill="url(#wuhz)" opacity=".5"/><g stroke="${P}" stroke-opacity=".16" stroke-width="1">${grid}</g>
+    <polygon class="wuroutep" fill="${P}" style="filter:drop-shadow(0 0 6px ${P})"/><polyline class="wuroutec" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.2"/>
+    <circle class="wudot" r="6" fill="#fff" style="filter:drop-shadow(0 0 8px ${P})"/>
+    <g class="wufig" style="color:${P};transform-origin:${ex.toFixed(1)}px ${ey.toFixed(1)}px"><circle cx="${ex.toFixed(1)}" cy="${(ey - 34).toFixed(1)}" r="34" fill="#0b0d12" stroke="${P}" stroke-width="2.5" style="filter:drop-shadow(0 0 10px ${P})"/>
+      <path d="M${(ex - 9).toFixed(1)} ${(ey - 4).toFixed(1)}L${ex.toFixed(1)} ${(ey + 6).toFixed(1)}L${(ex + 9).toFixed(1)} ${(ey - 4).toFixed(1)}z" fill="${P}"/>
+      <svg x="${(ex - 24).toFixed(1)}" y="${(ey - 58).toFixed(1)}" width="48" height="48" viewBox="0 0 24 24" fill="currentColor">${art}</svg></g></svg>`;
+}
+const wuRouteX = z => 0.55 * Math.sin(z * 7.5 + 0.4) * (1 - z * 0.5) + 0.1 * Math.sin(z * 19);
+function wuGpsRun(ph, W, D) {
+  const poly = ph.querySelector(".wuroutep"), cen = ph.querySelector(".wuroutec"), dot = ph.querySelector(".wudot"), N = 140, t0 = performance.now(); if (!poly) return;
+  const pts = Array.from({ length: N + 1 }, (_, i) => { const z = i / N, [x, y, sc] = wuProj(wuRouteX(z), z); return [x, y, sc]; });
+  const step = t => { if (S.wrap !== W) return; const p = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - p, 2), m = Math.max(1, Math.round(e * N)), sub = pts.slice(0, m + 1);
+    const L = sub.map(([x, y, sc]) => [x - 9 * sc, y]), R = sub.map(([x, y, sc]) => [x + 9 * sc, y]).reverse(), f = q => q.map(v => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ");
+    poly.setAttribute("points", f(L.concat(R))); cen.setAttribute("points", f(sub)); const [x, y, sc] = sub[sub.length - 1]; dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", y.toFixed(1)); dot.setAttribute("r", (3 + 6 * sc).toFixed(1));
+    if (p < 1) requestAnimationFrame(step); else dot.style.opacity = 0; };
+  requestAnimationFrame(step);
+}
+
 // ---- summary page (also what's opened from "Your programmes" on Progress)
 function wuSummaryHtml(s) {
   const [P, O] = wuColours(s.goal), d = iso => iso ? shortDate(iso) : "";
@@ -221,7 +268,9 @@ function wuSfx(kind, arg) {
   else if (kind === "whoosh") wuTone(520, 0, 0.18, 0.05, "sine", 180);
   else if (kind === "pop") { wuTone(660, 0, 0.09, 0.08, "triangle", 990); }
   else if (kind === "land") { wuTone(1046.5, 0, 0.35, 0.12, "sine"); wuTone(1568, 0.07, 0.45, 0.1, "sine"); wuTone(2093, 0.14, 0.5, 0.05, "triangle"); }
-  else if (kind === "thud") { wuTone(95, 0, 0.55, 0.5, "sine", 32); wuTone(60, 0, 0.7, 0.35, "triangle", 28); wuNoise(0.35, 0.35, 900, 120); }
+  else if (kind === "thud") { wuTone(80, 0, 0.8, 0.6, "sine", 28); wuTone(52, 0, 0.9, 0.4, "triangle", 24); wuNoise(0.45, 0.45, 1400, 90); setTimeout(() => wuNoise(0.3, 0.12, 2500, 600), 90); }
+  else if (kind === "fall") wuTone(900, 0, 0.5, 0.05, "sine", 160);
+  else if (kind === "shing") { wuTone(2637, 0, 0.9, 0.07, "sine"); wuTone(3951, 0.03, 0.8, 0.05, "sine"); wuTone(5274, 0.06, 0.6, 0.03, "triangle"); wuNoise(0.25, 0.05, 6000, 9000); }
   else if (kind === "swoosh") wuNoise(0.38, 0.16, 500, 3200);
   else if (kind === "glim") { const N = [1568, 1760, 2093, 2349, 2637, 3136, 3520, 4186], f = N[Math.min(N.length - 1, arg || 0)]; wuTone(f, 0, 0.5, 0.06, "sine"); wuTone(f * 1.5, 0.04, 0.35, 0.025, "sine"); wuTone(f * 2, 0.08, 0.25, 0.015, "triangle"); }
   else if (kind === "sparkle") for (let i = 0; i < 5; i++) wuTone(2200 + Math.random() * 1600, i * 0.05, 0.12, 0.03, "sine");
