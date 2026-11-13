@@ -115,14 +115,13 @@ function wuCards(s) {
     return `<div class="wurow" style="--d:${R0 + i * RS}ms"><div><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><b style="color:${WU_GREEN}">${r}</b></div><i><span style="width:${Math.max(6, wd)}%;background:${WU_GREEN};box-shadow:0 0 10px ${WU_GREEN}"></span></i></div>`; };
   cards.push({ c: WU_GREEN, dur: wowAt + 3600, h: `${glow(WU_GREEN)}<div class="wuk" style="color:${WU_GREEN}">Stronger</div>
     <div class="wurows">${s.lifts.map(row).join("")}</div>
-    <div class="wuwowbox" style="--wd:${wowAt}ms"><svg class="wuburst" viewBox="-100 -100 200 200"><polygon points="${Array.from({ length: 28 }, (_, i) => { const a = i / 28 * Math.PI * 2, r = i % 2 ? 58 : 98; return (Math.cos(a) * r).toFixed(1) + "," + (Math.sin(a) * r * 0.62).toFixed(1); }).join(" ")}" fill="${WU_GREEN}" fill-opacity=".16" stroke="${WU_GREEN}" stroke-opacity=".55" stroke-width="1.5"/></svg><i class="wushock" style="border-color:${WU_GREEN}"></i><i class="wushock s2" style="border-color:${WU_GREEN}"></i><div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div><div class="wuamaze">You're amazing!</div>
+    <div class="wuwowbox" style="--wd:${wowAt}ms"><div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div><div class="wuamaze">You're amazing!</div>
     ${w.length ? `<div class="wusub">${esc(w[0].n)} <b>${fmt(w[0].a)} → ${fmt(w[0].b)} kg</b></div>` : `<div class="wusub"><b>${nsp(s.sets)} sets</b> done – every one of them counts.</div>`}</div>
     <div class="wubot">${s.pbs ? chip(`${s.pbs} personal best${s.pbs > 1 ? "s" : ""}`, WU_GREEN) : ""}${chip(`${nsp(s.sets)} sets`, WU_GREEN)}</div>`,
     run(ph, W) {
       ph.querySelectorAll(".wurow").forEach(r => later(W, parseInt(r.style.getPropertyValue("--d")), () => wuSfx("swoosh")));
       later(W, wowAt - 260, () => wuSfx("riser"));
       later(W, wowAt + 150, () => { wuSfx("boom"); wuBuzz([30, 30, 60]); ph.classList.add("shake2"); wuBurst(ph.querySelector(".wuwow"), [WU_GREEN, "#fff", "#ffd75e"], 34); });
-      later(W, wowAt + 700, () => wuBurst(ph.querySelector(".wuwow"), [WU_GREEN, "#fff"], 14, false, 90));
     } });
   // 3 · showing up: the calendar glimmers, then the best weeks
   const circ = 2 * Math.PI * 50, frac = s.weeks ? s.best / s.weeks : 0, per = 3;
@@ -149,7 +148,7 @@ function wuCards(s) {
       <div class="wusub">of cardio${got.length ? ` – you've made it <b>${esc(fig[2])}</b>.` : "."}</div>
       ${wuGps(P, BADGE_ART[fig[5] || fig[0]] || BADGE_ICON.mile)}
       ${next ? `<div class="wubot"><div class="wunext">Next stop · ${esc(next[2])} · ${Math.max(1, Math.ceil(nh - life / 60))} h</div><i class="wubar"><span style="width:${Math.min(100, Math.round(life / 60 / nh * 100))}%;background:${P};box-shadow:0 0 10px ${P}"></span></i></div>` : ""}`,
-      run(ph, W) { wuGpsRun(ph, W, 2600, hrs); wuCount(ph, 2600, () => { const f = ph.querySelector(".wufig"); f.parentNode.style.opacity = 1; f.classList.add("on"); wuSfx("land"); wuBuzz(18); wuBurst(f, cols, 22); }); } });
+      run(ph, W) { wuCount(ph, 2600, () => {}); wuGpsRun(ph, W, 2600, hrs, () => { const f = ph.querySelector(".wufig"); f.parentNode.style.opacity = 1; f.classList.add("on"); wuSfx("land"); wuBuzz(18); wuBurst(f, cols, 22); }); } });
   }
   // 5 · finale: trophy, workouts, body, newest badges
   const bchips = s.body.filter(b => ["weight", "waist", "arm", "chest", "thigh"].includes(b.k)).slice(0, 3).map((b, i) => {
@@ -208,9 +207,9 @@ const wuRouteX = z => 0.5 * Math.sin(z * 4.2 + 0.4) + 0.12 * Math.sin(z * 11.5);
 // first person: you are the dot at the bottom; the world moves towards you along the route until the figure (the end point) is close
 // first person: you are the dot at the bottom; the world rushes towards you. More hours = a longer route in the same time = faster.
 // The figure (the end point) only shows when you arrive.
-function wuGpsRun(ph, W, D, hrs) {
+function wuGpsRun(ph, W, D, hrs, arrive) {
   const poly = ph.querySelector(".wuroutep"), cen = ph.querySelector(".wuroutec"), grid = ph.querySelector(".wugrid2"), fig = ph.querySelector(".wufigm"); if (!poly) return;
-  const M = Math.min(14, 1 + Math.log2(1 + (hrs || 1)) * 2.2), K = 5, HY = 40, BY = 306, VIEW = 1.6, t0 = performance.now(), END = M - 0.12;
+  const M = Math.min(14, 1 + Math.log2(1 + (hrs || 1)) * 2.2), K = 5, HY = 40, BY = 306, VIEW = 1.6, t0 = performance.now(), END = Math.max(0, M - 0.45), self = ph.querySelector(".wuself");
   const proj = (x, z) => { const sc = 1 / (1 + z * K); return [150 + x * 170 * sc, HY + (BY - HY) * sc, sc]; };
   const f = q => q.map(v => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ");
   const frame = c => {
@@ -225,8 +224,14 @@ function wuGpsRun(ph, W, D, hrs) {
     const [fx, fy, fs] = proj(wuRouteX(M) - cx, M - c); fig.setAttribute("transform", `translate(${fx.toFixed(1)} ${fy.toFixed(1)}) scale(${(0.35 + 1.4 * fs).toFixed(3)})`);
   };
   frame(0);
+  // last stretch: the camera stops and the dot runs ahead along the route to the end point
+  const finish = () => { const cx = wuRouteX(END), A = 650, t1 = performance.now(), path = Array.from({ length: 41 }, (_, i) => { const z = END + (M - END) * i / 40; return proj(wuRouteX(z) - cx, z - END); });
+    const run = t => { if (S.wrap !== W) return; const q = Math.min(1, (t - t1) / A), e = 1 - Math.pow(1 - q, 3), [x, y, sc] = path[Math.round(e * 40)];
+      self.setAttribute("transform", `translate(${(x - 150).toFixed(1)} ${(y - 306).toFixed(1)})`); self.querySelectorAll("circle,path").forEach(el => el.style.transform = `scale(${(0.55 + 0.45 * sc).toFixed(3)})`);
+      if (q < 1) requestAnimationFrame(run); else { self.style.opacity = 0; arrive && arrive(); } };
+    requestAnimationFrame(run); };
   const step = t => { if (S.wrap !== W) return; const p = Math.min(1, (t - t0) / D), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-    frame(e * END); if (p < 1) requestAnimationFrame(step); };
+    frame(e * END); if (p < 1) requestAnimationFrame(step); else finish(); };
   requestAnimationFrame(step);
 }
 
