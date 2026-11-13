@@ -115,7 +115,7 @@ function wuCards(s) {
     return `<div class="wurow" style="--d:${R0 + i * RS}ms"><div><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><b style="color:${WU_GREEN}">${r}</b></div><i><span style="width:${Math.max(6, wd)}%;background:${WU_GREEN};box-shadow:0 0 10px ${WU_GREEN}"></span></i></div>`; };
   cards.push({ c: WU_GREEN, dur: wowAt + 3600, h: `${glow(WU_GREEN)}<div class="wuk" style="color:${WU_GREEN}">Stronger</div>
     <div class="wurows">${s.lifts.map(row).join("")}</div>
-    <div class="wuwowbox" style="--wd:${wowAt}ms"><div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div>
+    <div class="wuwowbox" style="--wd:${wowAt}ms"><div class="wuwow" style="color:${WU_GREEN};text-shadow:0 0 28px ${WU_GREEN}aa">${[...word].map((ch, i) => `<span style="--i:${i}">${esc(ch)}</span>`).join("")}</div><div class="wuamaze">You're amazing!</div>
     ${w.length ? `<div class="wusub">${esc(w[0].n)} <b>${fmt(w[0].a)} → ${fmt(w[0].b)} kg</b></div>` : `<div class="wusub"><b>${nsp(s.sets)} sets</b> done – every one of them counts.</div>`}</div>
     <div class="wubot">${s.pbs ? chip(`${s.pbs} personal best${s.pbs > 1 ? "s" : ""}`, WU_GREEN) : ""}${chip(`${nsp(s.sets)} sets`, WU_GREEN)}</div>`,
     run(ph, W) {
@@ -192,27 +192,37 @@ function wuFloor(P) {
     <circle class="wuimpact" cx="${ox}" cy="${oy}" r="1" fill="none"/></svg>`;
 }
 // card 4: a GPS-style route on a ground plane, drawn from the bottom of the screen into the distance; the figure is the end point
-function wuProj(x, z) { const sc = 1 / (1 + z * 4.2); return [150 + x * 150 * sc, 34 + 286 * sc, sc]; }
 function wuGps(P, art) {
-  let grid = ""; for (let i = 1; i <= 7; i++) { const [, y] = wuProj(0, i / 7); grid += `<line x1="0" y1="${y.toFixed(1)}" x2="300" y2="${y.toFixed(1)}"/>`; }
-  for (let i = -4; i <= 4; i++) { const a = wuProj(i * 0.5, 0), b = wuProj(i * 0.5, 1); grid += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`; }
-  const [ex, ey] = wuProj(wuRouteX(1), 1);
-  return `<svg class="wugps" viewBox="0 0 300 330"><defs><linearGradient id="wuhz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P}" stop-opacity=".35"/><stop offset="1" stop-color="${P}" stop-opacity="0"/></linearGradient></defs>
-    <rect x="0" y="${(ey - 30).toFixed(0)}" width="300" height="60" fill="url(#wuhz)" opacity=".5"/><g stroke="${P}" stroke-opacity=".16" stroke-width="1">${grid}</g>
-    <polygon class="wuroutep" fill="${P}" style="filter:drop-shadow(0 0 6px ${P})"/><polyline class="wuroutec" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.2"/>
-    <circle class="wudot" r="6" fill="#fff" style="filter:drop-shadow(0 0 8px ${P})"/>
-    <g class="wufig" style="color:${P};transform-origin:${ex.toFixed(1)}px ${ey.toFixed(1)}px"><circle cx="${ex.toFixed(1)}" cy="${(ey - 34).toFixed(1)}" r="34" fill="#0b0d12" stroke="${P}" stroke-width="2.5" style="filter:drop-shadow(0 0 10px ${P})"/>
-      <path d="M${(ex - 9).toFixed(1)} ${(ey - 4).toFixed(1)}L${ex.toFixed(1)} ${(ey + 6).toFixed(1)}L${(ex + 9).toFixed(1)} ${(ey - 4).toFixed(1)}z" fill="${P}"/>
-      <svg x="${(ex - 24).toFixed(1)}" y="${(ey - 58).toFixed(1)}" width="48" height="48" viewBox="0 0 24 24" fill="currentColor">${art}</svg></g></svg>`;
+  return `<svg class="wugps" viewBox="0 0 300 330" style="--p:${P}"><defs><linearGradient id="wuhz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P}" stop-opacity=".45"/><stop offset="1" stop-color="${P}" stop-opacity="0"/></linearGradient>
+    <linearGradient id="wufadeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset=".25" stop-color="#fff"/></linearGradient><mask id="wufade"><rect width="300" height="330" fill="url(#wufadeg)"/></mask></defs>
+    <rect x="0" y="22" width="300" height="50" fill="url(#wuhz)" opacity=".55"/>
+    <g mask="url(#wufade)"><g class="wugrid2" stroke="${P}" stroke-opacity=".2" stroke-width="1"></g>
+    <polygon class="wuroutep" fill="${P}" style="filter:drop-shadow(0 0 6px ${P})"/><polyline class="wuroutec" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="1.4"/></g>
+    <g class="wufigm" style="color:${P}"><g class="wufig"><circle cx="0" cy="-34" r="34" fill="#0b0d12" stroke="${P}" stroke-width="2.5" style="filter:drop-shadow(0 0 10px ${P})"/>
+      <path d="M-9 -4L0 6L9 -4z" fill="${P}"/><svg x="-24" y="-58" width="48" height="48" viewBox="0 0 24 24" fill="currentColor">${art}</svg></g></g>
+    <g class="wuself"><circle cx="150" cy="306" r="16" fill="${P}" opacity=".25" class="wuselfp"/><circle cx="150" cy="306" r="8" fill="#fff" style="filter:drop-shadow(0 0 8px ${P})"/><path d="M150 292l6 10h-12z" fill="#fff"/></g></svg>`;
 }
 const wuRouteX = z => 0.55 * Math.sin(z * 7.5 + 0.4) * (1 - z * 0.5) + 0.1 * Math.sin(z * 19);
+// first person: you are the dot at the bottom; the world moves towards you along the route until the figure (the end point) is close
 function wuGpsRun(ph, W, D) {
-  const poly = ph.querySelector(".wuroutep"), cen = ph.querySelector(".wuroutec"), dot = ph.querySelector(".wudot"), N = 140, t0 = performance.now(); if (!poly) return;
-  const pts = Array.from({ length: N + 1 }, (_, i) => { const z = i / N, [x, y, sc] = wuProj(wuRouteX(z), z); return [x, y, sc]; });
-  const step = t => { if (S.wrap !== W) return; const p = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - p, 2), m = Math.max(1, Math.round(e * N)), sub = pts.slice(0, m + 1);
-    const L = sub.map(([x, y, sc]) => [x - 9 * sc, y]), R = sub.map(([x, y, sc]) => [x + 9 * sc, y]).reverse(), f = q => q.map(v => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ");
-    poly.setAttribute("points", f(L.concat(R))); cen.setAttribute("points", f(sub)); const [x, y, sc] = sub[sub.length - 1]; dot.setAttribute("cx", x.toFixed(1)); dot.setAttribute("cy", y.toFixed(1)); dot.setAttribute("r", (3 + 6 * sc).toFixed(1));
-    if (p < 1) requestAnimationFrame(step); else dot.style.opacity = 0; };
+  const poly = ph.querySelector(".wuroutep"), cen = ph.querySelector(".wuroutec"), grid = ph.querySelector(".wugrid2"), fig = ph.querySelector(".wufigm"); if (!poly) return;
+  const K = 5, HY = 40, BY = 306, END = 0.9, t0 = performance.now();
+  const proj = (x, z) => { const sc = 1 / (1 + z * K); return [150 + x * 170 * sc, HY + (BY - HY) * sc, sc]; };
+  const f = q => q.map(v => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ");
+  const frame = c => {
+    const cx = wuRouteX(c), pts = [];
+    for (let i = 0; i <= 90; i++) { const z = c + (1 - c) * i / 90; pts.push(proj(wuRouteX(z) - cx, z - c)); }
+    poly.setAttribute("points", f(pts.map(([x, y, sc]) => [x - 10 * sc, y]).concat(pts.map(([x, y, sc]) => [x + 10 * sc, y]).reverse())));
+    cen.setAttribute("points", f(pts));
+    let g = ""; const off = (c * 10) % 1;                     // cross lines rush towards you, side lines follow the road
+    for (let i = 0; i < 12; i++) { const z = (i + 1 - off) / 10; if (z <= 0) continue; const [, y] = proj(0, z); g += `<line x1="0" y1="${y.toFixed(1)}" x2="300" y2="${y.toFixed(1)}"/>`; }
+    for (let i = -5; i <= 5; i++) { const a = proj(i * 0.45 - cx * 0.6, 0), b2 = proj(i * 0.45 - cx * 0.6, 3); g += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b2[0].toFixed(1)}" y2="${b2[1].toFixed(1)}"/>`; }
+    grid.innerHTML = g;
+    const [fx, fy, fs] = proj(wuRouteX(1) - cx, 1 - c); fig.setAttribute("transform", `translate(${fx.toFixed(1)} ${fy.toFixed(1)}) scale(${(0.35 + 1.4 * fs).toFixed(3)})`);
+  };
+  frame(0);
+  const step = t => { if (S.wrap !== W) return; const p = Math.min(1, (t - t0) / D), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    frame(e * END); if (p < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
 
