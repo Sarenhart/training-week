@@ -104,7 +104,7 @@ function obView() {
   let h = `<div class="ob">`;
   if (step === "welcome" && o.newProg) {
     h += `<header class="top"><div><div class="eyebrow">New programme</div><h1>Build your next 12 weeks</h1></div></header>
-      <p class="obp">Go through the questions again and change anything you like. Your answers from last time are filled in.</p>
+      <p class="obp">${loadProfile()?.answers ? "Go through the questions again and change anything you like. Your answers from last time are filled in." : "Answer a few quick questions and the app builds your next 12 weeks – the weights you've reached carry over."}</p>
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my current programme</button>`;
   } else if (step === "welcome") {
