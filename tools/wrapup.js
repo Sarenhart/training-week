@@ -36,10 +36,6 @@ function wrapSummary() {
   lifts.forEach(l => l.main = main.has(l.n));
   lifts.sort((x, y) => (x.help - y.help) || (y.main - x.main) || y.pct - x.pct || y.b - x.b);
   const top = lifts.filter(l => !l.help).slice(0, 4).concat(lifts.filter(l => l.help).slice(0, 1));
-  // body: the entry nearest before the start (else the first after it) → the latest one
-  const bd = Object.values(S.body || {}).filter(b => b && b.date).sort((a, b) => a.date.localeCompare(b.date));
-  const b0 = bd.filter(b => b.date <= P.start).pop() || bd[0], b1 = bd[bd.length - 1], body = [];
-  if (b0 && b1 && b0 !== b1) for (const m of METRICS) { const x = +b0[m.k], y = +b1[m.k]; if (x && y && Math.abs(y - x) >= 0.1) body.push({ k: m.k, n: m.n, u: m.u, a: x, b: y }); }
   const saved = jget(BADGE_KEY), mine = Object.entries(saved).filter(([, d]) => d >= P.start).sort((a, b) => b[1].localeCompare(a[1])), badges = mine.length;
   const wk = Array.from({ length: tw }, (_, i) => { const w = i + 1; let kgw = 0, nw = 0;
     for (const k of WK) { const l = S.logs[logId(w, k)]; if (!l) continue; kgw += stats(l).vol; if (l.finished) nw++; }
@@ -48,7 +44,7 @@ function wrapSummary() {
   return { key: progKey(), title: P.title || "Programme", goal: loadProfile()?.answers?.goal || null, start: P.start, end: dates[dates.length - 1] || today(),
     weeks: tw, planned: tw * REQ.length, workouts, extras, extraPlanned: WK.includes("c") ? tw : 0, sets, kg: Math.round(kg),
     pbs: bl.pbs || 0, best: bl.best || 0, grid, cardioMin: here.cmin || 0, balBlocks: here.balBlocks || 0, holdSec: here.holdSec || 0,
-    lifts: top, body, badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
+    lifts: top, badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
 }
 // Wrap-up is due after the last planned workout of the last week – or a week after that week was started, if it's never completed
 function wrapDue() {
@@ -150,10 +146,8 @@ function wuCards(s) {
       ${next ? `<div class="wubot"><div class="wunext">Next stop · ${esc(next[2])} · ${Math.max(1, Math.ceil(nh - life / 60))} h</div><i class="wubar"><span style="width:${Math.min(100, Math.round(life / 60 / nh * 100))}%;background:${P};box-shadow:0 0 10px ${P}"></span></i></div>` : ""}`,
       run(ph, W) { wuCount(ph, 2600, () => {}); wuGpsRun(ph, W, 2600, hrs, () => { const f = ph.querySelector(".wufig"); f.parentNode.style.opacity = 1; f.classList.add("on"); wuSfx("land"); wuBuzz(18); wuBurst(f, cols, 22); }); } });
   }
-  // 5 · finale: trophy, workouts, body, newest badges
-  const bchips = s.body.filter(b => ["weight", "waist", "arm", "chest", "thigh"].includes(b.k)).slice(0, 3).map((b, i) => {
-    const dd = Math.round((b.b - b.a) * 10) / 10, nm = b.k === "weight" ? "" : b.n.replace(" (flexed)", "") + " ";
-    return chip(`${esc(nm)}${dd > 0 ? "+" : "−"}${fmt(Math.abs(dd))} ${b.u}`, [P, WU_GREEN, O][i]); }).join("");
+  // 5 · finale: trophy, workouts, newest badges
+  // no body changes in the wrap-up (Christian 2026-11-13): measurements help track, but shouldn't be the driving force
   const BL = {}; try { badgeList().list.forEach(b => BL[b.id] = b); } catch {}
   const nb = (s.badgeIds || []).map(id => BL[id]).filter(Boolean).slice(0, 6);
   const bico = b => { const c = b.icon === "phase" ? P : WU_BCOL[b.icon] || WU_GREEN; return `<div class="wubdg" style="--bc:${c}"><span><svg viewBox="0 0 24 24" fill="currentColor">${BADGE_ART[b.art || b.id] || BADGE_ICON[b.icon] || ""}</svg></span><small>${esc(b.title)}</small></div>`; };
@@ -163,7 +157,6 @@ function wuCards(s) {
       <g class="wuflare"><circle cx="16.8" cy="3.1" r="4.2" fill="url(#wufg)"/><path d="M16.8 -7 17.3 2.6 27 3.1 17.3 3.6 16.8 13.2 16.3 3.6 6.6 3.1 16.3 2.6z" fill="#fff"/><path d="M16.8 3.1 19.6 .3M16.8 3.1 14 5.9M16.8 3.1 19.6 5.9M16.8 3.1 14 .3" stroke="#fff" stroke-width=".35" stroke-linecap="round"/><defs><radialGradient id="wufg"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs></g></svg></div>
     <div class="wufin">${s.workouts}<span class="dim">/${s.planned}</span></div>
     <div class="wusub c">workouts${s.extras ? ` · +${s.extras} extra${s.extras > 1 ? "s" : ""}` : ""}</div>
-    <div class="wuchips">${bchips}</div>
     ${nb.length ? `<div class="wubadges"><div class="wusec2 c">Newest badges · ${s.badges} earned</div><div class="wubgrid">${nb.map(bico).join("")}</div></div>` : ""}
     <div class="wubot"><button type="button" class="wucta" data-act="wusum" style="background:${P};box-shadow:0 0 20px ${P}88">See your summary →</button></div>`,
     run(ph, W) {
@@ -245,14 +238,12 @@ function wuSummaryHtml(s) {
     tile(cnt(s.pbs || 0), "Personal bests", WU_GREEN), tile(cnt(s.best, "", " wk"), "Best streak", O), cmin ? tile(cmin >= 60 ? cnt(Math.round(cmin / 60), "", " h") : cnt(cmin, "", " min"), "Cardio", WU_GREEN) : tile(cnt(s.sets || 0), "Sets", WU_GREEN)];
   const rows = (arr, f) => arr.map(f).join("");
   const lift = l => `<div class="wuline"><span>${esc(l.help ? l.n.replace(/^Assisted /, "") + " help" : l.n)}</span><span>${l.help ? `${fmt(-l.a)} → ${fmt(-l.b)}` : `${fmt(l.a)} → ${fmt(l.b)}`} <b style="color:${WU_GREEN}">${l.help ? `−${fmt(l.b - l.a)} kg` : `+${l.pct} %`}</b></span></div>`;
-  const bod = b => { const dd = Math.round((b.b - b.a) * 10) / 10; return `<div class="wuline"><span>${esc(b.n)}</span><span>${fmt(b.a)} → ${fmt(b.b)} <b style="color:${WU_GREEN}">${dd > 0 ? "+" : "−"}${fmt(Math.abs(dd))} ${b.u}</b></span></div>`; };
   const stopped = s.stopped != null;
   return `<div class="wusum"><div class="wusumtop">${`<div class="wuglow" style="background:${P};top:-160px;left:-10px"></div>`}
     <div class="wumedal" data-medal="1" style="border-color:${P};box-shadow:0 0 30px ${P}88,inset 0 0 20px ${P}55;color:${P}"><b>${stopped ? s.stopped : s.weeks}</b><small>${stopped ? "WEEKS" : "WEEKS"}</small></div>
     <h2>${stopped ? "Stopped in week " + s.stopped : "You did it!"}</h2><div class="wudim">${esc(s.title)} · ${d(s.start)} – ${d(s.end)}</div></div>
     <div class="wutiles">${tiles.join("")}</div>
     ${s.lifts?.length ? `<div class="wusec">Stronger</div>${rows(s.lifts, lift)}` : ""}
-    ${s.body?.length ? `<div class="wusec">Your body</div>${rows(s.body, bod)}` : ""}
     ${s.badges ? `<div class="wusec">Badges</div><div class="wuline"><span>Earned during the programme</span><b>${s.badges}</b></div>` : ""}
     <div class="wubtns">${S.wrap?.current ? `<button type="button" class="wucta" data-act="npstart" style="background:${P};box-shadow:0 0 20px ${P}88">Start your next programme →</button>` : ""}
     ${S.wrap?.preview ? `<div class="wudim c">DEV preview – the wrap-up isn't saved, but the button really starts a new programme in DEV.</div>` : ""}
