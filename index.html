@@ -649,6 +649,10 @@ const GUIDES = {
     steps: ["Hold the bar on the angled grips, palms up, arms straight.", "Keep the elbows at your sides and curl the bar up.", "Squeeze at the top, then lower slowly to straight arms."],
     avoid: ["Swinging the hips or leaning back.", "Elbows moving forward.", "Stopping short of straight arms at the bottom."]
   },
+  "dumbbell curl": {
+    steps: ["Stand tall, dumbbells at your sides, palms facing forward.", "Keep the elbows at your sides and curl the weights up.", "Squeeze at the top, then lower slowly."],
+    avoid: ["Swinging the body.", "Elbows drifting forward.", "Dropping the weight on the way down."]
+  },
   "barbell curl": {
     steps: ["Shoulder-width grip, palms up, arms straight.", "Keep the elbows at your sides and curl the bar up.", "Squeeze at the top, then lower slowly."],
     avoid: ["Swinging the body.", "Elbows drifting forward.", "Bending the wrists back."]
@@ -1240,6 +1244,12 @@ const ANIM4 = {
     frame: u => curlFrame(u, { hz: 14, half: 30, plate: 9 }),
     cues: [{ when: "all", pt: J => J.elbR, off: [50, -10], text: "Elbows at sides" }, { when: "all", pt: J => J.pelvis, off: [-50, 20], text: "No swinging" }]
   },
+  "dumbbell curl": {
+    cap: ["Start: arms straight, palms forward", "Top: curled up, elbows still"],
+    cam: camera(-30, 10, 116, 210, 0.92), dur: 2600,
+    frame: u => curlFrame(u, { db: true, hz: 20 }),
+    cues: [{ when: "all", pt: J => J.elbR, off: [60, 10], text: "Elbows still" }, { when: "B", pt: J => J.wriR, off: [60, -24], text: "Squeeze at the top" }]
+  },
   "barbell curl": {
     cap: ["Start: arms straight", "Top: curled up, elbows at your sides"],
     cam: camera(-30, 10, 116, 210, 0.92), dur: 2600,
@@ -1438,6 +1448,10 @@ const ANIM4 = {
   "bike intervals": { ...BIKE, cap: ["Hard: spin fast for 30 s", "Easy: 60 s to recover"], dur: 800 }
 };
 for (const k in ANIM4) ANIM[k] = ANIM3[k] = ANIM4[k];
+// restored 2026-11-15: these two were added to the main app only (2026-11-06 / 11-09) and were lost when round 4 moved over
+if (ANIM["parallel bar dips"]) ANIM["assisted parallel bar dips"] = ANIM["parallel bar dips"];
+if (typeof ANIM3 !== "undefined" && ANIM3["parallel bar dips"]) ANIM3["assisted parallel bar dips"] = ANIM3["parallel bar dips"];   // same movement, help from the machine
+if (GUIDES["parallel bar dips"] && !GUIDES["assisted parallel bar dips"]) GUIDES["assisted parallel bar dips"] = GUIDES["parallel bar dips"];
 
 let WK = ["1","2","3","c"];                   // workout keys; "c" = optional extra (set from the programme)
 let REQ = ["1","2","3"];
