@@ -27,6 +27,7 @@ WAVES = [
     ("wave5a", "W5a", "Home – body weight, towel, backpack"), ("wave5b", "W5b", "Home – dumbbells on the floor"),
     ("wave5c", "W5c", "Home – bands and suspension trainer"), ("pistol", "P", "Pistol squat ladder"),
     ("addons", "A", "Strength add-ons"), ("cardioadd", "K", "Cardio add-ons"),
+    ("wave6", "W6", "Programme lifts"),
 ]
 
 def read(*p):
