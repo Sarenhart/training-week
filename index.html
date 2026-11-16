@@ -313,6 +313,29 @@ tr:last-child td{border-bottom:0}
 .tcol{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
 .swapbtn{margin-left:8px;font-size:12px;font-weight:700;color:var(--accent);background:var(--swapbg,transparent);border:1.5px solid var(--accent);border-radius:8px;padding:2px 9px;vertical-align:middle}   /* outline: white in light mode, black in dark mode (Christian 2026-10-31) */
 .swapped{font-size:12px;color:var(--muted);font-weight:400}.linkbtn.inl{padding:0;font-size:12px}
+/* swap as playing cards (2026-11-15) */
+.swdeckmode{max-height:94vh}.swdeckmode .obchips{margin-bottom:10px}
+.swdeck{overflow:hidden;margin:4px -16px 0;padding:8px 0 10px;touch-action:pan-y}
+.swtrack{--cw:min(74vw,330px);display:flex;gap:14px;padding-left:16px;transform:translateX(calc(var(--i) * -1 * (var(--cw) + 14px) + var(--dx,0px)));transition:transform .35s cubic-bezier(.2,1,.3,1)}
+.swcard{flex:0 0 var(--cw);height:min(calc(var(--cw) * 1.4),calc(100dvh - 400px));min-height:300px;perspective:900px;transition:transform .35s,opacity .35s;transform:rotate(var(--tilt,0deg))}
+.swcard.past{transform:rotate(-7deg) translateY(10px);opacity:0}.swcard{z-index:1}.swcard.cur{z-index:2}
+.swin{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.3,1.3,.4,1);transform-style:preserve-3d}.swcard.flip .swin{transform:rotateY(180deg)}
+.swface,.swback{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);box-shadow:0 6px 20px rgba(0,0,0,.18);padding:22px 18px 18px;display:flex;flex-direction:column;overflow:hidden}
+.swcard.cur .swface,.swcard.cur .swback{border-color:var(--accent)}
+.swback{transform:rotateY(180deg)}.swback ol{margin:12px 0 0;padding-left:20px;font-size:15px;line-height:1.45}.swback li{margin-bottom:8px}
+.swidx{position:absolute;font-family:var(--display);font-weight:800;font-size:18px;color:var(--accent);line-height:1}.swidx.tl{top:9px;left:11px}.swidx.br{bottom:9px;right:11px;transform:rotate(180deg)}
+.swbest{position:absolute;top:9px;right:12px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:3px 8px}
+.swname{font-size:19px;line-height:1.2;margin-top:8px;display:block}.swmeta{color:var(--muted);font-size:13px;margin-top:2px}
+.swanim{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;margin:4px 0}.swanim svg{width:100%;height:100%;max-height:220px}
+.swpm{font-size:14px;line-height:1.35;display:grid;gap:3px}.swpm .pl{color:var(--done);font-weight:600}.swpm .mi{color:var(--warn);font-weight:600}
+.swhint{color:var(--muted);font-size:11px;text-align:center;margin-top:8px}
+.swdots{display:flex;gap:6px;justify-content:center;margin:2px 0 10px}.swdots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.swdots i.on{background:var(--accent);width:18px;border-radius:4px}
+.swbtns.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.swother{display:block;margin:10px auto 0}.swpicked{text-align:center;margin:0 0 10px}
+.swdeckmode{background:transparent!important;box-shadow:none!important;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px))!important;max-height:100dvh!important}
+.swhead{background:var(--surface);border-radius:16px;padding:12px 14px 6px;box-shadow:0 6px 20px rgba(0,0,0,.2)}.swhead .obsmall{margin:4px 0 6px}
+#swapov.float{background:rgba(10,14,20,.25)}
+.swdeckmode .swdots i{background:rgba(255,255,255,.45)}.swdeckmode .swdots i.on{background:var(--accent)}
+.swdeckmode .swbtns .btn.ghost{background:var(--surface)}.swdeckmode .swpicked{background:var(--surface);border-radius:12px;padding:8px 12px;width:max-content;max-width:100%;margin:0 auto 10px}
 #swapov{position:fixed;inset:0;z-index:60;background:rgba(10,14,20,.55);display:flex;align-items:flex-end;justify-content:center}#swapov[hidden]{display:none}
 .swapsheet{background:var(--surface);color:var(--ink);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px 20px}
 .swapsheet h2{font-family:var(--display);font-size:24px;margin:2px 0 4px}.swq{margin:0 0 8px;font-weight:600;font-size:15px}.swlist{display:grid;gap:8px;margin:12px 0 6px}
@@ -3956,24 +3979,94 @@ function swapExFields(n, e) {
   return { name: n, lib: x.lib || n, unit: x.unit || "reps", reps: x.unit && x.unit !== e.unit ? (x.reps || e.reps) : (x.unit === "sec" ? (x.reps || e.reps) : e.reps), kg,
     inc: x.inc || 0, ...(x.bw ? { bw: true } : { bw: false }), note: x.note || undefined };
 }
+// ---- Swap as playing cards (Christian 2026-11-09 design, 2026-11-15 decisions): after the reason, the 2–3 alternatives are cards in a row
+// (best match first, "Best match" tag), the next one peeking in at the right. Swipe browses, tap flips the card to the 2 how-to steps,
+// "Use this" picks it, then Just today / Rest of this phase. Only the front card animates. A tiny buzz when a card snaps in (to test).
+// One plus and one minus compared with the current exercise, from what the app knows (equipment, joints, support, balance, muscle) – empty when there's no real difference.
+function swapPM(curName, n, reason) {
+  const c = EX[curName] || {}, x = EX[n] || {}, plus = [], minus = [];
+  const sup = v => /incline|supported|seated|machine|assisted/i.test(v) || ["machine", "cable"].includes(EX[v]?.eq);
+  const ohp = v => /overhead|shoulder press|pike|dip|push press/i.test(v);
+  const MN = { chest: "chest", back: "back", shoulders: "shoulders", rear: "rear shoulders", biceps: "biceps", triceps: "triceps", thighs: "front thighs", ham: "hamstrings", glutes: "glutes", calves: "calves", core: "core" };
+  if (reason === "busy" && x.eq !== c.eq) plus.push(x.eq === "bw" ? "No equipment needed" : `Uses ${EQ_NAME[x.eq].toLowerCase()} instead`);
+  if (c.knee && !x.knee) plus.push("Easier on the knees");
+  if (ohp(curName) && !ohp(n)) plus.push("Easier on the shoulders");
+  if (/Romanian deadlift|back squat|bent-over/i.test(curName) && !/Romanian deadlift|back squat|bent-over/i.test(n)) plus.push("Easier on the lower back");
+  if (reason === "hard" && sup(n) && !sup(curName)) plus.push("Supported – easier to keep good form");
+  if (reason === "easy" && /single-leg|bulgarian|deficit|decline|pistol/i.test(n)) plus.push("Harder – more for the muscle to do");
+  if (["machine", "cable"].includes(x.eq) && !["machine", "cable"].includes(c.eq)) plus.push(x.eq === "cable" ? "Even tension through the whole rep" : "Steadier – the machine guides you");
+  if (x.eq === "db" && c.eq !== "db") plus.push("Each side works on its own");
+  if (x.eq === "bb" && c.eq !== "bb") plus.push("Easy to load heavier over time");
+  if (x.eq === "bw" && c.eq !== "bw") plus.push("No equipment needed");
+  if (x.m && c.m && x.m !== c.m) minus.push(`Works the ${MN[x.m] || x.m} more than the ${MN[c.m] || c.m}`);
+  if (!c.knee && x.knee) minus.push("More work for the knees");
+  if (!ohp(curName) && ohp(n)) minus.push("More load on the shoulders");
+  if (x.eq === "db" && c.eq !== "db") minus.push("Needs more balance and control");
+  if (x.eq === "bw" && c.eq !== "bw") minus.push("Hard to make heavier");
+  if (x.floor && !c.floor) minus.push("Gets you down on the floor");
+  if (/single-leg|bulgarian|pistol/i.test(n) && !/single-leg|bulgarian|pistol/i.test(curName)) minus.push("Harder to balance");
+  if (reason === "easy" && sup(n) && !sup(curName)) minus.push("Supported – less for the body to steady");
+  return { plus: plus[0] || "", minus: minus[0] || "" };
+}
 function swapView() {
   const sw = S.swap; if (!sw) return "";
   const e = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex); if (!e) return "";
-  const opts = swapOptions(e, sw.reason), pick = sw.pick && opts.includes(sw.pick) ? sw.pick : null;
-  const prev = n => { const c = TWLIB.find(EX[n]?.lib || n); if (!c) return `<p class="muted">No animation for this one yet.</p>`; const g = TWLIB.guide(c) || { steps: [] }, k = c.keys[0][1];
-    return `<div class="lib swprev"><svg class="anim" data-lk="${esc(k)}" viewBox="0 0 240 225" role="img" aria-label="Animation of ${esc(c.title)}">${TWLIB.frame(k, 0)}</svg><ol>${g.steps.slice(0, 2).map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>`; };
-  return `<div class="swapsheet" role="dialog" aria-labelledby="sw-title"><div class="eyebrow">Swap</div><h2 id="sw-title">${esc(e.name)}</h2>
-    <p class="swq">Why do you wish to swap?</p>
-    <div class="obchips">${SWAP_REASONS.map(([k, l]) => `<button type="button" class="obchip" data-act="swreason" data-v="${k}" aria-pressed="${sw.reason === k}">${l}</button>`).join("")}</div>
-    ${opts.length ? `<div class="swlist">${opts.map(n => `<div class="swopt ${pick === n ? "on" : ""}"><button type="button" class="swpick" data-act="swpick" data-v="${esc(n)}" aria-pressed="${pick === n}"><b>${esc(n)}</b><small>${esc([feelIn(n), EQ_NAME[EX[n].eq]].filter(Boolean).join(" · "))}</small></button>
-      <button type="button" class="swplay" data-act="swprev" data-v="${esc(n)}" aria-expanded="${sw.prev === n}" aria-label="Preview ${esc(n)}">▶</button>${sw.prev === n ? prev(n) : ""}</div>`).join("")}</div>`
-      : `<p class="muted">No other exercise fits here with your equipment and "go easy" choices.</p>`}
-    <p class="muted obsmall">Same sets and reps. A new exercise starts with "find your weight".</p>
-    <div class="swbtns"><button type="button" class="btn ghost" data-act="swclose">Cancel</button><button type="button" class="btn ghost" data-act="swapply" data-v="today" ${pick ? "" : "disabled"}>Just today</button><button type="button" class="btn" data-act="swapply" data-v="phase" ${pick ? "" : "disabled"}>Rest of this phase</button></div></div>`;
+  const cur = e.swappedFrom?.name && EX[e.swappedFrom.name] && !EX[e.name] ? e.swappedFrom.name : e.name;
+  const opts = sw.reason ? swapOptions(e, sw.reason) : [], n = opts.length, i = Math.min(sw.i || 0, Math.max(0, n - 1));
+  const head = `<div class="eyebrow">Swap</div><h2 id="sw-title">${esc(e.name)}</h2><p class="swq">Why do you wish to swap?</p>
+    <div class="obchips">${SWAP_REASONS.map(([k, l]) => `<button type="button" class="obchip" data-act="swreason" data-v="${k}" aria-pressed="${sw.reason === k}">${l}</button>`).join("")}</div>`;
+  if (!sw.reason) return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}</div><div class="swbtns"><button type="button" class="btn ghost" data-act="swclose">Keep ${esc(e.name)}</button></div></div>`;
+  if (!n) return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted">No other exercise fits here with your equipment and "go easy" choices.</p></div><div class="swbtns"><button type="button" class="btn ghost" data-act="swclose">Keep ${esc(e.name)}</button></div></div>`;
+  const card = (nm, k) => {
+    const c = TWLIB.find(EX[nm]?.lib || nm), key = c ? c.keys[0][1] : null, ak = nm.toLowerCase(), old = !c && ANIM[ak] ? ak : null;
+    const g = c ? TWLIB.guide(c) || { steps: [] } : GUIDES[ak] || { steps: [] }, pm = swapPM(cur, nm, sw.reason);
+    const meta = [feelIn(nm), EQ_NAME[EX[nm]?.eq]].filter(Boolean).join(" · ");
+    return `<div class="swcard ${k === i ? "cur" : k < i ? "past" : ""} ${sw.flip === k ? "flip" : ""}" data-k="${k}"><div class="swin">
+      <div class="swface"><span class="swidx tl">${k + 1}</span><span class="swidx br">${k + 1}</span>
+        ${k === 0 ? `<span class="swbest">Best match</span>` : ""}<b class="swname">${esc(nm)}</b><small class="swmeta">${esc(meta)}</small>
+        <div class="${old ? "" : "lib "}swanim">${key ? `<svg class="anim" ${k === i ? "data-lk" : "data-lks"}="${esc(key)}" viewBox="0 0 240 225" role="img" aria-label="Animation of ${esc(nm)}">${TWLIB.frame(key, 0)}</svg>`
+          : old ? `<svg class="anim" ${k === i ? "data-k" : "data-ks"}="${esc(old)}" viewBox="0 0 240 225" role="img" aria-label="Animation of ${esc(nm)}">${animFrame(old, 0)}</svg>` : `<p class="muted">No animation for this one yet.</p>`}</div>
+        <div class="swpm">${pm.plus ? `<div class="pl">+ ${esc(pm.plus)}</div>` : ""}${pm.minus ? `<div class="mi">− ${esc(pm.minus)}</div>` : ""}</div>
+        <small class="swhint">Tap to see how</small></div>
+      <div class="swback"><span class="swidx tl">${k + 1}</span><span class="swidx br">${k + 1}</span><b class="swname">How to do it</b>
+        <ol>${(g.steps.length ? g.steps.slice(0, 2) : ["Same sets and reps as before.", "Starts with \"find your weight\"."]).map(t => `<li>${esc(t)}</li>`).join("")}</ol><small class="swhint">Tap to turn back</small></div></div></div>`; };
+  const pick = sw.step === "scope" ? opts[i] : null;
+  return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted obsmall">Same sets and reps – a new exercise starts with "find your weight".</p></div>
+    <div class="swdeck"><div class="swtrack" style="--i:${i}">${opts.map(card).join("")}</div></div>
+    <div class="swdots">${opts.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
+    <div class="swfoot">${pick ? `<p class="swpicked">Swap to <b>${esc(pick)}</b> for…</p><div class="swbtns"><button type="button" class="btn ghost" data-act="swback">Back</button><button type="button" class="btn ghost" data-act="swapply" data-v="today">Just today</button><button type="button" class="btn" data-act="swapply" data-v="phase">Rest of this phase</button></div>`
+      : `<div class="swbtns two"><button type="button" class="btn ghost" data-act="swclose">Keep ${esc(e.name)}</button><button type="button" class="btn" data-act="swuse">Use this</button></div>`}</div>
+</div>`;
 }
-function swapRender() { const ov = document.getElementById("swapov"); if (!S.swap) { ov.hidden = true; ov.innerHTML = ""; return; } ov.hidden = false; ov.innerHTML = swapView(); startAnims(); }
+// swipe: drag the row; past ~50 px (or a quick flick) moves one card; a short tap flips the card
+function swGo(d) {
+  const sw = S.swap; if (!sw || sw.step === "scope") return; const e = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = swapOptions(e, sw.reason).length;
+  const ni = Math.max(0, Math.min(n - 1, (sw.i || 0) + d)); if (ni === (sw.i || 0)) { swSnap(); return; }
+  sw.i = ni; sw.flip = null; try { navigator.vibrate && navigator.vibrate(10); } catch {}
+  // update in place so the row slides (a full redraw would jump)
+  const tr = document.querySelector(".swtrack"); if (!tr) { swapRender(); return; }
+  tr.style.transition = ""; tr.style.removeProperty("--dx"); tr.style.setProperty("--i", ni);
+  tr.querySelectorAll(".swcard").forEach(c => { const k = +c.dataset.k; c.classList.toggle("cur", k === ni); c.classList.toggle("past", k < ni); c.classList.remove("flip"); c.style.removeProperty("--tilt");
+    const a = c.querySelector("svg.anim"); if (a) { const lib = a.hasAttribute("data-lk") || a.hasAttribute("data-lks"), on = lib ? "data-lk" : "data-k", off = lib ? "data-lks" : "data-ks";
+      const key = a.getAttribute(on) || a.getAttribute(off); a.removeAttribute(on); a.removeAttribute(off); a.setAttribute(k === ni ? on : off, key); } });
+  document.querySelectorAll(".swdots i").forEach((d, k) => d.classList.toggle("on", k === ni));
+  const tmp = document.createElement("div"); tmp.innerHTML = swapView(); const nf = tmp.querySelector(".swfoot"), of = document.querySelector(".swfoot"); if (nf && of) of.innerHTML = nf.innerHTML;
+  startAnims();
+}
+function swSnap() { const t = document.querySelector(".swtrack"); if (t) { t.style.transition = ""; t.style.removeProperty("--dx"); t.querySelector(".swcard.cur")?.style.removeProperty("--tilt"); } }
+let swDrag = null;
+document.addEventListener("pointerdown", ev => { const t = ev.target.closest(".swtrack"); if (!t || !S.swap || S.swap.step === "scope") return; swDrag = { x: ev.clientX, y: ev.clientY, t0: performance.now(), dx: 0, t }; t.style.transition = "none"; });
+document.addEventListener("pointermove", ev => { if (!swDrag) return; const dx = ev.clientX - swDrag.x; if (Math.abs(dx) < 6 && !swDrag.moved) return; swDrag.moved = true; swDrag.dx = dx;
+  swDrag.t.style.setProperty("--dx", dx + "px"); swDrag.t.querySelector(".swcard.cur")?.style.setProperty("--tilt", Math.max(-5, Math.min(5, dx / 40)) + "deg"); });
+document.addEventListener("pointerup", ev => { if (!swDrag) return; const d = swDrag; swDrag = null; d.t.style.transition = "";
+  const fast = Math.abs(d.dx) > 25 && performance.now() - d.t0 < 250;
+  if (d.moved && (d.dx < -50 || (fast && d.dx < 0))) swGo(1); else if (d.moved && (d.dx > 50 || (fast && d.dx > 0))) swGo(-1);
+  else if (d.moved) swSnap();
+  else { const c = ev.target.closest(".swcard"); if (!c) return; const k = +c.dataset.k; if (k !== (S.swap.i || 0)) { swGo(k - (S.swap.i || 0)); return; } S.swap.flip = S.swap.flip === k ? null : k; c.classList.toggle("flip"); } });
+document.addEventListener("pointercancel", () => { if (swDrag) { swDrag = null; swSnap(); } });
+function swapRender() { const ov = document.getElementById("swapov"); if (!S.swap) { ov.hidden = true; ov.innerHTML = ""; return; } ov.hidden = false; ov.innerHTML = swapView(); ov.classList.toggle("float", !!ov.querySelector(".swdeckmode")); startAnims(); }
 function swapApply(scope) {
-  const sw = S.swap, n = sw.pick, base = phaseOf(S.week).workouts[S.wk].exercises.find(x => x.id === sw.ex); if (!base || !n) return;
+  const sw = S.swap, base0 = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = sw.pick || (base0 && swapOptions(base0, sw.reason)[sw.i || 0]), base = phaseOf(S.week).workouts[S.wk].exercises.find(x => x.id === sw.ex); if (!base || !n) return;
   const l = ensureLog(S.week, S.wk), f = swapExFields(n, base);
   if (scope === "today") { l.swaps = l.swaps || {}; l.swaps[base.id] = { ...f, swappedFrom: { name: base.name }, swapScope: "today" }; }
   else { if (l.swaps) delete l.swaps[base.id]; base.swappedFrom = base.swappedFrom || { name: base.name, lib: base.lib, unit: base.unit, reps: base.reps, kg: base.kg, inc: base.inc, bw: !!base.bw, note: base.note };
@@ -4464,8 +4557,10 @@ document.addEventListener("click", ev => {
     case "bonusdone": { const v = jget(BONUS_KEY); if (v[b.dataset.w]) v[b.dataset.w].done = true; jset(BONUS_KEY, v); render(); break; }
     case "bonusdrop": { const v = jget(BONUS_KEY); if (v[b.dataset.w]) v[b.dataset.w] = { min: 0, done: true, skipped: true }; jset(BONUS_KEY, v); render(); break; }
     case "easymin": { const l = ensureLog(S.week, S.wk); l.sets[b.dataset.ex].forEach(x => { x.reps = +b.dataset.v; x.target = +b.dataset.v; }); saveLog(l); render(); break; }
-    case "swopen": S.swap = { ex: b.dataset.ex, reason: null, pick: null, prev: null }; swapRender(); break;
-    case "swreason": S.swap.reason = S.swap.reason === b.dataset.v ? null : b.dataset.v; S.swap.pick = null; swapRender(); break;
+    case "swopen": S.swap = { ex: b.dataset.ex, reason: null, pick: null, prev: null, i: 0, flip: null, step: null }; swapRender(); break;
+    case "swreason": S.swap.reason = !b.dataset.v || S.swap.reason === b.dataset.v ? null : b.dataset.v; S.swap.pick = null; S.swap.i = 0; S.swap.flip = null; S.swap.step = null; swapRender(); break;
+    case "swuse": { const e = workout(S.week, S.wk).exercises.find(x => x.id === S.swap.ex); S.swap.pick = swapOptions(e, S.swap.reason)[S.swap.i || 0]; S.swap.step = "scope"; swapRender(); break; }
+    case "swback": S.swap.pick = null; S.swap.step = null; swapRender(); break;
     case "swpick": S.swap.pick = b.dataset.v; swapRender(); break;
     case "swprev": S.swap.prev = S.swap.prev === b.dataset.v ? null : b.dataset.v; swapRender(); break;
     case "swclose": S.swap = null; swapRender(); break;
