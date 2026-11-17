@@ -44,7 +44,28 @@ function wrapSummary() {
   return { key: progKey(), title: P.title || "Programme", goal: loadProfile()?.answers?.goal || null, start: P.start, end: dates[dates.length - 1] || today(),
     weeks: tw, planned: tw * REQ.length, workouts, extras, extraPlanned: WK.includes("c") ? tw : 0, sets, kg: Math.round(kg),
     pbs: bl.pbs || 0, best: bl.best || 0, grid, cardioMin: here.cmin || 0, balBlocks: here.balBlocks || 0, holdSec: here.holdSec || 0,
-    lifts: top, badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
+    lifts: top, ...wuBests(), badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
+}
+// Personal bests of this programme (Christian 2026-11-17): a lift heavier than ever before – before this programme (the best sets
+// kept from earlier programmes) and earlier in it. "Find your weight" sessions and warm-ups never count; the first programme's
+// first session is the starting point. Every exercise's best set is kept in the summary so the next programme can compare.
+function wuBests() {
+  const before = {}; for (const p of histList()) if (p.key !== progKey() && p.bests) for (const [n, b] of Object.entries(p.bests)) if (!before[n] || b.kg > before[n].kg) before[n] = b;
+  const ses = {};
+  for (const id of Object.keys(S.logs).sort()) { const l = S.logs[id];
+    for (const [eid, sets] of Object.entries(l.sets || {})) { const n = l.names?.[eid]; if (!n || /^Warm-up/.test(n)) continue;
+      const d = sets.filter(x => x.done && x.kg != null); if (!d.length) continue;
+      const top = d.reduce((a, x) => (x.kg > a.kg || (x.kg === a.kg && x.reps > a.reps) ? x : a), d[0]);
+      (ses[n] = ses[n] || []).push({ kg: top.kg, reps: top.reps, date: (l.finishedAt || "").slice(0, 10) || l.date, finding: !!l.finding?.[eid] }); } }
+  const bests = {}, pbs = [];
+  for (const [n, a] of Object.entries(ses)) {
+    let top = before[n] ? before[n].kg : null, pb = null;
+    for (const x of a) { if (top == null) { top = x.kg; continue; } if (x.finding) { if (!before[n]) top = Math.max(top, x.kg); continue; } if (x.kg > top) { top = x.kg; pb = x; } }
+    const best = a.reduce((m, x) => (x.kg > m.kg ? x : m), a[0]); bests[n] = { kg: best.kg, reps: best.reps, date: best.date };
+    if (pb) pbs.push({ n, kg: pb.kg, reps: pb.reps, date: pb.date });
+  }
+  pbs.sort((x, y) => (y.date || "").localeCompare(x.date || ""));
+  return { bests, pbList: pbs };
 }
 // Wrap-up is due after the last planned workout of the last week – or a week after that week was started, if it's never completed
 function wrapDue() {
@@ -244,6 +265,7 @@ function wuSummaryHtml(s) {
     <h2>${stopped ? "Stopped in week " + s.stopped : "You did it!"}</h2><div class="wudim">${esc(s.title)} · ${d(s.start)} – ${d(s.end)}</div></div>
     <div class="wutiles">${tiles.join("")}</div>
     ${s.lifts?.length ? `<div class="wusec">Stronger</div>${rows(s.lifts, lift)}` : ""}
+    ${s.pbList ? `<div class="wusec">Personal bests</div>${s.pbList.length ? rows(s.pbList, b => `<div class="wuline"><span>${esc(b.n)}</span><span>${b.kg < 0 ? `${fmt(-b.kg)} kg help` : `${fmt(b.kg)} kg`} × ${b.reps} <small class="wudim2">${b.date ? fullDate(b.date) : ""}</small></span></div>`) : `<div class="wuline"><span>No personal bests were beaten this programme.</span></div>`}` : ""}
     ${s.badges ? `<div class="wusec">Badges</div><div class="wuline"><span>Earned during the programme</span><b>${s.badges}</b></div>` : ""}
     <div class="wubtns">${S.wrap?.current ? `<button type="button" class="wucta" data-act="npstart" style="background:${P};box-shadow:0 0 20px ${P}88">Start your next programme →</button>` : ""}
     ${S.wrap?.preview ? `<div class="wudim c">DEV preview – the wrap-up isn't saved, but the button really starts a new programme in DEV.</div>` : ""}
