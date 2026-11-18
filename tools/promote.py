@@ -12,7 +12,7 @@ cut('<div class="devbar"', '</script>\n', "DEV bar")
 s = "\n".join(l for l in s.split("\n") if not l.startswith(".devbar")); print("removed DEV bar CSS")
 # DEV-only buttons
 for a in ['<button type="button" class="linkbtn" data-act="bkdemo">DEV: preview the backup reminder</button>',
-          '<button type="button" class="linkbtn" data-act="obskip">DEV: skip setup and keep my current programme</button>']:
+          '<button type="button" class="linkbtn" data-act="obskip">DEV: skip setup (keeps the programme, or builds a sample Strength plan)</button>']:
     n = s.count(a); s = s.replace(a, ""); print("removed", n, a[:60])
 # names and storage
 s = s.replace("<title>Training Week DEV</title>", "<title>Training Week</title>").replace('content="TW Dev"', 'content="Training"')

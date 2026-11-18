@@ -114,7 +114,7 @@ function obView() {
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <p class="muted obsmall">About 2 minutes. Everything stays on your phone.</p>
       ${o.edit ? `<button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my answers</button>` : `<label class="linkbtn" for="ob-restore" style="cursor:pointer">Moving from another phone? Restore a backup file</label><input type="file" id="ob-restore" accept="application/json,.json,text/plain,.txt" hidden>
-        <button type="button" class="linkbtn" data-act="obskip">DEV: skip setup and keep my current programme</button>`}`;
+        <button type="button" class="linkbtn" data-act="obskip">DEV: skip setup (keeps the programme, or builds a sample Strength plan)</button>`}`;
   } else if (step === "about") {
     h += `<header class="top"><div>${stepTag}<h1>About you</h1></div><button type="button" class="infobtn" data-act="obinfo" aria-expanded="${!!o.info}" aria-label="Privacy">i</button></header>
       <p class="obp">Weight and height are optional. They help set your starting weights and become your baseline in the Body tab.</p>
@@ -222,6 +222,10 @@ function obFinish(skipped) {
   const a = S.ob.a, m = obMetric(a);
   const p = skipped ? { skipped: true, at: today() } : { answers: a, at: today(), direction: directionOf(a), metric: m };
   saveProfile(p);
+  if (skipped && !S.program && typeof generatePlan === "function") {   // DEV skip with nothing on the phone: a sample plan (no built-in programme any more)
+    S.program = generatePlan({ ...defaultAnswers(), sex: "Man", year: "1990", goal: "Strength", shape: "Toned", level: "Some", days: 3, time: "60 min", where: "Gym", focus: ["chest"] });
+    S.logs = {}; syncKeys(); try { saveLocal(); } catch {}
+  }
   if (!skipped && m.kg && !S.ob.edit) {                 // first set of measurements becomes the Body baseline
     const d = today(), b = S.body[d] || { date: d };
     b.weight = Math.round(m.kg * 10) / 10;
