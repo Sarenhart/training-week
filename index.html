@@ -490,6 +490,7 @@ body.wuopen{overflow:hidden}
 .wugps .wufigm{opacity:0;transition:opacity .15s}.wugps .wufig.on{animation:wufigpop .6s cubic-bezier(.2,1.8,.4,1)}.wugps .wufigm:has(.wufig.on){opacity:1}
 @media (prefers-reduced-motion: reduce){.wuburst,.wushock,.wuwowbox .wuwow,.wuwowbox .wuwow span{animation:none!important}.wushock{display:none}}
 .wuself circle,.wuself path{transform-box:fill-box;transform-origin:center}
+.wudim2{color:#9aa0b0;font-size:12px;margin-left:6px}
 .npsheet{background:var(--surface);color:var(--ink);border-radius:18px;padding:20px;max-width:420px;width:100%;margin:auto 0}.npsheet h2{font-family:var(--display);font-size:28px;margin:4px 0 6px}.npsheet .obchips{margin:10px 0 12px}.npsheet .note{margin:12px 0 0}
 .wucard{border:1.5px solid var(--accent);margin-bottom:14px}.wucard h2{font-family:var(--display);font-size:24px;margin:2px 0 12px}
 .nplink{text-align:center;margin:22px 0 8px}
@@ -1493,6 +1494,7 @@ const fmt = n => (Math.round(n * 100) / 100).toString().replace(".", ",");
 const isoDate = d => { const z = new Date(d); z.setMinutes(z.getMinutes() - z.getTimezoneOffset()); return z.toISOString().slice(0, 10); };
 const today = () => isoDate(new Date());
 const clone = o => JSON.parse(JSON.stringify(o));
+const fullDate = iso => { const d = new Date(iso + "T12:00"); return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}) }); };   // year shown when it isn't this year
 const shortDate = iso => new Date(iso + "T12:00").toLocaleDateString("en-GB", { day:"numeric", month:"short" });
 const logId = (w, k) => "w" + String(w).padStart(2, "0") + "-" + k;
 
@@ -3108,7 +3110,28 @@ function wrapSummary() {
   return { key: progKey(), title: P.title || "Programme", goal: loadProfile()?.answers?.goal || null, start: P.start, end: dates[dates.length - 1] || today(),
     weeks: tw, planned: tw * REQ.length, workouts, extras, extraPlanned: WK.includes("c") ? tw : 0, sets, kg: Math.round(kg),
     pbs: bl.pbs || 0, best: bl.best || 0, grid, cardioMin: here.cmin || 0, balBlocks: here.balBlocks || 0, holdSec: here.holdSec || 0,
-    lifts: top, badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
+    lifts: top, ...wuBests(), badges, badgeIds: mine.map(([id]) => id), wk, stopped: null, reason: null };
+}
+// Personal bests of this programme (Christian 2026-11-17): a lift heavier than ever before – before this programme (the best sets
+// kept from earlier programmes) and earlier in it. "Find your weight" sessions and warm-ups never count; the first programme's
+// first session is the starting point. Every exercise's best set is kept in the summary so the next programme can compare.
+function wuBests() {
+  const before = {}; for (const p of histList()) if (p.key !== progKey() && p.bests) for (const [n, b] of Object.entries(p.bests)) if (!before[n] || b.kg > before[n].kg) before[n] = b;
+  const ses = {};
+  for (const id of Object.keys(S.logs).sort()) { const l = S.logs[id];
+    for (const [eid, sets] of Object.entries(l.sets || {})) { const n = l.names?.[eid]; if (!n || /^Warm-up/.test(n)) continue;
+      const d = sets.filter(x => x.done && x.kg != null); if (!d.length) continue;
+      const top = d.reduce((a, x) => (x.kg > a.kg || (x.kg === a.kg && x.reps > a.reps) ? x : a), d[0]);
+      (ses[n] = ses[n] || []).push({ kg: top.kg, reps: top.reps, date: (l.finishedAt || "").slice(0, 10) || l.date, finding: !!l.finding?.[eid] }); } }
+  const bests = {}, pbs = [];
+  for (const [n, a] of Object.entries(ses)) {
+    let top = before[n] ? before[n].kg : null, pb = null;
+    for (const x of a) { if (top == null) { top = x.kg; continue; } if (x.finding) { if (!before[n]) top = Math.max(top, x.kg); continue; } if (x.kg > top) { top = x.kg; pb = x; } }
+    const best = a.reduce((m, x) => (x.kg > m.kg ? x : m), a[0]); bests[n] = { kg: best.kg, reps: best.reps, date: best.date };
+    if (pb) pbs.push({ n, kg: pb.kg, reps: pb.reps, date: pb.date });
+  }
+  pbs.sort((x, y) => (y.date || "").localeCompare(x.date || ""));
+  return { bests, pbList: pbs };
 }
 // Wrap-up is due after the last planned workout of the last week – or a week after that week was started, if it's never completed
 function wrapDue() {
@@ -3308,6 +3331,7 @@ function wuSummaryHtml(s) {
     <h2>${stopped ? "Stopped in week " + s.stopped : "You did it!"}</h2><div class="wudim">${esc(s.title)} · ${d(s.start)} – ${d(s.end)}</div></div>
     <div class="wutiles">${tiles.join("")}</div>
     ${s.lifts?.length ? `<div class="wusec">Stronger</div>${rows(s.lifts, lift)}` : ""}
+    ${s.pbList ? `<div class="wusec">Personal bests</div>${s.pbList.length ? rows(s.pbList, b => `<div class="wuline"><span>${esc(b.n)}</span><span>${b.kg < 0 ? `${fmt(-b.kg)} kg help` : `${fmt(b.kg)} kg`} × ${b.reps} <small class="wudim2">${b.date ? fullDate(b.date) : ""}</small></span></div>`) : `<div class="wuline"><span>No personal bests were beaten this programme.</span></div>`}` : ""}
     ${s.badges ? `<div class="wusec">Badges</div><div class="wuline"><span>Earned during the programme</span><b>${s.badges}</b></div>` : ""}
     <div class="wubtns">${S.wrap?.current ? `<button type="button" class="wucta" data-act="npstart" style="background:${P};box-shadow:0 0 20px ${P}88">Start your next programme →</button>` : ""}
     ${S.wrap?.preview ? `<div class="wudim c">DEV preview – the wrap-up isn't saved, but the button really starts a new programme in DEV.</div>` : ""}
@@ -3674,11 +3698,11 @@ function historyInner() {
   const best = {};
   all.forEach(l => Object.entries(l.sets || {}).forEach(([id, arr]) => {
     const n = l.names?.[id] || "Exercise", k = n.toLowerCase();
-    arr.filter(x => x.done && x.kg > 0).forEach(x => { if (!best[k] || x.kg > best[k].kg || (x.kg === best[k].kg && x.reps > best[k].reps)) best[k] = { name: n, kg: x.kg, reps: x.reps, week: l.week }; });
+    arr.filter(x => x.done && x.kg > 0).forEach(x => { if (!best[k] || x.kg > best[k].kg || (x.kg === best[k].kg && x.reps > best[k].reps)) best[k] = { name: n, kg: x.kg, reps: x.reps, week: l.week, date: (l.finishedAt || "").slice(0, 10) || l.date }; });
   }));
   const rows = Object.values(best).sort((a, b) => a.name.localeCompare(b.name));
-  if (rows.length) h += `<h2 class="sec">Heaviest sets</h2><div class="tbl"><table><thead><tr><th>Exercise</th><th class="n">Best</th><th class="n">Week</th></tr></thead><tbody>` +
-    rows.map(r => `<tr><td>${esc(r.name)}</td><td class="n">${fmt(r.kg)} kg × ${r.reps}</td><td class="n">${r.week}</td></tr>`).join("") + `</tbody></table></div>`;
+  if (rows.length) h += `<h2 class="sec">Heaviest sets</h2><div class="tbl"><table><thead><tr><th>Exercise</th><th class="n">Best</th><th class="n">Date</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${esc(r.name)}</td><td class="n">${fmt(r.kg)} kg × ${r.reps}</td><td class="n">${r.date ? fullDate(r.date) : "Week " + r.week}</td></tr>`).join("") + `</tbody></table></div>`;
   h += `<h2 class="sec">Sessions</h2>`;
   all.forEach(l => { const st = stats(l);
     h += `<div class="hist"><div><div class="d">Week ${l.week} · ${wLabel(l.workout)} · ${shortDate(l.date)}${l.finished ? "" : " · not finished"}</div><div class="t">${esc(l.title)}</div></div><div class="v num">${fmt(st.vol)} kg<small>${st.done}/${st.total} sets</small></div></div>`; });
