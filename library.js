@@ -4804,8 +4804,7 @@ const GUIDES = {
   },
   "Pull-up": {
     steps: ["Grip just outside shoulder width, palms facing away.", "Start from a full hang with arms straight.", "Pull the shoulder blades down first, then drive the elbows toward the ribs.", "Pull until the chin is over the bar.", "Lower under control to a full hang."],
-    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."],
-    tip: "Can't do the reps yet? Use the assisted pull-up machine and tap − under the sets until it shows the help you need (e.g. 20 kg). The help moves in 0,25 kg steps so you can match your machine's numbers. When it feels light, set the next lower setting on the machine."
+    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."]
   },
   "Parallel bar dips": {
     steps: ["Support yourself on straight arms, shoulders down.", "Lean slightly forward and lower until the upper arms are about parallel to the floor.", "Push back up to straight arms."],

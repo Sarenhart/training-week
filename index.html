@@ -598,8 +598,7 @@ const GUIDES = {
   },
   "pull-up": {
     steps: ["Grip just outside shoulder width, palms facing away.", "Start from a full hang with arms straight.", "Pull the shoulder blades down first, then drive the elbows toward the ribs.", "Pull until the chin is over the bar.", "Lower under control to a full hang."],
-    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."],
-    tip: "Can't do the reps yet? Use the assisted pull-up machine and tap − under the sets until it shows the help you need (e.g. 20 kg). The help moves in 0,25 kg steps so you can match your machine's numbers. When it feels light, set the next lower setting on the machine."
+    avoid: ["Kicking or swinging the legs for momentum.", "Half reps that stop short at the bottom.", "Reaching the chin forward to clear the bar."]
   },
   "weighted pull-up": {
     steps: ["Hang the weight from a dip belt, plate or dumbbell between the legs.", "Same technique as a normal pull-up: full hang, shoulder blades down, chin over the bar.", "Lower under control to a full hang."],
@@ -1631,6 +1630,15 @@ function currentWeek() {
   for (let w = 1; w <= totalWeeks(); w++) if (!REQ.every(k => isDone(w, k))) return w;
   return totalWeeks();
 }
+// where the app opens: the current week – unless the extra was planned for last week ("Yes, this week") and isn't done,
+// and nothing in the next week has been started yet
+function startWeek() {
+  const cw = currentWeek(), pw = cw - 1, plan = typeof jget === "function" ? jget("tw.weekdone")[pw] : null;
+  const bonus = typeof jget === "function" ? jget("tw.bonus")[pw] : null;
+  if (pw >= 1 && plan === "extra" && WK.includes("c") && !isDone(pw, "c") && !WK.some(k => S.logs[logId(cw, k)])) return [pw, "c"];
+  if (pw >= 1 && bonus && !bonus.done && !WK.some(k => S.logs[logId(cw, k)])) return [pw, "c"];
+  return [cw, nextWorkout(cw)];
+}
 function nextWorkout(w) { return REQ.find(k => !isDone(w, k)) || "c"; }
 function wLabel(k) { return k === "c" ? "Extra" : "Workout " + k; }
 
@@ -1756,7 +1764,7 @@ function render() {
   if (S.ob && S.loaded) { app.innerHTML = obView(); return; }
   if (!S.loaded) { app.innerHTML = head("Loading", "Training Week") + `<p class="empty">Getting your programme…</p>`; return; }
   if (!S.program && S.tab !== "body" && S.tab !== "lib") { app.innerHTML = head("Setup", "Training Week") + `<div class="card empty">Your programme hasn't loaded. Check your connection, or ask Claude to set it up again.</div>`; renderTimer(); return; }
-  if (S.program && S.week == null) { S.week = currentWeek(); S.wk = nextWorkout(S.week); }
+  if (S.program && S.week == null) { const st = startWeek(); S.week = st[0]; S.wk = st[1]; }
   app.innerHTML = S.tab === "lib" ? libView() : S.tab === "plan" ? planView() : S.tab === "body" ? bodyView() : S.tab === "history" ? historyView() : todayView();
   if (S.tab === "body") wireChart();
   if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
@@ -1872,7 +1880,7 @@ function todayView() {
       h += `<div class="sshead">${bal ? `Balance block · ${n} exercises, ${e.sets} rounds` : `Superset ${e.ss[0]}${spot ? " · " + esc(spot) : ""} · ${n} exercises`}</div>`;
     }
     h += `<section class="ex ${complete ? "complete" : ""} ${ssCls} ${exCls}">
-      <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}${typeof EX !== "undefined" && (EX[e.name] || EX[e.swappedFrom?.name]) && EX[e.name]?.m !== "cardio" && !/^Warm-up/.test(e.name) && !complete ? `<button type="button" class="swapbtn" data-act="swopen" data-ex="${e.id}">Swap</button>` : ""}${finding && (w !== 1 || S.program.carried) ? `<span class="newtag">New – find your weight</span>` : ""}${e.swappedFrom ? `<div class="swapped">${e.swapScope === "barbell" ? `Barbell from now on · <button type="button" class="linkbtn inl" data-act="swundo" data-ex="${e.id}">Back to dumbbells</button>` : `Swapped from ${esc(e.swappedFrom.name)}${e.swapScope === "today" ? " (today)" : " (this phase)"} · <button type="button" class="linkbtn inl" data-act="swundo" data-ex="${e.id}">Undo</button>`}</div>` : ""}
+      <div class="exhead"><div class="exname">${e.ss ? `<span class="tag">${esc(e.ss)}</span>` : ""}${esc(e.name)}${typeof EX !== "undefined" && ((EX[e.name] || EX[e.swappedFrom?.name]) && EX[e.name]?.m !== "cardio" || isCardioSwap(e)) && !/^Warm-up/.test(e.name) && !complete ? `<button type="button" class="swapbtn" data-act="swopen" data-ex="${e.id}">Swap</button>` : ""}${finding && (w !== 1 || S.program.carried) ? `<span class="newtag">New – find your weight</span>` : ""}${e.swappedFrom ? `<div class="swapped">${e.swapScope === "barbell" ? `Barbell from now on · <button type="button" class="linkbtn inl" data-act="swundo" data-ex="${e.id}">Back to dumbbells</button>` : `Swapped from ${esc(e.swappedFrom.name)}${e.swapScope === "today" ? " (today)" : " (this phase)"} · <button type="button" class="linkbtn inl" data-act="swundo" data-ex="${e.id}">Undo</button>`}</div>` : ""}
         ${feelIn(e.name) ? `<div class="feelit">Feel it in: <b>${feelIn(e.name)}</b></div>` : ""}
         ${e.note ? `<div class="cue">${esc(e.note)}</div>` : ""}
 </div>
@@ -3760,7 +3768,10 @@ function phaseNews(pi) {
   const sets = Math.max(0, ...m.map(x => x.sets)), prevSets = Math.max(0, ...Object.values(pm).map(x => x.sets));
   const rest = Math.max(0, ...m.map(x => x.rest || 0));
   const lines = [];
-  if (m.length) lines.push(prev && reps.join("/") !== prevReps.join("/") ? `Main lifts: ${prevReps.join("–")} → <b>${reps.join("–")} reps</b>${sets !== prevSets ? `, ${sets} sets` : ""}` : `Main lifts: <b>${sets} × ${reps.join("–")} reps</b>${rest ? `, ${Math.round(rest / 15) * 15} s rest` : ""}`);
+  // one line per main lift when they differ – "8–6–5 reps" read like a rep scheme for one lift (Christian 2026-11-20)
+  const sr = x => `${x.sets} × ${x.reps}`, same = new Set(m.map(sr)).size === 1, pSame = new Set(Object.values(pm).map(sr));
+  if (m.length && same) lines.push(`Main lifts: <b>${sr(m[0])}</b>${prev && pSame.size === 1 && !pSame.has(sr(m[0])) ? ` (was ${[...pSame][0]})` : ""}${rest ? `, ${Math.round(rest / 15) * 15} s rest` : ""}`);
+  else if (m.length) lines.push(`Main lifts: ${m.map(x => `${esc(x.name)} <b>${sr(x)}</b>`).join(" · ")}`);
   return { ph, pi, aim: ph.about, lines, newEx };
 }
 function phaseCardHtml(n, closable) {
@@ -3972,6 +3983,42 @@ const SWAP_TWIN = (() => { const pairs = [["Barbell bench press", "Dumbbell benc
 const SWAP_REASONS = [["hard", "Too hard"], ["easy", "Too easy"], ["busy", "Equipment busy"], ["feel", "Doesn't feel right"]];
 const EQ_NAME = { db: "Dumbbells", kb: "Kettlebell", bb: "Barbell", cable: "Cable", machine: "Machine", bw: "Body weight" };
 function swapProfile() { return loadProfile()?.answers || null; }
+// ---- Extra session: swap the cardio for any kind of cardio (Christian 2026-11-20 – doing something matters more than what).
+// Same minutes; easy / moderate / hard; respects "go easy on knees", 65+ and home equipment.
+const CARDIO_SWAP = {
+  "Walk": { lib: "Walk–run", key: "Walk", lvl: 0, eq: "none", plus: "Easy to recover from" },
+  "Incline treadmill walk": { lvl: 0, eq: "Treadmill", plus: "Heart rate up without running" },
+  "Bike": { lvl: 0, eq: "Exercise bike", plus: "Easy on the knees" },
+  "Cross-trainer": { lvl: 0, eq: "Cross-trainer", plus: "Whole body, low impact" },
+  "Rower": { lvl: 1, eq: "Rower", plus: "Works the back and legs too", minus: "Technique takes practice" },
+  "Stair climber": { lvl: 1, eq: "gym", plus: "Strong legs and glutes" },
+  "Ski machine": { lvl: 1, eq: "gym", plus: "Works the arms and core too" },
+  "Jog": { lib: "Walk–run", key: "Jog", lvl: 1, eq: "none", impact: true, plus: "No equipment needed", minus: "More impact on the knees" },
+  "Jump rope": { lvl: 2, eq: "Jump rope", impact: true, plus: "Only needs a rope", minus: "High impact" },
+  "Air bike intervals": { lib: "Air bike", lvl: 2, eq: "gym", plus: "Arms and legs together" },
+  "Body-weight cardio circuit": { lvl: 2, eq: "none", impact: true, plus: "No equipment needed", minus: "High impact" },
+  "Burpee intervals": { lvl: 2, eq: "none", impact: true, plus: "No equipment needed", minus: "Very demanding" }
+};
+const CARDIO_LVL = ["Easy", "Moderate", "Hard"];
+function isCardioSwap(e) { return S.wk === "c" && e.unit === "min" && !/^Warm-up|^Cool-down|^Finisher/.test(e.name); }
+function cardioNote(n, min) {
+  const x = CARDIO_SWAP[n]; if (!x) return "";
+  if (x.lvl === 0) return "Easy pace – you can still talk.";
+  if (x.lvl === 1) return "Steady pace – short sentences.";
+  const rounds = Math.max(3, Math.floor((min - 5) * 60 / 90));            // 3 min Easy, rounds of 30 s Hard / 60 s Easy, Easy to finish
+  return `3 min Easy · ${rounds} × 30 s Hard / 60 s Easy · Easy to finish`;
+}
+function cardioOptions(e, reason) {
+  const a = swapProfile() || {}, knees = (a.easy || []).includes("Knees"), age = typeof obAge === "function" ? obAge(a) || 30 : 30, home = a.where === "Home", kit = new Set(a.kit || []);
+  const ok = n => { const x = CARDIO_SWAP[n]; if (n === e.name) return false; if (x.impact && (knees || age >= 65)) return false;
+    if (home && x.eq !== "none" && !kit.has(x.eq === "Treadmill" ? "Treadmill" : x.eq)) return false; return true; };
+  const order = Object.keys(CARDIO_SWAP).filter(ok), idx = n => order.indexOf(n), L = n => CARDIO_SWAP[n].lvl;
+  if (reason === "hard") return order.sort((p, q) => L(p) - L(q) || idx(p) - idx(q));
+  if (reason === "easy") return order.sort((p, q) => L(q) - L(p) || idx(p) - idx(q));
+  if (reason === "busy") return order.sort((p, q) => (CARDIO_SWAP[p].eq === "none" ? 0 : 1) - (CARDIO_SWAP[q].eq === "none" ? 0 : 1) || idx(p) - idx(q));
+  return order;
+}
+function swapList(e, reason) { return isCardioSwap(e) ? cardioOptions(e, reason) : swapOptions(e, reason); }
 function swapOptions(e, reason) {
   if (typeof EX === "undefined") return [];
   const cur = EX[e.name] || EX[e.swappedFrom?.name] || {}, m = cur.m; if (!m || m === "cardio") return [];
@@ -4002,6 +4049,7 @@ function swapOptions(e, reason) {
   return list.sort((p, q) => score(q) - score(p)).slice(0, 3);
 }
 function swapExFields(n, e) {
+  if (CARDIO_SWAP[n]) return { name: n, lib: CARDIO_SWAP[n].lib || n, unit: "min", reps: e.reps, kg: 0, inc: 0, bw: false, note: cardioNote(n, e.reps) };
   // no setup answers (a programme carried over from before round 4) → the setup defaults, so startKg() has what it needs (Christian 2026-11-12: Just today did nothing)
   const x = EX[n] || {}, a = { ...(typeof defaultAnswers === "function" ? defaultAnswers() : {}), ...(swapProfile() || {}) };
   const kg = x.ratio && typeof startKg === "function" ? startKg(a, x) : 0;
@@ -4041,15 +4089,15 @@ function swapView() {
   const sw = S.swap; if (!sw) return "";
   const e = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex); if (!e) return "";
   const cur = e.swappedFrom?.name && EX[e.swappedFrom.name] && !EX[e.name] ? e.swappedFrom.name : e.name;
-  const opts = sw.reason ? swapOptions(e, sw.reason) : [], n = opts.length, i = Math.min(sw.i || 0, Math.max(0, n - 1));
+  const opts = sw.reason ? swapList(e, sw.reason) : [], n = opts.length, i = Math.min(sw.i || 0, Math.max(0, n - 1));
   const head = `<div class="eyebrow">Swap</div><h2 id="sw-title">${esc(e.name)}</h2><p class="swq">Why do you wish to swap?</p>
     <div class="obchips">${SWAP_REASONS.map(([k, l]) => `<button type="button" class="obchip" data-act="swreason" data-v="${k}" aria-pressed="${sw.reason === k}">${l}</button>`).join("")}</div>`;
   if (!sw.reason) return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}</div><div class="swbtns"><button type="button" class="btn ghost" data-act="swclose">Keep ${esc(e.name)}</button></div></div>`;
   if (!n) return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted">No other exercise fits here with your equipment and "go easy" choices.</p></div><div class="swbtns"><button type="button" class="btn ghost" data-act="swclose">Keep ${esc(e.name)}</button></div></div>`;
   const card = (nm, k) => {
-    const c = TWLIB.find(EX[nm]?.lib || nm), key = c ? c.keys[0][1] : null, ak = nm.toLowerCase(), old = !c && ANIM[ak] ? ak : null;
-    const g = c ? TWLIB.guide(c) || { steps: [] } : GUIDES[ak] || { steps: [] }, pm = swapPM(cur, nm, sw.reason);
-    const meta = [feelIn(nm), EQ_NAME[EX[nm]?.eq]].filter(Boolean).join(" · ");
+    const cx = CARDIO_SWAP[nm], lname = cx?.lib || EX[nm]?.lib || nm, c = TWLIB.find(lname), kl = (cx?.key || lname).toLowerCase(), key = c ? (c.keys.find(([l]) => l.toLowerCase() === kl) || c.keys[0])[1] : null, ak = nm.toLowerCase(), old = !c && ANIM[ak] ? ak : null;
+    const g = c ? TWLIB.guide(c) || { steps: [] } : GUIDES[ak] || { steps: [] }, pm = cx ? { plus: cx.plus || "", minus: cx.minus || "" } : swapPM(cur, nm, sw.reason);
+    const meta = cx ? [CARDIO_LVL[cx.lvl], cx.eq === "none" ? "No equipment" : ""].filter(Boolean).join(" · ") : [feelIn(nm), EQ_NAME[EX[nm]?.eq]].filter(Boolean).join(" · ");
     return `<div class="swcard ${k === i ? "cur" : k < i ? "past" : ""} ${sw.flip === k ? "flip" : ""}" data-k="${k}"><div class="swin">
       <div class="swface"><span class="swidx tl">${k + 1}</span><span class="swidx br">${k + 1}</span>
         ${k === 0 ? `<span class="swbest">Best match</span>` : ""}<b class="swname">${esc(nm)}</b><small class="swmeta">${esc(meta)}</small>
@@ -4060,7 +4108,7 @@ function swapView() {
       <div class="swback"><span class="swidx tl">${k + 1}</span><span class="swidx br">${k + 1}</span><b class="swname">How to do it</b>
         <ol>${(g.steps.length ? g.steps.slice(0, 2) : ["Same sets and reps as before.", "Starts with \"find your weight\"."]).map(t => `<li>${esc(t)}</li>`).join("")}</ol><small class="swhint">Tap to turn back</small></div></div></div>`; };
   const pick = sw.step === "scope" ? opts[i] : null;
-  return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted obsmall">Same sets and reps – a new exercise starts with "find your weight".</p></div>
+  return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted obsmall">${isCardioSwap(e) ? "Same minutes." : `Same sets and reps – a new exercise starts with "find your weight".`}</p></div>
     <div class="swdeck"><div class="swtrack" style="--i:${i}">${opts.map(card).join("")}</div></div>
     <div class="swdots">${opts.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
     <div class="swfoot">${pick ? `<p class="swpicked">Swap to <b>${esc(pick)}</b> for…</p><div class="swbtns"><button type="button" class="btn ghost" data-act="swback">Back</button><button type="button" class="btn ghost" data-act="swapply" data-v="today">Just today</button><button type="button" class="btn" data-act="swapply" data-v="phase">Rest of this phase</button></div>`
@@ -4069,7 +4117,7 @@ function swapView() {
 }
 // swipe: drag the row; past ~50 px (or a quick flick) moves one card; a short tap flips the card
 function swGo(d) {
-  const sw = S.swap; if (!sw || sw.step === "scope") return; const e = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = swapOptions(e, sw.reason).length;
+  const sw = S.swap; if (!sw || sw.step === "scope") return; const e = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = swapList(e, sw.reason).length;
   const ni = Math.max(0, Math.min(n - 1, (sw.i || 0) + d)); if (ni === (sw.i || 0)) { swSnap(); return; }
   sw.i = ni; sw.flip = null; try { navigator.vibrate && navigator.vibrate(10); } catch {}
   // update in place so the row slides (a full redraw would jump)
@@ -4095,7 +4143,7 @@ document.addEventListener("pointerup", ev => { if (!swDrag) return; const d = sw
 document.addEventListener("pointercancel", () => { if (swDrag) { swDrag = null; swSnap(); } });
 function swapRender() { const ov = document.getElementById("swapov"); if (!S.swap) { ov.hidden = true; ov.innerHTML = ""; return; } ov.hidden = false; ov.innerHTML = swapView(); ov.classList.toggle("float", !!ov.querySelector(".swdeckmode")); startAnims(); }
 function swapApply(scope) {
-  const sw = S.swap, base0 = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = sw.pick || (base0 && swapOptions(base0, sw.reason)[sw.i || 0]), base = phaseOf(S.week).workouts[S.wk].exercises.find(x => x.id === sw.ex); if (!base || !n) return;
+  const sw = S.swap, base0 = workout(S.week, S.wk).exercises.find(x => x.id === sw.ex), n = sw.pick || (base0 && swapList(base0, sw.reason)[sw.i || 0]), base = phaseOf(S.week).workouts[S.wk].exercises.find(x => x.id === sw.ex); if (!base || !n) return;
   const l = ensureLog(S.week, S.wk), f = swapExFields(n, base);
   if (scope === "today") { l.swaps = l.swaps || {}; l.swaps[base.id] = { ...f, swappedFrom: { name: base.name }, swapScope: "today" }; }
   else { if (l.swaps) delete l.swaps[base.id]; base.swappedFrom = base.swappedFrom || { name: base.name, lib: base.lib, unit: base.unit, reps: base.reps, kg: base.kg, inc: base.inc, bw: !!base.bw, note: base.note };
@@ -4194,7 +4242,7 @@ const CHEERS = ["Nice week!", "Excellent!", "You vs Excuses: 1–0", "This week 
   "Week done. You: stronger.", "Look at you go!", "Workout tamer!", "Super!", "Future you will be proud", "Future you thanks you!",
   "Stronger than yesterday", "A real fighter", "Not holding back", "Real Gainz",
   "Ready for the next level", "Front runner", "New and improved",
-  "Game, set and match", "Touchdown!", "Slam dunk!", "Hole in one!", "Back of the net!", "Home run!", "Knockout week!", "Bullseye!", "10s across the board!", "Victory lap!"];   // "Moving mountains" dropped – too close to the Mountain Mover badge   // "Unstoppable!" removed – it's a badge
+  "Game, set and match", "Touchdown!", "Slam dunk!", "Hole in one!", "Back of the net!", "Home run!", "Knockout week!", "Bullseye!", "10s across the board!", "Victory lap!", "Harder, Better, Faster, Stronger"];   // Christian 2026-11-19 (Daft Punk)   // "Moving mountains" dropped – too close to the Mountain Mover badge   // "Unstoppable!" removed – it's a badge
 function weekCheer(w) {
   if (S.wdPrevOn) { const all = ["Week one: done!", "Halfway there!", "That's a wrap!", ...CHEERS]; return all[S.wdPreview % all.length]; }
   const tw = totalWeeks();
@@ -4268,7 +4316,7 @@ function weekDoneClose(next) {
   if (S.wdPrevOn) { S.wdPrevOn = false; S.weekDone = null; weekDoneRender(); return; }   // a preview changes nothing
   const w = S.weekDone; S.weekDone = null; weekDoneRender();
   if (next) { const cw = currentWeek(); S.week = cw > w ? cw : Math.min(w + 1, totalWeeks()); S.wk = nextWorkout(S.week); toast(`Week ${S.week} is ready.`); }
-  else if (WK.includes("c")) S.wk = "c";
+  else if (WK.includes("c")) { S.wk = "c"; const v = jget(WD_KEY); v[w] = "extra"; jset(WD_KEY, v); }   // planned the extra this week (Christian 2026-11-20: app jumped to next week on reopen)
   S.timer = null; clearInterval(tick); window.scrollTo(0, 0); render();
 }
 // ---- Badges (Christian 2026-10-27: all four kinds in the first version – full weeks in a row, phases / 12 weeks, personal bests, milestones)
@@ -4588,7 +4636,7 @@ document.addEventListener("click", ev => {
     case "easymin": { const l = ensureLog(S.week, S.wk); l.sets[b.dataset.ex].forEach(x => { x.reps = +b.dataset.v; x.target = +b.dataset.v; }); saveLog(l); render(); break; }
     case "swopen": S.swap = { ex: b.dataset.ex, reason: null, pick: null, prev: null, i: 0, flip: null, step: null }; swapRender(); break;
     case "swreason": S.swap.reason = !b.dataset.v || S.swap.reason === b.dataset.v ? null : b.dataset.v; S.swap.pick = null; S.swap.i = 0; S.swap.flip = null; S.swap.step = null; swapRender(); break;
-    case "swuse": { const e = workout(S.week, S.wk).exercises.find(x => x.id === S.swap.ex); S.swap.pick = swapOptions(e, S.swap.reason)[S.swap.i || 0]; S.swap.step = "scope"; swapRender(); break; }
+    case "swuse": { const e = workout(S.week, S.wk).exercises.find(x => x.id === S.swap.ex); S.swap.pick = swapList(e, S.swap.reason)[S.swap.i || 0]; S.swap.step = "scope"; swapRender(); break; }
     case "swback": S.swap.pick = null; S.swap.step = null; swapRender(); break;
     case "swpick": S.swap.pick = b.dataset.v; swapRender(); break;
     case "swprev": S.swap.prev = S.swap.prev === b.dataset.v ? null : b.dataset.v; swapRender(); break;
