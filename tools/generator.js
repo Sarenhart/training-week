@@ -799,7 +799,12 @@ function finalizePlan(P, a) {
           if (e.eq === "cable") return "cable:" + (/rope|face pull|pull-through|cable crunch|kneeling crunch/i.test(n) ? "rope" : /seated cable row/i.test(n) ? "row" : /lat pulldown/i.test(n) ? "pulldown"
             : /^cable curl|straight-bar|bar pushdown/i.test(n) ? "bar" : /hip abduction|kickback/i.test(n) ? "ankle" : /lateral raise|fly|crossover|pallof|face-away|one-arm|single-arm|rear-delt|woodchop/i.test(n) ? "handle" : n);
           return e.eq === "bw" ? "free" : e.eq || "x:" + n; };
-        const fits = xs => { const f = new Set(xs.map(stn).filter(t => t !== "free")); return f.size <= 1 && ![...f].some(t => t === "machine" || t === "cardio" || t.startsWith("x:")); };
+        // one bench setting per superset (Christian 2026-11-23): flat, incline or upright – partners don't change the bench angle
+        const bench = x => { const n = x.name; if ((EX[n] || {}).eq === "bw") return null;
+          return /incline|chest-supported|spider curl|side-lying|y-raise/i.test(n) ? "incline" : /^seated (dumbbell|barbell)|seated .*curl/i.test(n) ? "upright"
+            : /bench press|skull crusher|pullover|one-arm dumbbell row|flat/i.test(n) ? "flat" : null; };
+        const fits = xs => { const f = new Set(xs.map(stn).filter(t => t !== "free")), b = new Set(xs.map(bench).filter(Boolean));
+          return f.size <= 1 && b.size <= 1 && ![...f].some(t => t === "machine" || t === "cardio" || t.startsWith("x:")); };
         const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null, r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
         let tmp = 0; const tag = () => String.fromCharCode(0x3b1 + tmp++), loose = [], spotless = x => { if (x.note) x.note = x.note.replace(/ ?Superset at the [^.]+\./, "").trim() || undefined; };
         for (const r of runs) { if (!r.L) continue;
