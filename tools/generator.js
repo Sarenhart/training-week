@@ -842,13 +842,21 @@ function finalizePlan(P, a) {
   });
   return P;
 }
-function startKg(a, e) {
+function startKg(a, e, n) {
   const age = obAge(a) || 30, m = obMetric(a), bwKg = Math.max(50, Math.min(100, m.kg || 75));
   const sx = a.sex === "Female" ? [0.6, 0.8] : a.sex === "Male" ? [1, 1] : [0.8, 0.9], expF = { New: 0.6, Some: 1, Experienced: 1.6 }[a.level || "Some"], ageF = age >= 65 ? 0.8 : age >= 50 ? 0.9 : 1;
   const raw = e.ratio * bwKg * expF * (e.lower ? sx[1] : sx[0]) * ageF, step = e.eq === "db" ? 2 : 2.5;
   let kg = Math.max(e.eq === "db" ? 2 : 5, Math.floor(raw / step) * step);
   if (a.where === "Home" && e.eq === "db") kg = Math.min(a.dbMax || 10, kg);
+  if (n && barKg(n)) kg = Math.max(0, kg - barKg(n));      // swap into a barbell lift: what you load, without the bar
   return kg;
 }
 const _genBeforeFinal = generatePlan;
-generatePlan = function (a) { return finalizePlan(_genBeforeFinal(a), a); };
+// Barbell weights are what you load – the bar isn't included (Christian 2026-11-23); kg lifted adds the bar (barKg).
+// The starting weights above are totals, so the bar comes off (an empty bar = 0 kg).
+function platesOnly(P) {
+  P.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => {
+    const bar = barKg(e.name.replace(/^Warm-up sets: /, "")); if (bar && !e.bw && e.kg > 0) e.kg = Math.max(0, Math.round((e.kg - bar) / 2.5) * 2.5); })));
+  return P;
+}
+generatePlan = function (a) { return platesOnly(finalizePlan(_genBeforeFinal(a), a)); };
