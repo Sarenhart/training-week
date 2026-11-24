@@ -795,7 +795,8 @@ function finalizePlan(P, a) {
       // handle, floor/mat exercises go with anything; machines stand alone; barbell and dumbbells aren't mixed. Groups that break this
       // are split, and the exercises split off are re-paired with each other where they fit, so the workout doesn't get much longer.
       { const stn = x => { const n = x.name, e = EX[n] || {};
-          if (/Back extension/i.test(n)) return "st:backext"; if (/Hanging|Captain|Pull-up|Chin-up|\bdips?\b/i.test(n)) return "st:bar";
+          if (/Back extension/i.test(n)) return "st:backext";
+          if (/^barbell hip thrust/i.test(n)) return "x:hipthrust";      // stands alone – hard to get in and out of (Christian 2026-11-24) if (/Hanging|Captain|Pull-up|Chin-up|\bdips?\b/i.test(n)) return "st:bar";
           if (e.eq === "cable") return "cable:" + (/rope|face pull|pull-through|cable crunch|kneeling crunch/i.test(n) ? "rope" : /seated cable row/i.test(n) ? "row" : /lat pulldown/i.test(n) ? "pulldown"
             : /^cable curl|straight-bar|bar pushdown/i.test(n) ? "bar" : /hip abduction|kickback/i.test(n) ? "ankle" : /lateral raise|fly|crossover|pallof|face-away|one-arm|single-arm|rear-delt|woodchop/i.test(n) ? "handle" : n);
           return e.eq === "bw" ? "free" : e.eq || "x:" + n; };
@@ -819,7 +820,7 @@ function finalizePlan(P, a) {
           const y = loose.find(z => z !== x && !used.has(z) && fits([x, z])); if (!y) continue;
           used.add(x); used.add(y); w.exercises.splice(w.exercises.indexOf(y), 1); w.exercises.splice(w.exercises.indexOf(x) + 1, 0, y);
           const t = tag(); x.ss = t + "1"; y.ss = t + "2"; }
-        for (const x of loose) if (!x.ss && !x.rest) x.rest = 60; }
+        for (const x of loose) if (!x.ss && !x.rest) x.rest = /hip thrust/i.test(x.name) ? 90 : 60; }
       // Same machine twice in one workout (Christian 2026-11-05): don't make the user go back to a machine they've left –
       // in a busy gym it may be taken. The second exercise on that machine moves right after the first one.
       { const fam = x => { const e = EX[x.name] || {}; if (/leg press/i.test(x.name)) return "legpress"; if (/hip (ab|ad)duction machine/i.test(x.name)) return "hipmachine";
