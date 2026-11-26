@@ -137,5 +137,22 @@ const GUIDES = {
   "Bike or rower": {
     steps: ["Easy pace for most of the session, where you can still talk.", "Pick up the pace a little for the last 5 minutes."],
     avoid: ["On the rower: pulling with the arms first. The order is legs, then body, then arms.", "Seat too low on the bike (bends the knee too much)."]
+  },
+  "Push-up": {
+    steps: ["Hands a little wider than the shoulders.", "Body in a straight line from head to heels, stomach braced.", "Lower until the chest nearly touches the floor, elbows about 45° from the body.", "Push back up to straight arms."],
+    avoid: ["Hips sagging.", "Head dropping forward.", "Elbows flaring straight out."]
+  },
+  "Face pull": {
+    steps: ["Rope on the cable at head height. Grip with thumbs toward you.", "Step back with arms straight and stand tall.", "Pull the rope toward the forehead, splitting the ends apart.", "Finish with elbows high and hands beside the ears, like a double-biceps pose.", "Return slowly."],
+    avoid: ["Pulling to the chest with elbows low (that's a row).", "Leaning back to move more weight.", "Going heavy. This is a light exercise for shoulder health and posture."]
+  },
+  "Pallof press": {
+    steps: ["Cable at chest height. Stand side-on to it, feet shoulder-width.", "Hold the handle at your chest with both hands.", "Press the hands straight out and hold 2 seconds without letting the cable twist you.", "Bring the hands back to the chest. Do all reps, then switch sides."],
+    avoid: ["Rotating the hips or shoulders toward the cable.", "Standing too close. Step out until you feel the pull."]
+  },
+  "Romanian deadlift": {
+    steps: ["Stand with the bar at hip height, feet hip-width, grip just outside the legs.", "Unlock the knees slightly and keep that same small bend the whole set.", "Push the hips back and let the bar slide down the thighs, back flat.", "Go down until you feel a strong stretch in the hamstrings, usually just below the knees.", "Squeeze the glutes and push the hips forward to stand up."],
+    avoid: ["Rounding the back. Stop where you can keep it flat.", "Bending the knees more as you go down (turns it into a squat).", "Letting the bar drift away from the legs.", "Leaning back at the top."],
+    knee: "Knees stay nearly still, so this is a good lift while your knee recovers."
   }
 };

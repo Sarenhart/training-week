@@ -413,7 +413,63 @@ const SAMPLES = {
   },
   "bike-or-rower": { ...BIKE, cap: ["Easy pace for most of it", "Last 5 minutes a bit harder"], dur: 1300 },
   "bike-rower-or-incline-walk": { ...BIKE, cap: ["Easy pace on the bike, rower or treadmill", "You should still be able to talk"], dur: 1400 },
-  "bike-intervals": { ...BIKE, cap: ["Hard: spin fast for 30 s", "Easy: 60 s to recover"], dur: 800 }
+  "bike-intervals": { ...BIKE, cap: ["Hard: spin fast for 30 s", "Easy: 60 s to recover"], dur: 800 },
+  "push-up": {
+    cap: ["Top: arms straight, body in a line", "Bottom: chest near the floor, elbows ~45°"],
+    cam: camera(-35, 16, 140, 170, 0.95), dur: 2600,
+    frame: u => pushupFrame(u, { hz: 24, pole: zz => [-0.6, 0.3, 0.9 * zz] }),
+    cues: [{ when: "B", pt: J => J.elbR, off: [30, 40], text: "Elbows ~45°" }, { when: "all", pt: J => J.pelvis, off: [0, -60], text: "Hips in line" }]
+  },
+  "face-pull": {
+    cap: ["Start: arms straight toward the cable", "End: pull to the forehead, elbows high and wide"],
+    cam: camera(-34, 16, 96, 196),
+    frame(u) {
+      const J = {}, ay = 140;                         // cable anchor height
+      J.pelvis = [0, 86, 0]; J.chest = [-3, 136, 0]; J.head = [-2, 153, 0];
+      for (const [sd, zz] of [["L", -1], ["R", 1]]) {
+        const hand = V.lerp([57, 138, 5 * zz], [7, 151, 17 * zz], u);                  // straight path to the forehead
+        limbs(J, sd, [-3, 136, 18 * zz], hand, [-0.4, 0.7, 1.2 * zz],                  // elbows up and out
+          [0, 86, 9 * zz], [1, 2, 12 * zz], [1, 0, 0], [12, 0, 0]);
+      }
+      const A = [118, ay, 0];
+      const items = [
+        ...floor3(-40, 140, 40),
+        L3([124, 0, 0], [124, 170, 0], "an3col"), D3(A, 4, "an3eqf"),
+        ...body3(J, "R"),
+        L3(A, V.lerp(J.wriL, J.wriR, .5), "an3cable"), L3(V.lerp(J.wriL, J.wriR, .5), J.wriL, "an3cable"), L3(V.lerp(J.wriL, J.wriR, .5), J.wriR, "an3cable"),
+        D3(J.wriL, 4, "an3grip"), D3(J.wriR, 4, "an3grip")
+      ];
+      return { items, J };
+    },
+    cues: [
+      { when: "B", pt: J => J.elbR, lx: 152, ly: 100, from: [140, 90], text: "Elbows high" },
+      { when: "B", pt: J => J.wriL, lx: 66, ly: 20, from: [70, 26], text: "Hands to forehead" },
+      { when: "all", pt: J => J.pelvis, lx: 164, ly: 204, from: [132, 196], text: "Don't lean back" }
+    ],
+    dur: 2600
+  },
+  "pallof-press": {
+    cap: ["Start: handle at the chest", "Press out and hold, no twisting"],
+    cam: camera(-58, 10, 150, 210, 0.9), dur: 3200,
+    frame(u) {
+      const J = {}, anchor = [4, 122, -120];
+      trunk(J, [0, 86, 0], [0, 1, 0]); standLegs(J, 17);
+      const hand = V.lerp([16, 121, 0], [60, 121, 0], u);
+      for (const [sd, zz] of SIDES) arm(J, sd, V.add(hand, [0, 0, 3 * zz]), [0, -1, 0.4 * zz]);
+      return { items: [...floor3(-40, 80, 130), post(4, -126, 0, 175), D3(anchor, 4, "an3eqf"), ...body3(J, "R"), L3(anchor, hand, "an3cable"), D3(hand, 5, "an3grip")], J };
+    },
+    cues: [{ when: "B", pt: J => J.chest, off: [30, -50], text: "Don't let it twist you" }, { when: "all", pt: J => J.pelvis, off: [-60, 20], text: "Stomach braced" }]
+  },
+  "romanian-deadlift": {
+    cap: ["Top: stand tall, bar at the thighs", "Bottom: hips back, flat back, bar close to the legs"],
+    cam: camera(-18, 8, 116, 206, 0.95), dur: 3000,
+    frame(u) {
+      const J = hingeFrame(u, { leanA: 2, leanB: 64, pA: [0, 86, 0], pB: [-24, 81, 0] });
+      for (const [sd, zz] of SIDES) { const s = J["sho" + sd]; arm(J, sd, [s[0] - 4, s[1] - 60, 20 * zz], [-1, 0, 0]); }
+      return { items: [...floor3(-60, 80, 50), ...body3(J, "R"), ...barZ(mid3(J.wriL, J.wriR), 46, 13, 38)], J };
+    },
+    cues: [{ when: "B", pt: J => mid3(J.pelvis, J.chest), text: "Flat back" }, { when: "B", pt: J => J.pelvis, text: "Hips back" }, { when: "all", pt: J => J.kneR, text: "Soft knees" }]
+  }
 };
 const CARDS = [
   { section: "Free weights" },
@@ -436,15 +492,19 @@ const CARDS = [
   { title: "Barbell hip thrust", fam: "Free weights", keys: [["Hip thrust", "barbell-hip-thrust"]] },
   { title: "Kettlebell swing", fam: "Free weights", keys: [["Swing", "kettlebell-swing"]] },
   { title: "Farmer's carry", fam: "Free weights", keys: [["Carry", "farmer-s-carry"]] },
+  { title: "Romanian deadlift", fam: "Free weights", keys: [["Romanian deadlift","romanian-deadlift"]] },
   { section: "Machines and cables" },
   { title: "Machine row", fam: "Machine / cable", keys: [["Machine row", "machine-row"]] },
   { title: "Lying hamstring curl", fam: "Machine / cable", keys: [["Lying curl", "lying-hamstring-curl"]] },
   { title: "Standing calf raise", fam: "Machine / cable", keys: [["Standing", "standing-calf-raise"]] },
   { title: "Seated calf raise", fam: "Machine / cable", keys: [["Seated", "seated-calf-raise"]] },
   { title: "Cable pull-through", fam: "Machine / cable", keys: [["Pull-through", "cable-pull-through"]] },
+  { title: "Face pull", fam: "Machine / cable", keys: [["Face pull","face-pull"]] },
+  { title: "Pallof press", fam: "Machine / cable", keys: [["Pallof press","pallof-press"]] },
   { section: "Body weight" },
   { title: "Pull-up", fam: "Body weight", keys: [["Pull-up", "pull-up"], ["Weighted pull-up", "weighted-pull-up"]] },
   { title: "Parallel bar dips", fam: "Body weight", keys: [["Parallel bar dips", "parallel-bar-dips"], ["Assisted parallel bar dips", "parallel-bar-dips"]] },
+  { title: "Push-up", fam: "Body weight", keys: [["Push-up","push-up"]] },
   { title: "Close-grip push-up", fam: "Body weight", keys: [["Close-grip push-up", "close-grip-push-up"]] },
   { title: "Hanging knee raise", fam: "Body weight", keys: [["Knee raise", "hanging-knee-raise"]] },
   { title: "Ab wheel rollout", fam: "Body weight", keys: [["Rollout", "ab-wheel-rollout"]] },
