@@ -403,7 +403,7 @@ function npRender() {
     <div class="obchips">${NP_REASONS.map(r => `<button type="button" class="obchip" data-act="npreason" data-v="${esc(r)}" aria-pressed="${N.reasons.includes(r)}">${esc(r)}</button>`).join("")}
       <button type="button" class="obchip" data-act="npother" aria-pressed="${N.otherOn}">Other</button></div>
     ${N.otherOn ? `<label class="f">Your reason<input type="text" id="np-other" data-np="other" value="${esc(N.other)}" maxlength="200" placeholder="Tell us in your own words"></label>` : ""}
-    <div class="note">This programme is saved in your history as <b>Stopped in week ${cw}</b>. Your badges and totals so far are kept, and your weights carry over.</div>
+    <div class="note">Saved in your history. Badges, totals and weights carry over.</div>
     <div class="wdbtns"><button type="button" class="btn" data-act="npgo" ${ok ? "" : "disabled"}>Continue</button><button type="button" class="btn ghost" data-act="npcancel">Keep my programme</button></div></div>`;
 }
 function npSetup(reason) {

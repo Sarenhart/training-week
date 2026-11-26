@@ -327,7 +327,6 @@ function generatePlan(a) {
           if (e.assist) kg = -Math.round(bwKg * 0.3 / 2.5) * 2.5;           // assisted pull-up: start with plenty of help
           const last = xi === g.ex.length - 1;
           const notes = [];
-          if (ss && !last) notes.push("Go straight to " + ss + (xi + 2) + ".");
           if (g.spot && xi === 0 && ss) notes.push("Superset at the " + g.spot + ".");
           if (e.note) notes.push(e.note);
           if (x.note) notes.push(x.note);
@@ -514,7 +513,7 @@ function generateCardio(a) {
         if (pkey !== "1" && g === groups[0] && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg dumbbell Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
         ex.forEach((x, xi) => { x.name = swapEasy(x.name); const e = EX[x.name] || {};
           out.push({ name: x.name, sets: x.sets, reps: e.reps || 15, kg: e.nokg || e.bw ? 0 : kg(e), rest: xi < ex.length - 1 ? 0 : 60, inc: e.inc || 0, unit: e.unit || "reps", ss: "A" + (xi + 1),
-            ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: [xi < ex.length - 1 ? "Go straight to A" + (xi + 2) + "." : "", e.note || ""].filter(Boolean).join(" ") || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
+            ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: e.note || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
       }
       return out;
     };
@@ -854,7 +853,7 @@ function finalizePlan(P, a) {
         if (r.xs.length === 1) { const x = r.xs[0]; delete x.ss; strip(x); if (!x.rest) x.rest = 60; continue; }
         const L = String.fromCharCode(65 + letter++);
         r.xs.forEach((x, i) => { strip(x); x.ss = L + (i + 1); const last = i === r.xs.length - 1;
-          if (!last) { x.rest = 0; x.note = ["Go straight to " + L + (i + 2) + ".", x.note].filter(Boolean).join(" "); } else if (!x.rest) x.rest = 60; });
+          if (!last) x.rest = 0; else if (!x.rest) x.rest = 60; });
       }
     });
   });

@@ -104,7 +104,7 @@ function obView() {
   let h = `<div class="ob">`;
   if (step === "welcome" && o.newProg) {
     h += `<header class="top"><div><div class="eyebrow">New programme</div><h1>Build your next 12 weeks</h1></div></header>
-      <p class="obp">${loadProfile()?.answers ? "Go through the questions again and change anything you like. Your answers from last time are filled in." : "Answer a few quick questions and the app builds your next 12 weeks – the weights you've reached carry over."}</p>
+      <p class="obp">${loadProfile()?.answers ? "Your last answers are filled in." : "Answer a few quick questions and the app builds your next 12 weeks – the weights you've reached carry over."}</p>
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my current programme</button>`;
   } else if (step === "welcome") {
@@ -137,7 +137,7 @@ function obView() {
       <div class="obcards">${G.map(([g, t]) => `<button type="button" class="obcard" data-act="obone" data-k="goal" data-v="${g}" aria-pressed="${a.goal === g}"><b>${g}</b><span>${t}</span></button>`).join("")}</div>${nav()}`;
   } else if (step === "shape") {
     const d = directionOf(a), sp = startingPoint(a);
-    h += `<header class="top"><div>${stepTag}<h1>What look are you aiming for?</h1></div></header><p class="obp">This sets your reps, sets and how much conditioning goes into each week.</p>
+    h += `<header class="top"><div>${stepTag}<h1>What look are you aiming for?</h1></div></header>
       <div class="obshape">${["Slim", "Toned", "Built"].map(v => `<button type="button" class="obcard sh" data-act="obone" data-k="shape" data-v="${v}" aria-pressed="${a.shape === v}">${shapeIcon(v)}<b>${v}</b></button>`).join("")}</div>
       ${d ? `<div class="card obdir"><div class="eyebrow">Your direction, from your measurements</div><h2>${esc(d)}</h2><p>${esc(DIRECTIONS[d])}</p>
         ${a.shape === "Slim" && sp === "lighter" ? `<p class="muted obsmall">You're already lean – Toned may suit you better if you want to add some muscle.</p>` : ""}</div>` : ""}${nav()}`;
@@ -155,7 +155,7 @@ function obView() {
   } else if (step === "home") {
     const has = x => a.kit.includes(x);
     h += `<header class="top"><div><div class="eyebrow">Step ${nr} of ${n} · Training at home</div><h1>What do you have at home?</h1></div></header>
-      <p class="obp">Tick everything you have. Your plan only uses what you tick – you can change it later.</p>
+      <p class="obp">Tick everything you have.</p>
       <button type="button" class="obnone" data-act="obnokit" aria-pressed="${a.kit.length === 0}"><b>Nothing – body weight only</b><span>a floor and a little space</span></button>
       ${KIT.map(([g, items]) => `<div class="obrow col"><span class="oblbl">${g}</span><div class="obchips">${items.map(i => chipB(has(i), "obkit", i, i)).join("")}</div>
         ${g === "Weights" && has("Dumbbells") ? `<div class="kgrow"><span>Heaviest dumbbell (per hand)</span><button class="step" data-act="obdb" data-d="-0.5" aria-label="Lighter">−</button><span class="kg">${fmt(a.dbMax)} kg</span><button class="step" data-act="obdb" data-d="0.5" aria-label="Heavier">+</button></div>` : ""}
@@ -167,10 +167,10 @@ function obView() {
     const NM = { shoulders: ["shoulders", "Shoulders"], thighs: ["thighs", "Knees"] };
     const clash = a.focus.filter(f => typeof focusClash === "function" && focusClash(a, f)).map(f => NM[f]);
     h += `<header class="top"><div>${stepTag}<h1>Your focus</h1></div></header>
-      <p class="obp">Pick up to ${max} ${max === 1 ? "area" : "areas"}${a.goal === "Cardio" ? " – Cardio plans have two short strength days" : ` – you train ${a.days} days a week`}. The plan stays full body and adds extra sets for these. You can also skip this.</p>
+      <p class="obp">Pick up to ${max} – or skip.</p>
       <div class="obgrid2 tight">${MUSCLES.map(([k, l]) => { const on = a.focus.includes(k), full = !on && a.focus.length >= max;
         return `<button type="button" class="obchip big" data-act="obfocus" data-v="${k}" aria-pressed="${on}" ${full ? "disabled" : ""}>${on ? "✓ " : ""}${l}</button>`; }).join("")}</div>
-      ${clash.map(([f, e]) => `<div class="obfit" role="note"><p>You picked ${f} as a focus and to go easy on your ${e.toLowerCase()}. Going easy comes first: your plan trains ${f} with exercises that work well but are kind to the joints.</p></div>`).join("")}
+      ${clash.length ? `<div class="obfit" role="note"><p>Going easy comes first – joint-friendly exercises.</p></div>` : ""}
       ${tf ? `<div class="obfit" role="note"><p>${esc(tf)}</p>${a.time !== "60 min" ? `<button type="button" class="btn small" data-act="obone" data-k="time" data-v="60 min">Switch to 60 min</button>` : ""}</div>` : ""}
       ${nav()}`;
   } else if (step === "plan") {
@@ -185,7 +185,7 @@ function obView() {
       <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
       <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
       ${o.newProg ? `<div class="note">Your current programme is saved in your history on the Progress tab. Your badges and totals stay.</div>`
-        : obKeepsProgramme() ? `<div class="note">Your answers are saved. Your current programme carries on with all your history – your next programme will be built from these answers.</div>`
+        : obKeepsProgramme() ? `<div class="note">Saved – your next programme uses these answers.</div>`
         : OB_DEV ? `<div class="note">${typeof genSupported === "function" && genSupported(a) ? "DEV: \"Start week 1\" builds this plan and clears the workouts logged in DEV. Your main app is not touched." : "DEV: plans for " + (a.where === "Home" ? "home training" : a.goal) + " come in the next part of round 3. Until then your current programme is kept – your answers are saved."}</div>` : ""}
       <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">${o.newProg ? "Start my new programme" : obKeepsProgramme() ? "Save my answers" : "Start week 1"}</button></div>`;
   }
