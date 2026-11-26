@@ -75,10 +75,6 @@ const GUIDES = {
     avoid: ["Squatting down instead of hinging.", "Lifting the bell with the arms or shoulders.", "Leaning back at the top.", "Rounding the back at the bottom."],
     knee: "Knees bend only a little, so this is usually fine. Stop if it hurts."
   },
-  "Farmer's carry": {
-    steps: ["Pick up heavy dumbbells or kettlebells as in a deadlift, back flat.", "Stand tall, shoulders back and down, stomach braced.", "Walk with short, steady steps for the distance.", "Set the weights down with a flat back."],
-    avoid: ["Leaning to one side.", "Shrugging or rounding the shoulders.", "Rushing with long strides."]
-  },
   "Machine row": {
     steps: ["Set the seat so the handles are at lower-chest height, chest against the pad.", "Sit tall and pull the handles toward the ribs.", "Squeeze the shoulder blades together at the end.", "Let the arms stretch fully forward on the way back."],
     avoid: ["Leaning back to move the weight.", "Shrugging the shoulders up.", "Letting the weight stack slam between reps."]

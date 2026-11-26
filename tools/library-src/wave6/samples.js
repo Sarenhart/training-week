@@ -491,7 +491,6 @@ const CARDS = [
   { title: "Chest-supported dumbbell row", fam: "Free weights", keys: [["Chest-supported row", "chest-supported-dumbbell-row"]] },
   { title: "Barbell hip thrust", fam: "Free weights", keys: [["Hip thrust", "barbell-hip-thrust"]] },
   { title: "Kettlebell swing", fam: "Free weights", keys: [["Swing", "kettlebell-swing"]] },
-  { title: "Farmer's carry", fam: "Free weights", keys: [["Carry", "farmer-s-carry"]] },
   { title: "Romanian deadlift", fam: "Free weights", keys: [["Romanian deadlift","romanian-deadlift"]] },
   { section: "Machines and cables" },
   { title: "Machine row", fam: "Machine / cable", keys: [["Machine row", "machine-row"]] },

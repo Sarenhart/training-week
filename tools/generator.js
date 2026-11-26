@@ -223,7 +223,7 @@ function generatePlan(a) {
       if (pi === 3 && EX[x.name] && (EX[x.name].nokg) && EX[x.name].m === "core") swap(x, ["Ab crunch machine", "Pallof press", "Suitcase hold", "Hanging knee raise"]);
     }
     if (bal && lvl === "New" && pi < 3) plan.forEach(w => { w.groups = w.groups.filter(g => g.spot !== "static holds"); });
-    if (bal && lvl !== "Experienced") plan.forEach(w => { if (w.name === "Mobility & core") { const x = w.groups[0].ex[0]; x.name = used.has("Suitcase carry") ? "Farmer carry" : "Suitcase carry"; x.sets = 3; } });
+    if (bal && lvl !== "Experienced") plan.forEach(w => { if (w.name === "Mobility & core") { const x = w.groups[0].ex[0]; x.name = used.has("Suitcase carry") ? "Farmer's carry" : "Suitcase carry"; x.sets = 3; } });
     // thighs at least Build for Strength (programme-rules B) – the 3-day template was written for "go easy on knees"
     if (!bal && days === 3 && !easy.has("Knees")) {
       const fb = plan[2]; const add = [pi % 2 === 0 ? "Goblet squat" : "Bulgarian split squat"].filter(n => !used.has(n));
@@ -363,8 +363,8 @@ Object.assign(EX, {
   "Side-lying leg raise": { m: "glutes", eq: "bw", nokg: true, floor: true, note: "Reps per side." },
   "Standing cable hip abduction": { m: "glutes", eq: "cable", ratio: .05, inc: 1, lower: true, note: "Reps per side." },
   "Suitcase carry": { m: "core", eq: "db", ratio: .25, inc: 2, unit: "m", reps: 20, lib: "Suitcase hold & carry", note: "Metres per side." },
-  "Farmer carry": { m: "core", eq: "db", ratio: .3, inc: 2, unit: "m", reps: 20, lib: "Farmer carry & march" },
-  "Farmer march": { m: "core", eq: "db", ratio: .2, inc: 2, unit: "m", reps: 20, lib: "Farmer carry & march", note: "Lift one knee, pause 1 s each step." },
+  "Farmer's carry": { m: "core", eq: "db", ratio: .3, inc: 2, unit: "m", reps: 20, lib: "Farmer's carry & march", note: "kg per hand." },
+  "Farmer march": { m: "core", eq: "db", ratio: .2, inc: 2, unit: "m", reps: 20, lib: "Farmer's carry & march", note: "Lift one knee, pause 1 s each step." },
   "Overhead carry": { m: "shoulders", eq: "db", ratio: .1, inc: 2, unit: "m", reps: 20 },
   "Turkish get-up": { m: "core", eq: "db", ratio: .06, inc: 2, reps: 2, note: "Reps per side, slow." },
   "Sit-to-stand": { m: "thighs", eq: "db", ratio: .1, inc: 2, lower: true, note: "To a bench, dumbbell at the chest." },
@@ -381,7 +381,7 @@ const BALANCE = {
        "Extra|Home balance and mobility 1"]),
     T(["Lower & balance|Step-up 4|rack + mat: B-stance dumbbell Romanian deadlift 3 + Side plank 2|leg press: Single-leg leg press 3 + Calf raise on the leg press 2",
        "Upper & core|One-arm dumbbell row 4|incline bench ~45°: Incline dumbbell press 3 + Side-lying lateral raise 3|cable tower: Half-kneeling Pallof press 2 + Face pull 2|static holds: Wall sit 2 + Glute bridge hold 2",
-       "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Reverse crunch 2|rack: Farmer carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Side-lying leg raise 2",
+       "Full body & control|Goblet squat 4|lat pulldown + mat: Lat pulldown 3 + Reverse crunch 2|rack: Farmer's carry 2 + Lean-away lateral raise 2|flat bench + mat: Incline push-up 2 + Side-lying leg raise 2",
        "Extra|Home balance and mobility 1"]),
     T(["Lower & balance|Step-up 4|rack + bench: Bulgarian split squat 3 + Dead bug 2|Single-leg dumbbell Romanian deadlift 3|Seated calf raise 2",
        "Upper & core|One-arm dumbbell row 4|incline bench ~30°: Incline dumbbell press 3 + Incline Y-raise 3|cable tower: Tall-kneeling Pallof press 2 + Single-arm cable row 2|static holds: Hollow hold 2 + Side plank 2",
@@ -589,7 +589,7 @@ homeSet(["Cable woodchop"], [H("Band Pallof press", ["band+anchor"]), H("Front p
 homeSet(["Ab crunch machine"], [H("Stability-ball crunch", ["Stability ball"]), H("Reverse crunch", [])]);
 homeSet(["Stability-ball crunch"], [H("SAME", ["Stability ball"]), H("Reverse crunch", [])]);                  // M5
 homeSet(["Hanging knee raise"], [H("Hanging knee raise", ["Pull-up bar"]), H("Reverse crunch", []), H("Seated knee lift", [])]);
-homeSet(["Suitcase carry", "Farmer carry", "Farmer march", "Overhead carry", "Suitcase hold", "Turkish get-up"], [H("SAME", ["Dumbbells"]), H("SAME", ["Kettlebell"]), H("Front plank", []), H("Hollow hold", [])]);
+homeSet(["Suitcase carry", "Farmer's carry", "Farmer march", "Overhead carry", "Suitcase hold", "Turkish get-up"], [H("SAME", ["Dumbbells"]), H("SAME", ["Kettlebell"]), H("Front plank", []), H("Hollow hold", [])]);
 homeSet(["Incline push-up", "Deficit push-up", "Decline push-up", "Close-grip push-up"], [H("SAME", ["Sturdy chair"]), H("Push-up ladder", [], { bw: true })]);
 const HOME_EXTRA = { "Dumbbell floor press": { m: "chest", eq: "db", ratio: .1, inc: 2 }, "Dumbbell floor fly": { m: "chest", eq: "db", ratio: .05, inc: 2 }, "Lying dumbbell hamstring curl": { m: "ham", eq: "db", ratio: .05, inc: 2, lower: true },
   "Dumbbell hip thrust at home": { m: "glutes", eq: "db", ratio: .25, inc: 2, lower: true } };

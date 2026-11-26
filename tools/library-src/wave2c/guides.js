@@ -56,7 +56,7 @@ const GUIDES = {
     avoid: ["Leaning toward the weight.", "Shrugging the shoulder.", "Rushing the steps."],
     tip: "One side loaded means the core has to keep you straight – great for balance and the side hips."
   },
-  "Farmer carry & march": {
+  "Farmer's carry & march": {
     steps: ["Hold a heavy dumbbell in each hand at your sides.", "Stand tall, shoulders back and down.", "Walk the set distance with short, quick steps – or march in place, knees to hip height.", "Put the weights down with a straight back."],
     levels: ["Carry.", "March in place (slower, more balance)."],
     avoid: ["Rounding the shoulders forward.", "Looking down at your feet.", "Picking the weights up with a round back."]
