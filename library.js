@@ -1883,7 +1883,7 @@ const SAMPLES = {
     frame: suitcaseHold, cues: [{ when: "all", pt: J => J.chest, text: "Stay level" }] },
   "suc": { cap: ["Suitcase carry", "Walk tall, one dumbbell"], cam: camera(-50, 10, 126, 212, 0.86), dur: 1600, loop: true,
     frame: u => carry(u, "suitcase"), cues: [{ when: "all", pt: J => J.chest, text: "Don't lean" }] },
-  "fac": { cap: ["Farmer carry", "Walk tall, a dumbbell in each hand"], cam: camera(-50, 10, 126, 212, 0.86), dur: 1600, loop: true,
+  "fac": { cap: ["Farmer's carry", "Walk tall, a dumbbell in each hand"], cam: camera(-50, 10, 126, 212, 0.86), dur: 1600, loop: true,
     frame: u => carry(u, "farmer"), cues: [{ when: "all", pt: J => J.chest, text: "Chest tall" }] },
   "fam": { cap: ["Farmer march", "Knee to hip height, slowly"], cam: camera(-30, 10, 116, 214, 0.86), dur: 2200, loop: true,
     frame: farmerMarch, cues: [{ when: "all", pt: J => J.chest, text: "Stand tall" }] },
@@ -1906,7 +1906,7 @@ const CARDS = [
   { title: "Cable curl", fam: "Biceps · cable", keys: [["Bar", "ccu"]] },
   { title: "Cable rear-delt fly", fam: "Rear shoulders · cable", keys: [["Crossed cables", "rfly"]] },
   { title: "Suitcase hold & carry", fam: "Carry · one side", keys: [["Hold", "suh"], ["Carry", "suc"]] },
-  { title: "Farmer carry & march", fam: "Carry · both hands", keys: [["Carry", "fac"], ["March", "fam"]] },
+  { title: "Farmer's carry & march", fam: "Carry · both hands", keys: [["Farmer's carry", "fac"], ["March", "fam"]] },
   { title: "Overhead carry", fam: "Carry · overhead", keys: [["One arm", "ohc"]] },
   { title: "Turkish get-up", fam: "Full body · kettlebell · Experienced", keys: [["Kettlebell", "tgu"]] }
 ];
@@ -1969,7 +1969,7 @@ const GUIDES = {
     avoid: ["Leaning toward the weight.", "Shrugging the shoulder.", "Rushing the steps."],
     tip: "One side loaded means the core has to keep you straight – great for balance and the side hips."
   },
-  "Farmer carry & march": {
+  "Farmer's carry & march": {
     steps: ["Hold a heavy dumbbell in each hand at your sides.", "Stand tall, shoulders back and down.", "Walk the set distance with short, quick steps – or march in place, knees to hip height.", "Put the weights down with a straight back."],
     levels: ["Carry.", "March in place (slower, more balance)."],
     avoid: ["Rounding the shoulders forward.", "Looking down at your feet.", "Picking the weights up with a round back."]
@@ -4736,7 +4736,6 @@ const CARDS = [
   { title: "Chest-supported dumbbell row", fam: "Free weights", keys: [["Chest-supported row", "chest-supported-dumbbell-row"]] },
   { title: "Barbell hip thrust", fam: "Free weights", keys: [["Hip thrust", "barbell-hip-thrust"]] },
   { title: "Kettlebell swing", fam: "Free weights", keys: [["Swing", "kettlebell-swing"]] },
-  { title: "Farmer's carry", fam: "Free weights", keys: [["Carry", "farmer-s-carry"]] },
   { title: "Romanian deadlift", fam: "Free weights", keys: [["Romanian deadlift","romanian-deadlift"]] },
   { section: "Machines and cables" },
   { title: "Machine row", fam: "Machine / cable", keys: [["Machine row", "machine-row"]] },
@@ -4835,10 +4834,6 @@ const GUIDES = {
     steps: ["Feet slightly wider than hips, bell a step in front of you.", "Hinge at the hips (as in a Romanian deadlift) and hike the bell back between the legs.", "Snap the hips forward hard, squeezing the glutes. The bell floats up to chest height.", "Let the bell fall and hinge again as it comes back.", "Arms stay loose like ropes. The hips do the work."],
     avoid: ["Squatting down instead of hinging.", "Lifting the bell with the arms or shoulders.", "Leaning back at the top.", "Rounding the back at the bottom."],
     knee: "Knees bend only a little, so this is usually fine. Stop if it hurts."
-  },
-  "Farmer's carry": {
-    steps: ["Pick up heavy dumbbells or kettlebells as in a deadlift, back flat.", "Stand tall, shoulders back and down, stomach braced.", "Walk with short, steady steps for the distance.", "Set the weights down with a flat back."],
-    avoid: ["Leaning to one side.", "Shrugging or rounding the shoulders.", "Rushing with long strides."]
   },
   "Machine row": {
     steps: ["Set the seat so the handles are at lower-chest height, chest against the pad.", "Sit tall and pull the handles toward the ribs.", "Squeeze the shoulder blades together at the end.", "Let the arms stretch fully forward on the way back."],
