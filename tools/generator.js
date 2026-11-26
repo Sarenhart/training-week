@@ -794,9 +794,11 @@ function finalizePlan(P, a) {
       // Superset rules (Christian 2026-11-05): partners must share one spot. Dumbbells with dumbbells, cables only with the same
       // handle, floor/mat exercises go with anything; machines stand alone; barbell and dumbbells aren't mixed. Groups that break this
       // are split, and the exercises split off are re-paired with each other where they fit, so the workout doesn't get much longer.
+      let ssFits = null;
       { const stn = x => { const n = x.name, e = EX[n] || {};
           if (/Back extension/i.test(n)) return "st:backext";
-          if (/^barbell hip thrust/i.test(n)) return "x:hipthrust";      // stands alone – hard to get in and out of (Christian 2026-11-24) if (/Hanging|Captain|Pull-up|Chin-up|\bdips?\b/i.test(n)) return "st:bar";
+          if (/^barbell hip thrust/i.test(n)) return "x:hipthrust";      // stands alone – hard to get in and out of (Christian 2026-11-24)
+          if (/Hanging|Captain|Pull-up|Chin-up|\bdips?\b/i.test(n)) return "st:bar";
           if (e.eq === "cable") return "cable:" + (/rope|face pull|pull-through|cable crunch|kneeling crunch/i.test(n) ? "rope" : /seated cable row/i.test(n) ? "row" : /lat pulldown/i.test(n) ? "pulldown"
             : /^cable curl|straight-bar|bar pushdown/i.test(n) ? "bar" : /hip abduction|kickback/i.test(n) ? "ankle" : /lateral raise|fly|crossover|pallof|face-away|one-arm|single-arm|rear-delt|woodchop/i.test(n) ? "handle" : n);
           return e.eq === "bw" ? "free" : e.eq || "x:" + n; };
@@ -804,8 +806,20 @@ function finalizePlan(P, a) {
         const bench = x => { const n = x.name; if ((EX[n] || {}).eq === "bw") return null;
           return /incline|chest-supported|spider curl|side-lying|y-raise/i.test(n) ? "incline" : /^seated (dumbbell|barbell)|seated .*curl/i.test(n) ? "upright"
             : /bench press|skull crusher|pullover|one-arm dumbbell row|flat/i.test(n) ? "flat" : null; };
-        const fits = xs => { const f = new Set(xs.map(stn).filter(t => t !== "free")), b = new Set(xs.map(bench).filter(Boolean));
-          return f.size <= 1 && b.size <= 1 && ![...f].some(t => t === "machine" || t === "cardio" || t.startsWith("x:")); };
+        // Christian 2026-11-26: a barbell lift only gets a partner without equipment; dumbbells also go with a cable
+        // (one handle); best pairs first: dumbbell + dumbbell, dumbbell + cable, dumbbell + no equipment, cable + no equipment,
+        // no equipment + no equipment. Machines, the barbell hip thrust and cardio stand alone.
+        const kind = x => { const t = stn(x); return t === "kb" ? "db" : t; };
+        const fits = xs => { const t = xs.map(kind), nf = t.filter(k => k !== "free"), b = new Set(xs.map(bench).filter(Boolean)); if (b.size > 1) return false;
+          if (nf.some(k => k === "machine" || k === "cardio" || k.startsWith("x:"))) return false;
+          const bb = nf.filter(k => k === "bb"), st = nf.filter(k => k.startsWith("st:")), cab = new Set(nf.filter(k => k.startsWith("cable:")));
+          if (nf.some(k => !(k === "bb" || k === "db" || k.startsWith("st:") || k.startsWith("cable:")))) return false;
+          if (bb.length) return bb.length === 1 && nf.length === 1;
+          if (st.length) return new Set(st).size === 1 && nf.length === st.length;
+          return cab.size <= 1; };
+        const pairScore = (x, y) => { const k = [kind(x), kind(y)].map(v => v.startsWith("cable:") ? "cable" : v).sort().join("+");
+          return { "db+db": 6, "cable+db": 5, "cable+cable": 4.5, "db+free": 4, "cable+free": 3, "free+free": 2 }[k] || 1; };
+        ssFits = fits;
         const runs = []; for (const x of w.exercises) { const L = x.ss ? x.ss[0] : null, r = runs[runs.length - 1]; if (L && r && r.L === L) r.xs.push(x); else runs.push({ L, xs: [x] }); }
         let tmp = 0; const tag = () => String.fromCharCode(0x3b1 + tmp++), loose = [], spotless = x => { if (x.note) x.note = x.note.replace(/ ?Superset at the [^.]+\./, "").trim() || undefined; };
         for (const r of runs) { if (!r.L) continue;
@@ -817,7 +831,7 @@ function finalizePlan(P, a) {
         // re-pair the split-off exercises with each other (never machines)
         const used = new Set();
         for (const x of loose) { if (used.has(x) || !fits([x])) continue;
-          const y = loose.find(z => z !== x && !used.has(z) && fits([x, z])); if (!y) continue;
+          const y = loose.filter(z => z !== x && !used.has(z) && fits([x, z])).sort((p, q) => pairScore(x, q) - pairScore(x, p))[0]; if (!y) continue;
           used.add(x); used.add(y); w.exercises.splice(w.exercises.indexOf(y), 1); w.exercises.splice(w.exercises.indexOf(x) + 1, 0, y);
           const t = tag(); x.ss = t + "1"; y.ss = t + "2"; }
         for (const x of loose) if (!x.ss && !x.rest) x.rest = /hip thrust/i.test(x.name) ? 90 : 60; }
@@ -834,6 +848,9 @@ function finalizePlan(P, a) {
       for (const r of runs) {
         if (!r.L) continue;
         const strip = x => { if (x.note) x.note = x.note.replace(/ ?Go straight to [A-Z]\d\.?/g, "").trim() || undefined; };
+        // last check after every later swap (e.g. a core exercise swapped to the hanging knee raise): a group that breaks the rules is undone
+        if (r.xs.length > 1 && ssFits && !r.xs.some(x => isBalanceItem(x) || /ladder/i.test(x.name)) && !ssFits(r.xs)) {
+          r.xs.forEach(x => { delete x.ss; strip(x); if (!x.rest) x.rest = /hip thrust/i.test(x.name) ? 90 : 60; }); continue; }
         if (r.xs.length === 1) { const x = r.xs[0]; delete x.ss; strip(x); if (!x.rest) x.rest = 60; continue; }
         const L = String.fromCharCode(65 + letter++);
         r.xs.forEach((x, i) => { strip(x); x.ss = L + (i + 1); const last = i === r.xs.length - 1;
