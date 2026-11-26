@@ -1612,6 +1612,10 @@ function migrate() {
     for (const l of Object.values(S.logs || {})) for (const [id, n] of Object.entries(l.names || {})) if (n === "Farmer carry") l.names[id] = "Farmer's carry";
     p.mig = 9; saveProgram(); saveLocal();
   }
+  if (p.mig < 10) {             // 2026-11-26 (Christian, less is more): no "Go straight to A2." notes – the superset header groups them
+    p.phases.forEach(ph => Object.values(ph.workouts || {}).forEach(w => (w.exercises || []).forEach(e => { if (e.note) e.note = e.note.replace(/ ?Go straight to [A-Z]\d\.?/g, "").trim() || undefined; })));
+    p.mig = 10; saveProgram();
+  }
 }
 function mergeColl(snap, prefix, current) {
   const next = {};
@@ -1845,9 +1849,7 @@ function backupDue() {
 function backupReminder() {
   const due = S.bkDemo ? { last: null, days: 0 } : backupDue(); if (!due) return "";   // S.bkDemo: DEV preview
   return `<div class="card bkrem" role="note"><b>${due.last ? `It's been ${due.days} days since your last backup.` : "You haven't saved a backup yet."}</b>
-    <p>Your workouts are only stored on this phone.</p>
-    <div class="row"><button type="button" class="btn" data-act="backup">Save backup now</button><button type="button" class="btn ghost" data-act="bklater">Later</button></div>
-    <small class="muted">Pick Google Drive and a “Backup Training Week” folder in the share menu, so it survives if the phone is lost.</small></div>`;
+    <div class="row"><button type="button" class="btn" data-act="backup">Save backup now</button><button type="button" class="btn ghost" data-act="bklater">Later</button></div></div>`;
 }
 function todayView() {
   const w = S.week, k = S.wk, ph = phaseOf(w), pi = phaseIndex(w), wo = workout(w, k), tw = totalWeeks(), cur = currentWeek();
@@ -1867,7 +1869,6 @@ function todayView() {
   h += `</div>`;
   if (S.program?.phases?.[pi] && !pcClosed()[pi]) h += phaseCardHtml(phaseNews(pi), true);   // shown during the phase until closed
   if (isCardioPlan()) h += minutesCard(w);
-  if (w === 1 && !S.program.carried) h += `<div class="note findban"><b>Week 1: finding your weights.</b> After each set, tap the <b>feather</b> if it was too easy, the <b>kettlebell</b> if it was too heavy.</div>`;
 
   const id = logId(w, k), l = S.logs[id];
   const st = l ? stats(l) : { done: 0, total: wo.exercises.reduce((a, e) => a + e.sets, 0), vol: 0 };
@@ -1884,13 +1885,13 @@ function todayView() {
     const kgLabel = x => e.bw ? (x > 0 ? "+" + fmt(x) + " kg" : x < 0 ? "−" + fmt(-x) + " kg" : "BW") : x ? fmt(x) + " kg" : "";
     const kgWord = x => e.bw && x < 0 ? fmt(-x) + " kg help" : fmt(x) + " kg";
     const cols = `grid-template-columns:repeat(${Math.max(sets.length, 1)},minmax(0,1fr))`;
-    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(Math.round((sg.kg - sg.last.kg) * 100) / 100) + " kg today"}</span>` : ""}${sg.down && !l ? `<span class="up down">↓ ${e.bw && sg.kg < 0 ? fmt(e.inc) + " kg more help today" : "−" + fmt(e.inc) + " kg today"}</span>` : ""}</div>${sg.down && !l ? `<div class="feelnote">Felt heavy twice – one step lighter today. Back up again when all reps feel good.</div>` : ""}
+    const lastRow = sg.last ? `<div class="lastlbl"><span>Last time</span>${sg.last.feel ? `<span class="fbadge ${sg.last.feel}" aria-label="Felt ${sg.last.feel}">${FEEL_ICON[sg.last.feel](12)}</span>` : ""}${sg.up && !l ? `<span class="up">↑ ${e.bw && sg.kg <= 0 ? fmt(e.inc) + " kg less help today" : "+" + fmt(Math.round((sg.kg - sg.last.kg) * 100) / 100) + " kg today"}</span>` : ""}${sg.down && !l ? `<span class="up down">↓ ${e.bw && sg.kg < 0 ? fmt(e.inc) + " kg more help today" : "−" + fmt(e.inc) + " kg today"}</span>` : ""}</div>
         <div class="lastrow num ${sets.length > 3 ? "tight" : ""}" style="${cols}">${sg.last.sets.map(x => `<span>${x.reps}${unit ? " " + unit : ""}${x.kg && !e.bw ? " × " + fmt(x.kg) + " kg" : e.bw && x.kg ? " × " + kgLabel(x.kg) : ""}</span>`).join("")}</div>` : "";
     const finding = isFinding(e, w, id), lastDone = sets.map(x => x.done).lastIndexOf(true);
     const feel = finding ? (lastDone >= 0 ? l?.setFeel?.[e.id]?.[lastDone] || null : null) : l?.feel?.[e.id] || null;
-    const findNote = finding ? `<div class="findnote">${lastDone < 0 ? "Finding your weight: tap the feather if a set was too easy, the kettlebell if it was too heavy."
-      : complete ? `Found: ${kgWord(sets[sets.length - 1].kg)} is your starting weight next time.` : l && findState(l, e).found != null ? `Found: ${kgWord(findState(l, e).found)} – between too easy and too heavy. The rest of the sets stay here.` : `Set ${lastDone + 1}${feel === "light" ? " felt light" : feel === "heavy" ? " felt heavy" : ": no mark"} → next set ${kgWord(sets.find((x, i) => i > lastDone && !x.done)?.kg ?? kgNow)}.`}</div>` : "";
-    const feelNote = finding ? findNote : feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(Math.round((kgNow + progStep(e, kgNow, 1)) * 100) / 100)}.` : (() => { const pv = prevBest(e.name, id), twice = pv && !pv.finding && (pv.feel === "heavy" || !pv.allReps) && kgNow >= pv.kg; return twice ? `Felt heavy twice: next time one step lighter, ${kgWord(Math.round((kgNow - progStep(e, kgNow, -1)) * 100) / 100)}.` : `Felt heavy: next time stay at ${kgWord(kgNow)}.`; })()}</div>` : "";
+    const findNote = finding ? `<div class="findnote">${lastDone < 0 ? "<b>Feather</b> = too easy · <b>Kettlebell</b> = too heavy"
+      : complete ? `Found: ${kgWord(sets[sets.length - 1].kg)}` : l && findState(l, e).found != null ? `Found: ${kgWord(findState(l, e).found)}` : `Next set: ${kgWord(sets.find((x, i) => i > lastDone && !x.done)?.kg ?? kgNow)}`}</div>` : "";
+    const feelNote = finding ? findNote : feel && e.inc ? `<div class="feelnote">${feel === "light" ? `Felt light: next time ${kgWord(Math.round((kgNow + progStep(e, kgNow, 1)) * 100) / 100)}.` : (() => { const pv = prevBest(e.name, id), twice = pv && !pv.finding && (pv.feel === "heavy" || !pv.allReps) && kgNow >= pv.kg; return twice ? "" : `Felt heavy: next time stay at ${kgWord(kgNow)}.`; })()}</div>` : "";
     const exCls = [/^Warm-up/.test(e.name) ? "wu" : "", isFinding(e, w, id) ? "finding" : "", e.unit === "min" && !/^Warm-up$|^Cool-down$/.test(e.name) ? "cardio" : "", /stand|Tandem|Heel-to-toe|step and hold|star reach|Step switch|March|hop and stick|Skater|knee drive|Skipping|Toe stand|Calf-raise hold|Split-stance|RDL reach|Single-leg Pallof|Pistol/.test(e.name) && !e.inc ? "bal" : "", /ladder/i.test(e.name) ? "ladder" : "", /Barbell back squat/.test(e.name) ? "bbsquat" : "", e.unit === "sec" ? "timed" : ""].filter(Boolean).join(" ");
     { const bo = bbOffer(e); if (bo) h += bbCard(e, bo); }
     if (e.ss && e.ss.endsWith("1") && nextSs && nextSs[0] === e.ss[0]) {          // superset header: "Superset A · incline bench" (approved)
@@ -2069,7 +2070,7 @@ function obView() {
   let h = `<div class="ob">`;
   if (step === "welcome" && o.newProg) {
     h += `<header class="top"><div><div class="eyebrow">New programme</div><h1>Build your next 12 weeks</h1></div></header>
-      <p class="obp">${loadProfile()?.answers ? "Go through the questions again and change anything you like. Your answers from last time are filled in." : "Answer a few quick questions and the app builds your next 12 weeks – the weights you've reached carry over."}</p>
+      <p class="obp">${loadProfile()?.answers ? "Your last answers are filled in." : "Answer a few quick questions and the app builds your next 12 weeks – the weights you've reached carry over."}</p>
       <button type="button" class="btn wide" data-act="obnext">Get started</button>
       <button type="button" class="btn ghost wide" data-act="obcancel">Cancel – keep my current programme</button>`;
   } else if (step === "welcome") {
@@ -2102,7 +2103,7 @@ function obView() {
       <div class="obcards">${G.map(([g, t]) => `<button type="button" class="obcard" data-act="obone" data-k="goal" data-v="${g}" aria-pressed="${a.goal === g}"><b>${g}</b><span>${t}</span></button>`).join("")}</div>${nav()}`;
   } else if (step === "shape") {
     const d = directionOf(a), sp = startingPoint(a);
-    h += `<header class="top"><div>${stepTag}<h1>What look are you aiming for?</h1></div></header><p class="obp">This sets your reps, sets and how much conditioning goes into each week.</p>
+    h += `<header class="top"><div>${stepTag}<h1>What look are you aiming for?</h1></div></header>
       <div class="obshape">${["Slim", "Toned", "Built"].map(v => `<button type="button" class="obcard sh" data-act="obone" data-k="shape" data-v="${v}" aria-pressed="${a.shape === v}">${shapeIcon(v)}<b>${v}</b></button>`).join("")}</div>
       ${d ? `<div class="card obdir"><div class="eyebrow">Your direction, from your measurements</div><h2>${esc(d)}</h2><p>${esc(DIRECTIONS[d])}</p>
         ${a.shape === "Slim" && sp === "lighter" ? `<p class="muted obsmall">You're already lean – Toned may suit you better if you want to add some muscle.</p>` : ""}</div>` : ""}${nav()}`;
@@ -2120,7 +2121,7 @@ function obView() {
   } else if (step === "home") {
     const has = x => a.kit.includes(x);
     h += `<header class="top"><div><div class="eyebrow">Step ${nr} of ${n} · Training at home</div><h1>What do you have at home?</h1></div></header>
-      <p class="obp">Tick everything you have. Your plan only uses what you tick – you can change it later.</p>
+      <p class="obp">Tick everything you have.</p>
       <button type="button" class="obnone" data-act="obnokit" aria-pressed="${a.kit.length === 0}"><b>Nothing – body weight only</b><span>a floor and a little space</span></button>
       ${KIT.map(([g, items]) => `<div class="obrow col"><span class="oblbl">${g}</span><div class="obchips">${items.map(i => chipB(has(i), "obkit", i, i)).join("")}</div>
         ${g === "Weights" && has("Dumbbells") ? `<div class="kgrow"><span>Heaviest dumbbell (per hand)</span><button class="step" data-act="obdb" data-d="-0.5" aria-label="Lighter">−</button><span class="kg">${fmt(a.dbMax)} kg</span><button class="step" data-act="obdb" data-d="0.5" aria-label="Heavier">+</button></div>` : ""}
@@ -2132,10 +2133,10 @@ function obView() {
     const NM = { shoulders: ["shoulders", "Shoulders"], thighs: ["thighs", "Knees"] };
     const clash = a.focus.filter(f => typeof focusClash === "function" && focusClash(a, f)).map(f => NM[f]);
     h += `<header class="top"><div>${stepTag}<h1>Your focus</h1></div></header>
-      <p class="obp">Pick up to ${max} ${max === 1 ? "area" : "areas"}${a.goal === "Cardio" ? " – Cardio plans have two short strength days" : ` – you train ${a.days} days a week`}. The plan stays full body and adds extra sets for these. You can also skip this.</p>
+      <p class="obp">Pick up to ${max} – or skip.</p>
       <div class="obgrid2 tight">${MUSCLES.map(([k, l]) => { const on = a.focus.includes(k), full = !on && a.focus.length >= max;
         return `<button type="button" class="obchip big" data-act="obfocus" data-v="${k}" aria-pressed="${on}" ${full ? "disabled" : ""}>${on ? "✓ " : ""}${l}</button>`; }).join("")}</div>
-      ${clash.map(([f, e]) => `<div class="obfit" role="note"><p>You picked ${f} as a focus and to go easy on your ${e.toLowerCase()}. Going easy comes first: your plan trains ${f} with exercises that work well but are kind to the joints.</p></div>`).join("")}
+      ${clash.length ? `<div class="obfit" role="note"><p>Going easy comes first – joint-friendly exercises.</p></div>` : ""}
       ${tf ? `<div class="obfit" role="note"><p>${esc(tf)}</p>${a.time !== "60 min" ? `<button type="button" class="btn small" data-act="obone" data-k="time" data-v="60 min">Switch to 60 min</button>` : ""}</div>` : ""}
       ${nav()}`;
   } else if (step === "plan") {
@@ -2150,7 +2151,7 @@ function obView() {
       <div class="card"><div class="eyebrow">Each week</div><ol class="obweek">${names.map((nm, i) => `<li><b>Workout ${i + 1}</b><span>${esc(nm)}</span></li>`).join("")}<li><b>Extra</b><span>${esc(EXTRA_TEXT[a.goal])}</span></li></ol></div>
       <div class="card"><div class="eyebrow">Four phases</div><ol class="obweek"><li><b>Phase 1</b><span>Weeks 1–3 · learn the movements, find your weights</span></li><li><b>Phase 2</b><span>Weeks 4–6 · more sets, new variations</span></li><li><b>Phase 3</b><span>Weeks 7–9 · heavier main lifts</span></li><li><b>Phase 4</b><span>Weeks 10–12 · build strength</span></li></ol></div>
       ${o.newProg ? `<div class="note">Your current programme is saved in your history on the Progress tab. Your badges and totals stay.</div>`
-        : obKeepsProgramme() ? `<div class="note">Your answers are saved. Your current programme carries on with all your history – your next programme will be built from these answers.</div>`
+        : obKeepsProgramme() ? `<div class="note">Saved – your next programme uses these answers.</div>`
         : OB_DEV ? `<div class="note">${typeof genSupported === "function" && genSupported(a) ? "DEV: \"Start week 1\" builds this plan and clears the workouts logged in DEV. Your main app is not touched." : "DEV: plans for " + (a.where === "Home" ? "home training" : a.goal) + " come in the next part of round 3. Until then your current programme is kept – your answers are saved."}</div>` : ""}
       <div class="obnav"><button type="button" class="btn ghost" data-act="obback">Change my answers</button><button type="button" class="btn" data-act="obdone">${o.newProg ? "Start my new programme" : obKeepsProgramme() ? "Save my answers" : "Start week 1"}</button></div>`;
   }
@@ -2573,7 +2574,6 @@ function generatePlan(a) {
           if (e.assist) kg = -Math.round(bwKg * 0.3 / 2.5) * 2.5;           // assisted pull-up: start with plenty of help
           const last = xi === g.ex.length - 1;
           const notes = [];
-          if (ss && !last) notes.push("Go straight to " + ss + (xi + 2) + ".");
           if (g.spot && xi === 0 && ss) notes.push("Superset at the " + g.spot + ".");
           if (e.note) notes.push(e.note);
           if (x.note) notes.push(x.note);
@@ -2760,7 +2760,7 @@ function generateCardio(a) {
         if (pkey !== "1" && g === groups[0] && ((lvl !== "New" && pi === 1) || (lvl === "New" && pi === 2))) ex = [{ name: easy.has("Back") ? "Glute bridge" : "Single-leg dumbbell Romanian deadlift", sets: 2 }, { name: "Standing cable hip abduction", sets: 2 }];
         ex.forEach((x, xi) => { x.name = swapEasy(x.name); const e = EX[x.name] || {};
           out.push({ name: x.name, sets: x.sets, reps: e.reps || 15, kg: e.nokg || e.bw ? 0 : kg(e), rest: xi < ex.length - 1 ? 0 : 60, inc: e.inc || 0, unit: e.unit || "reps", ss: "A" + (xi + 1),
-            ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: [xi < ex.length - 1 ? "Go straight to A" + (xi + 2) + "." : "", e.note || ""].filter(Boolean).join(" ") || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
+            ...(e.bw ? { bw: true } : {}), ...(e.lib ? { lib: e.lib } : {}), note: e.note || undefined, id: `c${pi + 1}${pkey}-${slug(x.name)}` }); });
       }
       return out;
     };
@@ -3100,7 +3100,7 @@ function finalizePlan(P, a) {
         if (r.xs.length === 1) { const x = r.xs[0]; delete x.ss; strip(x); if (!x.rest) x.rest = 60; continue; }
         const L = String.fromCharCode(65 + letter++);
         r.xs.forEach((x, i) => { strip(x); x.ss = L + (i + 1); const last = i === r.xs.length - 1;
-          if (!last) { x.rest = 0; x.note = ["Go straight to " + L + (i + 2) + ".", x.note].filter(Boolean).join(" "); } else if (!x.rest) x.rest = 60; });
+          if (!last) x.rest = 0; else if (!x.rest) x.rest = 60; });
       }
     });
   });
@@ -3532,7 +3532,7 @@ function npRender() {
     <div class="obchips">${NP_REASONS.map(r => `<button type="button" class="obchip" data-act="npreason" data-v="${esc(r)}" aria-pressed="${N.reasons.includes(r)}">${esc(r)}</button>`).join("")}
       <button type="button" class="obchip" data-act="npother" aria-pressed="${N.otherOn}">Other</button></div>
     ${N.otherOn ? `<label class="f">Your reason<input type="text" id="np-other" data-np="other" value="${esc(N.other)}" maxlength="200" placeholder="Tell us in your own words"></label>` : ""}
-    <div class="note">This programme is saved in your history as <b>Stopped in week ${cw}</b>. Your badges and totals so far are kept, and your weights carry over.</div>
+    <div class="note">Saved in your history. Badges, totals and weights carry over.</div>
     <div class="wdbtns"><button type="button" class="btn" data-act="npgo" ${ok ? "" : "disabled"}>Continue</button><button type="button" class="btn ghost" data-act="npcancel">Keep my programme</button></div></div>`;
 }
 function npSetup(reason) {
@@ -3829,7 +3829,7 @@ function phaseCardHtml(n, closable) {
     ${closable ? `<button type="button" class="iconbtn" data-act="pcclose" data-p="${n.pi}" aria-label="Close">✕</button>` : ""}</div>
     <p class="pcaim"><b>Aiming for:</b> ${esc(n.aim)}</p>
     ${n.lines.length ? `<ul class="pclist">${n.lines.map(l => `<li>${l}</li>`).join("")}</ul>` : ""}
-    ${n.newEx.length ? `<div class="pcnew"><b>New exercises</b> – each starts with “find your weight”:<div class="pcchips">${n.newEx.slice(0, 12).map(x => `<span class="pill">${esc(x)}</span>`).join("")}${n.newEx.length > 12 ? `<span class="pill">+${n.newEx.length - 12} more</span>` : ""}</div></div>` : ""}</div>`;
+    ${n.newEx.length ? `<div class="pcnew"><b>New exercises:</b><div class="pcchips">${n.newEx.slice(0, 12).map(x => `<span class="pill">${esc(x)}</span>`).join("")}${n.newEx.length > 12 ? `<span class="pill">+${n.newEx.length - 12} more</span>` : ""}</div></div>` : ""}</div>`;
 }
 // ---- in-app countdown (round 4, approved by Christian 2026-10-27)
 // Timed sets (seconds): tap → 5 s "get ready" → countdown (left / 5 s switch / right for "per side") → buzz + sound → set turns green, rest timer starts.
@@ -3929,33 +3929,33 @@ const ICON_ROW = () => `<ul class="tipicons"><li><span class="ti light">${FEEL_I
 const goal = () => loadProfile()?.answers?.goal || null, atHome = () => loadProfile()?.answers?.where === "Home";
 const TIPS = [
   { id: "T1", title: "Your 12 weeks", tab: "plan", sel: ".day.phase", when: () => true, guide: true, back: "today",
-    text: "Here on <b>Programme</b>: 4 phases of 3 weeks. The workouts stay the same within a phase so the weights can climb, then change. Tap a phase to see its workouts. <b>The week is what counts</b> – move workouts around as your days allow." },
+    text: "4 phases of 3 weeks. Tap a phase to see its workouts. Move workouts around as your days allow." },
   { id: "T7", title: "Balance first", tab: "today", sel: ".ex.bal", onScreen: true, when: () => goal() === "Balance",
     text: "Balance is done first, while you're fresh. Always stand <b>next to a support</b> – a rack, a wall or a sturdy chair. Hold as steady as you can; touching down is fine." },
   { id: "T2", title: "Ticking sets", tab: "today", sel: ".ex:not(.wu) .setmain", when: () => true, next: "T3",
-    text: "Tap a set when it's done. Use the arrows to change the reps if you did more or less than specified. Timed sets count down for you. Tap <b>How to do it</b> for the guide and animation." },
-  { id: "T3", title: "Week 1: finding your weights", tab: "today", sel: ".ex:not(.wu) .feel", when: () => S.week === 1 && !!document.querySelector(".findban"), chained: true,
+    text: "Tap a set when it's done. The arrows change the reps." },
+  { id: "T3", title: "Week 1: finding your weights", tab: "today", sel: ".ex:not(.wu) .feel", when: () => S.week === 1 && !!document.querySelector(".ex.finding"), chained: true,
     text: "After each set, tap the feather or the kettlebell if the weight wasn't right." + "@@ICONS@@" },
   { id: "T4", title: "From now on: one mark per exercise", tab: "today", sel: ".ex:not(.wu):not(.finding) .feel", when: () => S.week >= 2, onScreen: true,
-    text: "From now on, one mark per exercise: the <b>feather</b> if it was too easy, the <b>kettlebell</b> if it was too heavy. The app sets next session's weight." },
+    text: "From now on, one mark per exercise: the <b>feather</b> if it was too easy, the <b>kettlebell</b> if it was too heavy." },
   { id: "T5", title: "Supersets", tab: "today", sel: ".ex.ss1:not(.bal)", onScreen: true, when: () => true,
-    text: "Do one set of <b>A1</b>, then one set of <b>A2</b> (and A3), then rest. They're done in the same spot, so you keep your place." },
+    text: "Do one set of <b>A1</b>, then <b>A2</b>, then rest." },
   { id: "T8", title: "How hard? The talk test", tab: "today", sel: ".ex.cardio .setmain", onScreen: true, when: () => goal() === "Cardio",
-    text: "<b>Easy</b> – full sentences · <b>Steady</b> – short sentences · <b>Hard</b> – only a few words. Tap the block to start: the app guides you through each part, with a sound and a buzz when the intensity changes." },
+    text: "<b>Easy</b> – full sentences · <b>Steady</b> – short sentences · <b>Hard</b> – only a few words. Tap the block to start." },
   { id: "T6", title: "Swap", tab: "today", sel: ".ex:not(.wu) .swapbtn", onScreen: true, when: () => Object.values(S.logs[logId(S.week, S.wk)]?.sets || {}).some(a => a.some(x => x.done)),
     text: "Busy machine, too hard, or doesn't feel right? Tap <b>Swap</b> and pick another exercise." },
   { id: "T9", title: "Weekly minutes", tab: "today", sel: ".mincard", when: () => isCardioPlan(),
-    text: "The goal is about 150 minutes a week. Hard minutes count double and warm-ups count. If a week ends short, you'll get the offer of a bonus session." },
+    text: "Aim for about 150 minutes a week." },
   { id: "T12", title: "Timed sets count down", tab: "today", sel: ".ex.timed .setmain", onScreen: true, when: () => true,
-    text: "Tap the set to start: 5 seconds to get ready, then it counts down – left side, then right side when it's per side. At 0 it beeps, buzzes and turns green by itself. <b>Pause</b>, <b>Done</b> or <b>Cancel</b> in the bar at the top." },
+    text: "Tap the set to start the countdown." },
   { id: "TB", title: "Your body", tab: "body", sel: "#bodyform", when: () => true,
-    text: "Log your weight – and waist if you like – every week or two, at the same time of day. The trend shows above it. Your weight also counts in <b>kg lifted</b> for pull-ups and push-ups." },
+    text: "Log your weight every week or two, at the same time of day." },
   { id: "TH", title: "Your progress", tab: "history", sel: ".grid12", when: () => true,
-    text: "Every workout is a square – it turns green when it's done. Further down: your badges, your heaviest sets and every session. <b>Save a backup</b> now and then – everything is stored on this phone." },
+    text: "Every workout is a square. Badges and heaviest sets are further down." },
   { id: "TL", title: "All exercises", tab: "lib", sel: "#libq", when: () => true,
     text: "Search by name, muscle or equipment. Tap an exercise for the animation, the technique and what to avoid." },
   { id: "T10", title: "Ladders", tab: "today", sel: ".ex.ladder", onScreen: true, when: () => atHome(),
-    text: "Some home exercises get harder by changing the exercise instead of adding weight. When the top of the rep range is easy, move up one step. Two kettlebells in a row → one step back." },
+    text: "Some home exercises get harder by changing the exercise instead of adding weight. When the top of the rep range is easy, move up one step." },
   { id: "T11", title: "Safety bars first", tab: "today", sel: ".ex.bbsquat", onScreen: true, when: () => true,
     text: "Set the rack's safety bars just below your lowest squat position before you start. If a rep fails, sit down onto the bars." }
 ];
@@ -4013,8 +4013,7 @@ function colourCard() {
   const sw = { blue: "#6693ff", orange: "#ff8a4c", pink: "#ff4fa3" };
   const chip = (v, label, c) => `<button type="button" class="colchip" data-act="colour" data-v="${v}" aria-pressed="${cur === v}"><i style="background:${c}"></i>${label}</button>`;
   return `<div class="card colcard"><div class="eyebrow">App colour</div>
-    <div class="colrow">${chip("plan", `Plan colour · ${name[pc]}`, sw[pc])}${["blue", "orange", "pink"].filter(c => c !== pc).map(c => chip(c, name[c], sw[c])).join("")}</div>
-    <small class="muted">Your plan's colour is the standard. Pick another one if you prefer.</small></div>`;
+    <div class="colrow">${chip("plan", `Plan colour · ${name[pc]}`, sw[pc])}${["blue", "orange", "pink"].filter(c => c !== pc).map(c => chip(c, name[c], sw[c])).join("")}</div></div>`;
 }
 function tipsCard() {      // Settings on the Programme tab: How the app works + Show tips again (P5)
   const open = S.open === "howto";
@@ -4160,7 +4159,7 @@ function swapView() {
       <div class="swback"><span class="swidx tl">${k + 1}</span><span class="swidx br">${k + 1}</span><b class="swname">How to do it</b>
         <ol>${(g.steps.length ? g.steps.slice(0, 2) : ["Same sets and reps as before.", "Starts with \"find your weight\"."]).map(t => `<li>${esc(t)}</li>`).join("")}</ol><small class="swhint">Tap to turn back</small></div></div></div>`; };
   const pick = sw.step === "scope" ? opts[i] : null;
-  return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted obsmall">${isCardioSwap(e) ? "Same minutes." : `Same sets and reps – a new exercise starts with "find your weight".`}</p></div>
+  return `<div class="swapsheet swdeckmode" role="dialog" aria-labelledby="sw-title"><div class="swhead">${head}<p class="muted obsmall">${isCardioSwap(e) ? "Same minutes." : ""}</p></div>
     <div class="swdeck"><div class="swtrack" style="--i:${i}">${opts.map(card).join("")}</div></div>
     <div class="swdots">${opts.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
     <div class="swfoot">${pick ? `<p class="swpicked">Swap to <b>${esc(pick)}</b> for…</p><div class="swbtns"><button type="button" class="btn ghost" data-act="swback">Back</button><button type="button" class="btn ghost" data-act="swapply" data-v="today">Just today</button><button type="button" class="btn" data-act="swapply" data-v="phase">Rest of this phase</button></div>`
@@ -4272,9 +4271,8 @@ function bbOffer(e) {
   return { ...m, from: e.name, kg: Math.max(0, Math.floor((2 * h[h.length - 1].kg - barKg(m.to)) / 2.5) * 2.5) };
 }
 function bbCard(e, o) {
-  return `<div class="card bbq"><div class="eyebrow">Ready for the barbell?</div><p>You've got strong on the ${esc(o.what)}. Want to try the <b>${esc(o.to.toLowerCase())}</b>? The first session starts at <b>${fmt(o.kg)} kg</b> and finds your weight.</p>
-    <div class="bbbtns"><button type="button" class="btn small" data-act="bbtry" data-ex="${e.id}">Try it</button><button type="button" class="btn ghost small" data-act="bbnot" data-ex="${e.id}">Not yet</button><button type="button" class="linkbtn" data-act="bbstay" data-ex="${e.id}">Stay with dumbbells</button></div>
-    <small class="muted">If the 20 kg bar feels too heavy, stay on dumbbells a while longer – many gyms also have lighter bars.</small></div>`;
+  return `<div class="card bbq"><div class="eyebrow">Barbell</div><p>Ready for the <b>${esc(o.to.toLowerCase())}</b>? First session: ${o.kg ? `<b>${fmt(o.kg)} kg</b>` : "<b>bar only</b>"}.</p>
+    <div class="bbbtns"><button type="button" class="btn small" data-act="bbtry" data-ex="${e.id}">Try it</button><button type="button" class="btn ghost small" data-act="bbnot" data-ex="${e.id}">Not yet</button><button type="button" class="linkbtn" data-act="bbstay" data-ex="${e.id}">Stay with dumbbells</button></div></div>`;
 }
 function bbTry(id) {
   const e = workout(S.week, S.wk).exercises.find(x => x.id === id), o = e && bbOffer(e); if (!o) return;
@@ -4291,7 +4289,7 @@ function bbTry(id) {
   saveProgram();
   const l = ensureLog(S.week, S.wk); for (const y of workout(S.week, S.wk).exercises) { if (y.name === o.to || y.name === "Warm-up sets: " + o.to) { l.names[y.id] = y.name; l.sets[y.id]?.forEach(s => { if (!s.done) s.kg = y.kg; }); } }
   saveLog(l); const v = bbState(); v[o.from] = { tried: true }; bbSave(v);
-  render(); toast(`Barbell it is – first session finds your weight from ${fmt(o.kg)} kg.`);
+  render(); toast("Barbell it is.");
 }
 // Week-done headline (Christian 2026-11-05: "Nice week!" got repetitive). One per week, fixed for that week, no repeats within
 // a programme; halfway and the last week get their own.
@@ -4329,7 +4327,7 @@ function minutesCard(w) {
   const t = cardioTarget(w), m = weekMinutes(w), pct = Math.min(100, Math.round(m / t * 100)), b = jget(BONUS_KEY)[w];
   return `<div class="card mincard"><div class="mchead"><span class="eyebrow">Weekly minutes</span><b class="num">${m} / ${t} min</b></div>
     <div class="meter"><span style="width:${pct}%;${m >= t ? "background:var(--done)" : ""}"></span></div>
-    <small class="muted">${m >= t ? `✓ ${t} minutes reached this week.` : "Hard minutes count double · warm-ups count"}${t < 150 ? " · building up to 150 by phase 4" : ""}</small>
+    <small class="muted">${m >= t ? `✓ ${t} minutes reached this week.` : ""}</small>
     ${b && !b.done ? `<div class="bonusrow"><span>Bonus easy session · ${b.min} min</span><button type="button" class="btn small" data-act="bonusdone" data-w="${w}">Done</button><button type="button" class="linkbtn" data-act="bonusdrop" data-w="${w}">Skip</button></div>` : ""}</div>`;
 }
 // planned easy session: pick 20 / 30 / 45 min until it's ticked
@@ -4348,8 +4346,8 @@ function weekDoneView() {
     const short = cardioTarget(w) - weekMinutes(w), offered = jget(BONUS_KEY)[w], off = jget(BONUS_KEY).off;
     if (short > 0 && !extraDone && WK.includes("c")) {
       const ce = workout(w, "c")?.exercises?.[0], cs = S.logs[logId(w, "c")]?.sets?.[ce?.id], em = (cs || []).reduce((t, x) => t + x.reps, 0) || ce?.reps || 0, reach = weekMinutes(w) + em;
-      body += `<p>The planned easy session (${em} min) ${reach >= cardioTarget(w) ? `gets you to ${cardioTarget(w)} minutes` : `brings you to ${reach} of ${cardioTarget(w)} minutes`}. Do it this week?</p>`; btns = [["wdstay", "Yes, this week"], ["wdnext", "Next week"]]; }
-    else if (short > 0 && !offered && !off) { const m = Math.max(15, Math.ceil(short / 5) * 5); body += `<p>You're ${short} minutes short of ${cardioTarget(w)}. Add a bonus easy session of ${m} minutes – a walk or an easy ride?</p>`; btns = [["wdbonus:" + m, "Add bonus"], ["wdnext", "Next week"]]; }
+      body += `<p>Great workout! Do you want to top off the week with another ${em} minutes?</p>`; btns = [["wdstay", "Yes, this week"], ["wdnext", "Next week"]]; }
+    else if (short > 0 && !offered && !off) { const m = Math.max(15, Math.ceil(short / 5) * 5); body += `<p>Almost at ${cardioTarget(w)} minutes this week! Add a short session to reach the goal?</p>`; btns = [["wdbonus:" + m, `Add ${m} min`], ["wdnext", "Next week"]]; }
     else btns = [["wdnext", "Next week"]];
   } else if (WK.includes("c") && !extraDone) { body += `<p>Do you plan to do the extra session this week?</p>`; btns = [["wdstay", "Yes, this week"], ["wdnext", "No – next week"]]; }
   else btns = [["wdnext", "Next week"]];
@@ -4682,12 +4680,12 @@ document.addEventListener("click", ev => {
     }
     case "pcclose": { const v = pcClosed(); v[b.dataset.p] = true; try { localStorage.setItem(PC_KEY, JSON.stringify(v)); } catch {} render(); break; }
     case "bbtry": bbTry(b.dataset.ex); break;
-    case "bbnot": { const e = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex), v = bbState(); v[e.name] = { notYet: bbHistory(e.name).length }; bbSave(v); render(); toast("OK – we'll ask again in a couple of sessions."); break; }
+    case "bbnot": { const e = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex), v = bbState(); v[e.name] = { notYet: bbHistory(e.name).length }; bbSave(v); render(); toast("OK – we'll ask again later."); break; }
     case "bbstay": { const e = workout(S.week, S.wk).exercises.find(x => x.id === b.dataset.ex), v = bbState(); v[e.name] = { stay: true }; bbSave(v); render(); toast("Staying with dumbbells for this programme."); break; }
     case "wdstay": weekDoneClose(false); break;
     case "wdnext": weekDoneClose(true); break;
     case "wdwrap": S.weekDone = null; weekDoneRender(); wrapOpen(false); break;
-    case "wdbonus": { const v = jget(BONUS_KEY); v[S.weekDone] = { min: +b.dataset.v, done: false }; jset(BONUS_KEY, v); weekDoneClose(false); toast("Bonus session added – tick it on the minutes card when it's done."); break; }
+    case "wdbonus": { const v = jget(BONUS_KEY); v[S.weekDone] = { min: +b.dataset.v, done: false }; jset(BONUS_KEY, v); weekDoneClose(false); toast("Bonus session added."); break; }
     case "bonusoff": { const v = jget(BONUS_KEY); v.off = true; jset(BONUS_KEY, v); weekDoneRender(); break; }
     case "bonusdone": { const v = jget(BONUS_KEY); if (v[b.dataset.w]) v[b.dataset.w].done = true; jset(BONUS_KEY, v); render(); break; }
     case "bonusdrop": { const v = jget(BONUS_KEY); if (v[b.dataset.w]) v[b.dataset.w] = { min: 0, done: true, skipped: true }; jset(BONUS_KEY, v); render(); break; }
@@ -4743,7 +4741,7 @@ document.addEventListener("click", ev => {
         const f = setFeelApply(l, fe, j, b.dataset.f), nx = arr.find((x, i) => i > j && !x.done);
         saveLog(l); render();
         const fs = findState(l, fe);
-        if (nx && fs.found != null) toast(`Found: ${fmt(fs.found)} kg – between too easy and too heavy.`);
+        if (nx && fs.found != null) toast(`Found: ${fmt(fs.found)} kg`);
         else if (nx) toast(f === "light" ? `Felt light – next set ${fmt(nx.kg)} kg.` : f === "heavy" ? `Felt heavy – next set ${fmt(nx.kg)} kg.` : `No mark – next set stays at ${fmt(nx.kg)} kg.`);
         else toast(f ? "Noted – this weight is your starting point next time." : "Mark removed.");
         break;
@@ -4816,13 +4814,12 @@ window.addEventListener("resize", () => { if (S.tab === "body") wireChart(); });
 function backupCard() {
   let last = null; try { last = localStorage.getItem("tw.lastBackup"); } catch {}
   return `<h2 class="sec">Backup</h2><div class="card" style="display:grid;gap:10px">
-    <div class="muted" style="font-size:14px">Everything is stored on this phone. Save a backup now and then, and after big changes, so nothing is lost if the phone is reset or replaced.${last ? ` Last backup: ${shortDate(last)}.` : " No backup saved yet."}</div>
+    <div class="muted" style="font-size:14px">Everything is stored on this phone. Save a backup to Google Drive or email now and then.${last ? ` Last backup: ${shortDate(last)}.` : " No backup saved yet."}</div>
     <div class="row"><button class="btn" data-act="backup" id="b-backup">Save backup</button>
     <label class="btn ghost" for="b-restore" style="cursor:pointer">Restore from file</label>
     <input type="file" id="b-restore" accept="application/json,.json,text/plain,.txt" hidden></div>
     
-    <button type="button" class="linkbtn" data-act="bkdl">Download instead</button>
-    <small class="muted">“Save backup” opens your phone's share menu – pick Google Drive and a folder like “Backup Training Week” (Drive remembers it next time), or Files or email. Keep it off the phone, so it survives if the phone is lost.</small></div>`;
+    <button type="button" class="linkbtn" data-act="bkdl">Download instead</button></div>`;
 }
 // Backup (Christian 2026-11-09): a web app can't pick a folder, so "Save backup" opens the phone's share menu with the file –
 // Google Drive (a "Backup Training Week" folder, remembered next time), Files or email. "Download instead" keeps the old way.
